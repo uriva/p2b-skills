@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-google-docs",
+  "version": "1.0.3",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/google-docs",
+  "description": "Google Docs and Sheets utils using safescript.",
+  "visibility": "public",
+  "skills": {
+    "google-docs": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": ["docs.googleapis.com", "sheets.googleapis.com"]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-scheduling",
+  "version": "1.0.6",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/scheduling",
+  "description": "Scheduling and calendar usage utils using safescript.",
+  "visibility": "public",
+  "skills": {
+    "scheduling": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": ["api.calendly.com", "www.googleapis.com"]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-google-drive",
+  "version": "1.0.3",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/google-drive",
+  "description": "Google Drive utils using safescript.",
+  "visibility": "public",
+  "skills": {
+    "google-drive": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": ["www.googleapis.com"]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}
