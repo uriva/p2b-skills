@@ -13,7 +13,7 @@ jobs:
     outputs:
       skill-dirs: ${{ steps.skills.outputs.skill-dirs }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: skills
         run: |
           dirs=$(find . -mindepth 2 -maxdepth 2 -name tank.json -printf '%h\n' | sed 's#^./##' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
@@ -32,7 +32,7 @@ jobs:
       run:
         working-directory: ${{ matrix.skill-dir }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Tank CLI
         run: sudo curl -fsSL https://raw.githubusercontent.com/tankpkg/tank/main/install.sh | sudo sh
       - name: Publish to Tank Registry
