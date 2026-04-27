@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-github",
+  "version": "1.0.0",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/github",
+  "description": "GitHub repository, issue, comment, and pull request tools using safescript.",
+  "visibility": "public",
+  "skills": {
+    "github": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": ["api.github.com"]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}
