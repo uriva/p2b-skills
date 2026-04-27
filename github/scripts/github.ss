@@ -70,3 +70,31 @@ patchGithubFile = (githubToken: string, owner: string, repo: string, branch: str
   write = read.success ? (patchError == "" ? writeGithubFile(githubToken, owner, repo, branch, path, replaced.result, commitMessage) : { success: false, result: "", error: patchError }) : { success: false, result: "", error: read.error }
   return write
 }
+
+createGithubIssue = (githubToken: string, owner: string, repo: string, title: string, body: string): { success: boolean, result: string, error: string } => {
+  requestPath = repoPath(owner, repo, "/issues")
+  requestBody = jsonStringify({ value: { title: title, body: body } })
+  res = httpRequest({ host: "api.github.com", method: "POST", path: requestPath, headers: githubHeaders(githubToken), body: requestBody.text })
+  parsed = res.status == 201 ? jsonParse(res.body) : { value: { html_url: "" } }
+  error = stringConcat({ parts: ["GITHUB_CREATE_ISSUE_ERROR: ", res.body] })
+  return res.status == 201 ? { success: true, result: parsed.value.html_url, error: "" } : { success: false, result: "", error: error.result }
+}
+
+addGithubIssueComment = (githubToken: string, owner: string, repo: string, issueNumber: string, body: string): { success: boolean, result: string, error: string } => {
+  suffix = stringConcat({ parts: ["/issues/", issueNumber, "/comments"] })
+  requestPath = repoPath(owner, repo, suffix.result)
+  requestBody = jsonStringify({ value: { body: body } })
+  res = httpRequest({ host: "api.github.com", method: "POST", path: requestPath, headers: githubHeaders(githubToken), body: requestBody.text })
+  parsed = res.status == 201 ? jsonParse(res.body) : { value: { html_url: "" } }
+  error = stringConcat({ parts: ["GITHUB_ADD_COMMENT_ERROR: ", res.body] })
+  return res.status == 201 ? { success: true, result: parsed.value.html_url, error: "" } : { success: false, result: "", error: error.result }
+}
+
+createGithubPullRequest = (githubToken: string, owner: string, repo: string, title: string, body: string, head: string, base: string): { success: boolean, result: string, error: string } => {
+  requestPath = repoPath(owner, repo, "/pulls")
+  requestBody = jsonStringify({ value: { title: title, body: body, head: head, base: base } })
+  res = httpRequest({ host: "api.github.com", method: "POST", path: requestPath, headers: githubHeaders(githubToken), body: requestBody.text })
+  parsed = res.status == 201 ? jsonParse(res.body) : { value: { html_url: "" } }
+  error = stringConcat({ parts: ["GITHUB_CREATE_PULL_REQUEST_ERROR: ", res.body] })
+  return res.status == 201 ? { success: true, result: parsed.value.html_url, error: "" } : { success: false, result: "", error: error.result }
+}

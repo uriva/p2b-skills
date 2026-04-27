@@ -20,6 +20,9 @@ The token must have access to the repository and must allow requests to `api.git
 - `readGithubFile`: reads a file from a branch or ref.
 - `writeGithubFile`: commits a full file replacement using the Git Data API.
 - `patchGithubFile`: reads a file, performs an exact string replacement, and commits the result using the Git Data API.
+- `createGithubIssue`: creates a GitHub issue.
+- `addGithubIssueComment`: adds a comment to an issue or pull request.
+- `createGithubPullRequest`: creates a pull request.
 - `patchTextForTest`: pure helper used for testing patch semantics.
 
 ## Editing Rules
@@ -33,3 +36,7 @@ Prefer `patchGithubFile` for small changes. It follows OpenCode-style safe editi
 - Set `replaceAll` to `true` only when every occurrence should change.
 
 Use `writeGithubFile` only when creating or replacing a whole file is clearer than a precise patch.
+
+Use `createGithubIssue`, `addGithubIssueComment`, and `createGithubPullRequest` for project-management tasks instead of shelling out to `curl`. This avoids VM state issues and command-length limits for long issue/comment bodies.
+
+Pass `issueNumber` as a string, for example `"11"`.
