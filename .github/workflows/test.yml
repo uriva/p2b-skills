@@ -1,0 +1,27 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  safescript:
+    name: SafeScript tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: p2b-skills
+      - uses: actions/checkout@v5
+        with:
+          repository: uriva/safescript
+          path: safescript
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Run SafeScript tests
+        working-directory: p2b-skills
+        run: deno run --allow-all ../safescript/cli.ts test
