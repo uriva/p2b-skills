@@ -18,6 +18,10 @@ branchRefPath = (owner: string, repo: string, branch: string): string => {
   return repoPath(owner, repo, suffix.result)
 }
 
+branchRefPathForTest = (owner: string, repo: string, branch: string): string => {
+  return branchRefPath(owner, repo, branch)
+}
+
 readGithubFile = (githubToken: string, owner: string, repo: string, path: string, ref: string): { success: boolean, result: string, error: string } => {
   encodedRef = urlEncode(ref)
   suffix = stringConcat({ parts: ["/contents/", path, "?ref=", encodedRef.encoded] })
