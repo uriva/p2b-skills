@@ -12,6 +12,12 @@ repoPath = (owner: string, repo: string, suffix: string): string => {
   return path.result
 }
 
+branchRefPath = (owner: string, repo: string, branch: string): string => {
+  encodedBranch = urlEncode(branch)
+  suffix = stringConcat({ parts: ["/git/ref/heads/", encodedBranch.encoded] })
+  return repoPath(owner, repo, suffix.result)
+}
+
 readGithubFile = (githubToken: string, owner: string, repo: string, path: string, ref: string): { success: boolean, result: string, error: string } => {
   encodedRef = urlEncode(ref)
   suffix = stringConcat({ parts: ["/contents/", path, "?ref=", encodedRef.encoded] })
@@ -31,7 +37,7 @@ patchTextForTest = (content: string, searchText: string, replaceText: string, re
 }
 
 writeGithubFile = (githubToken: string, owner: string, repo: string, branch: string, path: string, content: string, commitMessage: string): { success: boolean, result: string, error: string } => {
-  refPath = repoPath(owner, repo, stringConcat({ parts: ["/git/ref/heads/", branch] }).result)
+  refPath = branchRefPath(owner, repo, branch)
   refRes = httpRequest({ host: "api.github.com", method: "GET", path: refPath, headers: githubHeaders(githubToken) })
   refOk = refRes.status == 200
   refParsed = refOk ? jsonParse(refRes.body) : { value: { object: { sha: "" } } }
@@ -57,7 +63,8 @@ writeGithubFile = (githubToken: string, owner: string, repo: string, branch: str
 
   updateBody = jsonStringify({ value: { sha: newCommitParsed.value.sha, force: false } })
   updateRes = newCommitOk ? httpRequest({ host: "api.github.com", method: "PATCH", path: refPath, headers: githubHeaders(githubToken), body: updateBody.text }) : { status: 0, body: newCommitRes.body }
-  errorBody = stringConcat({ parts: ["GITHUB_WRITE_FILE_ERROR: ", updateRes.body] })
+  errorStep = refOk ? (commitOk ? (treeOk ? (newCommitOk ? "update_ref" : "create_commit") : "create_tree") : "get_commit") : "get_ref"
+  errorBody = stringConcat({ parts: ["GITHUB_WRITE_FILE_ERROR ", errorStep, ": ", updateRes.body] })
   return updateRes.status == 200 ? { success: true, result: newCommitParsed.value.html_url, error: "" } : { success: false, result: "", error: errorBody.result }
 }
 
