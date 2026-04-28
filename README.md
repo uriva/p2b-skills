@@ -5,6 +5,7 @@ Community skills for Prompt2Bot agents.
 ## Skills
 
 - `github/` - read and edit GitHub repositories through the GitHub REST API.
+- `coder/` - coding and integration guidelines for Prompt2Bot builder agents.
 - `google-docs/` - interact with Google Docs and Google Sheets.
 - `google-drive/` - search and list Google Drive files.
 - `scheduling/` - schedule and inspect availability with Calendly and Google Calendar.
