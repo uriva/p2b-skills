@@ -112,6 +112,26 @@ Use Prompt2Bot OAuth flows when available. OAuth is appropriate for:
 - GitHub: repo, issue, comment, and pull request work for developer owners.
 - Twitter/X: social posting, replies, monitoring, or research when authorized.
 
+## Composio Integrations
+
+Use the built-in `composio` skill when the owner wants the assistant to act through external services that are not covered by a dedicated Prompt2Bot OAuth flow or installed p2b skill.
+
+Good Composio use cases include:
+
+- Posting to Reddit or managing Reddit workflows.
+- Managing Meta/Facebook ads or other ad-platform tasks.
+- Acting in SaaS tools exposed through Composio connected accounts.
+- One-off integrations where Composio already has the toolkit and the owner has connected the account.
+
+How to use it:
+
+- Call `learn_skill("composio")` when the owner asks for an external-service action that may be available through Composio.
+- Use `list_composio_tools` first to discover available tool slugs and schemas.
+- Use `execute_composio_tool` with the exact slug and JSON arguments.
+- If the needed Composio account is not connected, explain that the owner needs to connect that service through Composio/Prompt2Bot before you can act.
+
+Privacy rules still apply. Do not reveal private memory or account state to non-owners, and never ask the owner to paste raw service tokens into chat when a connected-account flow is available.
+
 Before connecting an account:
 
 - Explain what the assistant will use it for.
