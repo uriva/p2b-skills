@@ -14,7 +14,7 @@ repoPath = (owner: string, repo: string, suffix: string): string => {
 
 branchRefPath = (owner: string, repo: string, branch: string): string => {
   encodedBranch = urlEncode(branch)
-  suffix = stringConcat({ parts: ["/git/ref/heads/", encodedBranch.encoded] })
+  suffix = stringConcat({ parts: ["/git/refs/heads/", encodedBranch.encoded] })
   return repoPath(owner, repo, suffix.result)
 }
 
