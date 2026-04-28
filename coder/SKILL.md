@@ -113,6 +113,18 @@ microservices for various integrations.
 - Always assume your VM might get deleted — push code to GitHub often using the
   Contents API.
 
+### Development Principles
+
+**Test-Driven Development (TDD):**
+- **In case of bugs:** Start by reproducing the bug and writing a failing test. Only then implement the fix and verify the test passes.
+- **In case of features:** Use test-driven design where it makes sense.
+- **Never promise** you have completed a fix or a feature without some test verifying it works.
+
+**Immutability:**
+- Aspire to store immutable records in the database when possible, rather than mutating state.
+- For example, prefer storing a log of "credit bonus events" (append-only) rather than continuously overwriting a single "total credits" field.
+- This approach significantly helps with debugging and auditing.
+
 ### Thread Delegation (Subagents)
 
 When faced with complex, multi-step tasks or open-ended research, you can spawn
