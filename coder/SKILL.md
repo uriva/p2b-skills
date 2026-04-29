@@ -277,23 +277,23 @@ automatically.
 
 **Required secrets** (store via `set_secret`):
 
-- `GITHUB_TOKEN` — GitHub personal access token. The token needs two
-  permissions to work end-to-end:
+- `GITHUB_TOKEN` — GitHub personal access token. The token needs two permissions
+  to work end-to-end:
   - **`repo`** (or fine-grained equivalent: Contents read+write) — enables
     cloning, pushing, creating repos, managing files via the Contents API.
   - **`workflow`** (or fine-grained: Workflows read+write) — needed to trigger
     GitHub Actions CI runs (e.g. after pushing schema changes to InstantDB,
-    triggering a deploy pipeline). Without this, CI steps in any repo you
-    create or push to will silently fail to run.
+    triggering a deploy pipeline). Without this, CI steps in any repo you create
+    or push to will silently fail to run.
 
-  When asking the user to create the token, present the two options and let
-  them pick — don't say one is mandatory:
+  When asking the user to create the token, present the two options and let them
+  pick — don't say one is mandatory:
 
   - **Account-wide token** (classic token with `repo` + `workflow`, or
     fine-grained with "All repositories" access). One token covers everything
     you'll ever build for them, including future repos you create on their
-    behalf. Most convenient. The trade-off: if the token leaks, the blast
-    radius is every repo on their account.
+    behalf. Most convenient. The trade-off: if the token leaks, the blast radius
+    is every repo on their account.
   - **Repo-scoped token** (fine-grained, "Only select repositories"). Pick the
     specific repo(s) the bot should touch. Tighter blast radius if leaked, and
     cleaner if they want to keep this bot quarantined to one project. The
@@ -301,13 +301,13 @@ automatically.
     add it to the token's repo list or generate a new token. Slightly more
     friction over time.
 
-  Recommend the account-wide token for users who plan to build multiple
-  things, and the repo-scoped token for users who want strict isolation or
-  are doing a one-off project. Either way, walk them through GitHub Settings
-  → Developer settings → Personal access tokens → Fine-grained tokens →
-  Generate new token, set the repository access option they chose, then
-  enable **Contents: Read and write** and **Workflows: Read and write**.
-  Classic tokens with `repo` and `workflow` scopes also work.
+  Recommend the account-wide token for users who plan to build multiple things,
+  and the repo-scoped token for users who want strict isolation or are doing a
+  one-off project. Either way, walk them through GitHub Settings → Developer
+  settings → Personal access tokens → Fine-grained tokens → Generate new token,
+  set the repository access option they chose, then enable **Contents: Read and
+  write** and **Workflows: Read and write**. Classic tokens with `repo` and
+  `workflow` scopes also work.
 - `DENO_DEPLOY_TOKEN` — Deno Deploy token starting with `ddo_`
 - `INSTANTDB_ADMIN_TOKEN` — InstantDB admin token
 
@@ -562,18 +562,17 @@ headaches.
 - **shadcn/ui** (https://ui.shadcn.com/) and **AI SDK Elements**
   (https://elements.ai-sdk.dev/) for UI design.
 - **Search agent-skill registries before building UI from scratch.** Before
-  starting a non-trivial frontend, check whether someone has already published
-  a skill that fits. Two registries worth searching every time:
+  starting a non-trivial frontend, check whether someone has already published a
+  skill that fits. Two registries worth searching every time:
   - https://github.com/anthropics/skills
   - https://github.com/vercel-labs/agent-skills
 
-  Use `gh search code` or browse the repos directly to find skills covering
-  the UI pattern you need (dashboards, forms, charts, chat UIs, landing
-  pages, etc.). If a relevant skill exists, install it via `learn_skill` and
-  follow its conventions instead of inventing your own. A pre-existing skill
-  encodes design decisions, accessibility, and component choices that would
-  otherwise take you hours to rediscover. Only build from scratch if nothing
-  matches.
+  Use `gh search code` or browse the repos directly to find skills covering the
+  UI pattern you need (dashboards, forms, charts, chat UIs, landing pages,
+  etc.). If a relevant skill exists, install it via `learn_skill` and follow its
+  conventions instead of inventing your own. A pre-existing skill encodes design
+  decisions, accessibility, and component choices that would otherwise take you
+  hours to rediscover. Only build from scratch if nothing matches.
 
 ### Two-legged systems: CI as the source of truth
 
@@ -944,6 +943,14 @@ a secret token, and inject context or activate it from the backend based on
 schedules or events.
 
 **Simple frontend / forms:** Use Next.js (App Router) on Deno Deploy.
+
+**Telegram to WhatsApp Forwarding:** When a user wants to automatically forward messages from a Telegram channel to a WhatsApp channel or group, do NOT try to use the official WhatsApp Business API or standard prompt2bot agents to "post to channels". The official API heavily restricts automated posting to Channels.
+Instead, follow this standard playbook:
+1. Ask the user to add a Telegram Bot to their Telegram channel as an admin.
+2. Set up a Deno Deploy webhook service to receive Telegram updates.
+3. Use **Supergreen** (the unofficial WhatsApp API via `https://jsr.io/@supergreen/client`) to send the messages.
+4. Explain to the user that they must connect a dedicated phone number to Supergreen, log in, and manually add that phone number as an admin to their target WhatsApp group/channel.
+5. In your Deno Deploy service, map the incoming Telegram payload to `sendMessage` or `sendImage` calls using the Supergreen client.
 
 ### Coding workflow on the VM
 
