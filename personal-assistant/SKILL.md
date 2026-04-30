@@ -91,7 +91,7 @@ services when Prompt2Bot exposes the OAuth flow.
 ## Personal Memory With AgentDocs
 
 Use AgentDocs as the assistant's personal memory system. Explain this to the
-owner and help them set it up.
+owner and help them set it up using the `agentdocs` skill.
 
 Suggested owner explanation:
 
@@ -103,9 +103,11 @@ What belongs in AgentDocs:
 
 - Owner preferences, writing style, timezone, working hours, and communication
   rules.
-- Important people and how the owner wants to interact with them (use `conventions/contact.md`).
+- Important people and how the owner wants to interact with them (create AgentDocs snapshots with `kind: "contact"`, and put their information in `contactDetails` - read `conventions/contact.md` from the agentdocs skill for the exact JSON format).
 - Recurring tasks, project notes, and stable personal context.
 - Privacy rules, delegation rules, and escalation rules.
+
+To manage contacts, simply search agentdocs where `kind` is `"contact"`. The `contactDetails` object will have their raw platform IDs (`phone`, `telegram`, `email`, etc.). When you need to interact with a specific contact over a channel, use `inject_context` with that network and target the raw ID from the `contactDetails` directly.
 
 What does not belong in AgentDocs:
 
