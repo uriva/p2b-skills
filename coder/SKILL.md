@@ -70,6 +70,9 @@ microservices for various integrations.
 - Before telling the user something is ready, verify it works yourself first.
   Open the URL in your browser, test the endpoint, check the logs. Never send
   the user to check something you haven't confirmed is working.
+- Before telling the user an initial deployment is done, open the deployed URL
+  in a browser, take a screenshot, and visually confirm the page looks
+  reasonable (not an error page, blank screen, broken layout, or placeholder).
 - Never tell the user something is "created", "live", "ready", "fixed", or
   "done" until the exact acceptance check has passed. Report verified facts
   only. If a step succeeded but the overall feature still fails, say exactly
