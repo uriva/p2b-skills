@@ -1,0 +1,23 @@
+{
+  "name": "@uriva/p2b-social-media-scraper",
+  "version": "1.0.0",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/social-media-scraper",
+  "description": "Social media scraper using safescript. Search Facebook posts and scrape LinkedIn profiles.",
+  "visibility": "public",
+  "skills": {
+    "p2b-social-media-scraper": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": [
+        "facebook-scraper3.p.rapidapi.com",
+        "api.brightdata.com"
+      ]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}

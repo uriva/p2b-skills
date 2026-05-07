@@ -12,6 +12,8 @@ Community skills for Prompt2Bot agents.
   email, and OAuth guidance.
 - `scheduling/` - schedule and inspect availability with Calendly and Google
   Calendar.
+- `social-media-scraper/` - search Facebook posts and scrape LinkedIn profiles
+  via Bright Data.
 
 Each skill directory has its own `tank.json`. CI discovers every `*/tank.json`
 and runs `tank publish` from that directory.
