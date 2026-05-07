@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-social-media-scraper",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/social-media-scraper",
   "description": "Social media scraper using safescript. Search Facebook posts, scrape LinkedIn profiles, and fetch YouTube subtitles.",
   "visibility": "public",
