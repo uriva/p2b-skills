@@ -14,6 +14,27 @@ Pass secrets via `secretMapping`:
 { "rapidApiKey": "RAPIDAPI_KEY", "brightDataToken": "BRIGHTDATA_TOKEN" }
 ```
 
+## Getting API Keys
+
+### RapidAPI
+
+Used by `facebookPosts` and `youtubeSubtitles`.
+
+1. Go to [rapidapi.com](https://rapidapi.com) and create a free account.
+2. Subscribe (free tier) to the APIs you need:
+   - [Facebook Scraper v3](https://rapidapi.com/restyler/api/facebook-scraper3) — for Facebook posts
+   - [YouTube Media Downloader](https://rapidapi.com/ytjar/api/youtube-media-downloader) — for YouTube subtitles
+3. Copy your API key from the [RapidAPI dashboard](https://rapidapi.com/developer/dashboard).
+4. Add it as a bot secret (e.g. name `RAPIDAPI_KEY`) with no host restrictions.
+
+### Bright Data
+
+Used by `startLinkedInProfileScrape` and `getLinkedInProfileSnapshot`.
+
+1. Go to [brightdata.com](https://brightdata.com) and create an account.
+2. Get your API token from the [Bright Data dashboard](https://brightdata.com/cp/settings).
+3. Add it as a bot secret (e.g. name `BRIGHTDATA_TOKEN`) with host `api.brightdata.com`.
+
 ## Tools
 
 - `facebookPosts` — Search or get Facebook posts. Pass `query` and/or `groupId`.
