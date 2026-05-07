@@ -21,6 +21,8 @@ Pass secrets via `secretMapping`:
   Returns a `snapshot_id` for polling.
 - `getLinkedInProfileSnapshot` — Fetch status/result of a pending snapshot.
 
+- `youtubeSubtitles` — Fetch SRT subtitles for a YouTube video URL.
+
 ## Example usage
 
 ```typescript
@@ -58,3 +60,10 @@ Two-step flow:
    Repeat until `status` is `"ready"` or `"failed"`.
 
 Valid LinkedIn URL format: `https://(www.)linkedin.com/in/<username>/`
+
+## YouTube
+
+Fetch subtitles for a single YouTube video:
+
+- `youtubeSubtitles(rapidApiKey, url)` — Returns SRT subtitle text for a YouTube video URL.
+  The URL must contain a video ID (e.g. `https://youtube.com/watch?v=abc`).

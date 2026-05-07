@@ -28,6 +28,10 @@ isLinkedInUrl = (url: string): boolean => {
   return matched.match
 }
 
+toScrapeItem = (url: string): { url: string } => {
+  return { url: url }
+}
+
 startLinkedInProfileScrape = (brightDataToken: string, urls: string[]): { success: boolean, result: string, error: string } => {
   validUrls = filter(isLinkedInUrl, urls)
   allValid = validUrls.length == urls.length
@@ -81,4 +85,37 @@ getLinkedInProfileSnapshot = (brightDataToken: string, snapshotId: string): { su
     : stringConcat({ parts: ["Snapshot status: ", status] }).result
 
   return isOk ? { success: true, result: result, error: "" } : { success: false, result: "", error: progressError.result }
+}
+
+doc({ text: "### YouTube Subtitles\n\nFetch subtitles for a YouTube video URL via the YouTube Media Downloader RapidAPI. Returns SRT subtitle text.\n\n#### Parameters\n- `rapidApiKey` — Your RapidAPI key (pass via secretMapping)\n- `url` — Full YouTube video URL, e.g. `https://youtube.com/watch?v=abc`\n\n#### Example\n```\nparams: { url: \"https://youtube.com/watch?v=abc\" }\nsecretMapping: { rapidApiKey: \"RAPIDAPI_KEY\" }\n```" })
+
+youtubeSubtitles = (rapidApiKey: string, url: string): { success: boolean, result: string, error: string } => {
+  matched = stringRegex({ text: url, pattern: "(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/)([^&\\s]+)" })
+  videoId = matched.match ? matched.groups[0] : ""
+  noVideoId = videoId == ""
+
+  detailsPath = stringConcat({ parts: ["/v2/video/details?videoId=", videoId] })
+  detailsRes = noVideoId
+    ? { status: 400, body: "No video ID found in URL" }
+    : httpRequest({ host: "youtube-media-downloader.p.rapidapi.com", method: "GET", path: detailsPath.result, headers: { "x-rapidapi-key": rapidApiKey, "x-rapidapi-host": "youtube-media-downloader.p.rapidapi.com" } })
+
+  detailsOk = detailsRes.status == 200
+  detailsData = detailsOk ? jsonParse({ text: detailsRes.body }) : { value: { subtitles: { items: [] } } }
+  items = detailsData.value.subtitles.items
+  hasItems = items.length > 0
+  chosenItem = hasItems ? items[0] : { url: "" }
+  subtitleUrl = chosenItem.url
+
+  encodedUrl = urlEncode({ text: subtitleUrl })
+  srtPath = stringConcat({ parts: ["/v2/video/subtitles?subtitleUrl=", encodedUrl.encoded, "&format=srt"] })
+  srtRes = hasItems
+    ? httpRequest({ host: "youtube-media-downloader.p.rapidapi.com", method: "GET", path: srtPath.result, headers: { "x-rapidapi-key": rapidApiKey, "x-rapidapi-host": "youtube-media-downloader.p.rapidapi.com" } })
+    : { status: 400, body: "No subtitles found" }
+
+  srtOk = srtRes.status == 200
+  hasSrt = srtOk ? stringIncludes({ haystack: srtRes.body, needle: "-->" }).result : false
+
+  errorMsg = detailsOk ? (srtOk ? "" : stringConcat({ parts: ["Subtitle error: ", srtRes.body] }).result) : stringConcat({ parts: ["Details error: ", detailsRes.body] }).result
+
+  return hasSrt ? { success: true, result: srtRes.body, error: "" } : { success: false, result: "", error: errorMsg }
 }
