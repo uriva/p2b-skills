@@ -14,9 +14,34 @@ jobs:
       skill-dirs: ${{ steps.skills.outputs.skill-dirs }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - id: skills
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
         run: |
-          dirs=$(find . -mindepth 2 -maxdepth 2 -name tank.json -printf '%h\n' | sed 's#^./##' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "${BEFORE:-}" ] || [[ "$BEFORE" =~ ^0+$ ]]; then
+            files=$(git ls-files '*/tank.json')
+          else
+            files=$(git diff --name-only "$BEFORE" "$SHA")
+          fi
+
+          dirs=$(
+            printf '%s\n' "$files" |
+              while IFS= read -r file; do
+                dir=${file%%/*}
+                if [ "$dir" != "$file" ] && [ -f "$dir/tank.json" ]; then
+                  printf '%s\n' "$dir"
+                fi
+              done |
+              sort -u |
+              jq -R -s -c 'split("\n") | map(select(length > 0))'
+          )
+
           echo "skill-dirs=$dirs" >> "$GITHUB_OUTPUT"
 
   deploy:
@@ -34,7 +59,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install Tank CLI
-        run: sudo curl -fsSL https://raw.githubusercontent.com/tankpkg/tank/main/install.sh | sudo sh
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if sudo curl -fsSL https://raw.githubusercontent.com/tankpkg/tank/main/install.sh | sudo sh; then
+              exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          exit 1
       - name: Verify Tank auth
         env:
           TANK_TOKEN: ${{ secrets.TANK_TOKEN }}
