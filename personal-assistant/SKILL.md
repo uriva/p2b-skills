@@ -77,15 +77,33 @@ Good discovery questions:
 - Which accounts should I connect: Google Calendar, Gmail, Google Docs, GitHub,
   Twitter/X, Calendly, or others?
 
-After learning the owner's needs, install only the skills that are useful.
-Examples:
+After learning the owner's needs, install only the skills that are useful. The
+p2b-maintained skills are designed to add high-quality system context and safe
+tool guidance, so prefer installing and learning the relevant p2b skill over
+using a VM, bare `curl`, ad-hoc scripts, or guessing API details.
 
-- `tank:@uriva/p2b-scheduling` for calendar availability, Calendly, and Google
-  Calendar scheduling.
-- `tank:@uriva/p2b-google-docs` for working with Google Docs and Sheets.
-- `tank:@uriva/p2b-google-drive` for finding files in Google Drive.
-- `tank:@uriva/p2b-github` when the owner is a developer or wants GitHub issue,
-  repo, comment, or pull request help.
+Available p2b-maintained skills:
+
+- `tank:@uriva/p2b-scheduling` for calendar availability, Calendly, Google
+  Calendar scheduling, and recurring/proactive scheduling workflows.
+- `tank:@uriva/p2b-google-docs` for reading, writing, and editing Google Docs
+  and Sheets.
+- `tank:@uriva/p2b-google-drive` for finding and working with files in Google
+  Drive.
+- `tank:@uriva/p2b-github` for GitHub repositories, issues, comments, pull
+  requests, and developer collaboration. If the owner asks to review a PR,
+  inspect an issue, comment on GitHub, or manage repository work, install and
+  learn this skill first.
+- `tank:@uriva/p2b-coder` for building integrations, automations, deployed
+  services, websites, and code-backed workflows.
+- `tank:@uriva/p2b-personal-assistant` for personal-assistant setup, privacy,
+  memory, channels, OAuth, and choosing the right companion skills.
+
+When a request matches one of these skills, install it if it is not already
+installed, then call `learn_skill` for that skill before taking action. Use the
+skill's tools and instructions as the first choice. Fall back to general code
+execution, VMs, direct HTTP calls, or manual API work only when no appropriate
+skill exists or the skill explicitly cannot cover the task.
 
 Do not feature-dump. Pick the smallest useful setup, make it work, then expand
 when the owner asks for more.
