@@ -371,7 +371,7 @@ curl -s -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
 #### `deno deploy` — Deno Deploy (native subcommand, NOT `deployctl`)
 
 **CRITICAL: The command is `deno deploy`, a built-in subcommand of the `deno`
-binary. NEVER use `deployctl` — it is a deprecated standalone CLI.** Do not
+binary. NEVER use `deployctl` — it is deprecated and will not work.** Do not
 install it (`deno install jsr:@deno/deployctl`), do not run it, do not fall back
 to it. If `deno deploy` fails, report the error — do not try `deployctl` as an
 alternative.
@@ -386,6 +386,17 @@ deno deploy env set KEY=VALUE ...         # Set environment variables
 deno deploy env list                      # List environment variables
 deno deploy logs --app=<slug>             # Tail logs
 ```
+
+Use `deno deploy env set` for Deno Deploy environment variables. Do not ask the
+user to set env vars in the dashboard when the CLI can do it; set them yourself
+with `deno deploy env set KEY=VALUE ...`, then verify with `deno deploy env
+list`.
+
+The user may need to do the initial GitHub integration/setup in the Deno Deploy
+dashboard, and you may need to ask them for the Deno org name and deployed app
+URL. Beyond that initial account/dashboard step, you should be able to create
+apps, set env vars, deploy, view logs, and manage normal follow-up work yourself
+with the `deno deploy` CLI.
 
 `deno deploy --app=<slug> --prod` is the standard way to deploy. It does
 diff-sync file upload, tracks the build via SSE (building -> warming ->
@@ -422,7 +433,8 @@ a project, or anytime you are not 100% certain of the org slug and app slug, you
 must run `orgs.list` and then `apps.list`. Do not guess app or org slugs.
 
 **Direct HTTP calls to the Deno Deploy REST API:** For operations the CLI
-doesn't support, use the v2 API. The v1 API (`/v1/`) rejects `ddo_` tokens.
+doesn't support, use the v2 API. The v1 API (`/v1/`) is deprecated and will not
+work with `ddo_` tokens.
 
 ```bash
 # Delete an app
@@ -436,8 +448,8 @@ curl -s \
   "https://api.deno.com/v2/apps"
 ```
 
-The base path is always `/v2/` — "projects" are called "apps" and "deployments"
-are called "revisions".
+The base path is always `/v2/`. Never call `/v1/`. In v2, "projects" are called
+"apps" and "deployments" are called "revisions".
 
 #### `instant-cli` — InstantDB CLI
 
@@ -532,12 +544,18 @@ headaches.
   webhook responders/senders. Deno also supports Next.js apps for frontends. The
   only exception is when you need Docker or long-running operations. Use the
   native `deno deploy` subcommand on the VM for all Deno Deploy operations
-  (create apps, deploy, set env vars). Never use `deployctl` — it is deprecated.
-  - **Deno Deploy v2 API — IMPORTANT: The v1 API (`/v1/`) rejects `ddo_`
-    organization tokens with "invalidToken". Always use `/v2/` for all Deno
+  (create apps, deploy, set env vars). Never use `deployctl` — it is deprecated
+  and will not work. Use `deno deploy env set` for environment variables instead
+  of asking the user to set them in the dashboard.
+  - **Deno Deploy v2 API — IMPORTANT: The v1 API (`/v1/`) is deprecated and will
+    not work with `ddo_` organization tokens. Always use `/v2/` for all Deno
     Deploy API calls.** The base URL is `https://api.deno.com/v2`. In v2,
     "projects" are called "apps" and "deployments" are called "revisions". Use
     `deno deploy` CLI commands for standard operations (deploy, env, logs).
+  - **Initial dashboard setup:** the user may need to connect GitHub in the Deno
+    dashboard and tell you the Deno org name and app URL. After that, use the CLI
+    to do the rest yourself: create apps, set env vars, deploy, inspect logs, and
+    iterate.
   - **Deno Deploy tokens**: Valid tokens start with `ddo_` (e.g.
     `ddo_abc123...`). If a user gives you a token that doesn't start with
     `ddo_`, it's wrong — likely from the old Deno Deploy dashboard
