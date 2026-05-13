@@ -51,6 +51,11 @@ microservices for various integrations.
   analyze the target (fetch the URL, inspect API docs or HTML structure). Don't
   write integration code against assumptions — verify the actual interface
   first.
+- When using the Make.com API, remember Make runs on regional subdomains such
+  as `eu1.make.com`, `eu2.make.com`, and `us1.make.com`. If a presumably valid
+  token returns `401 Unauthorized` or `Access denied`, do not immediately assume
+  the token is broken. Retry the request against the other regional subdomains,
+  especially `eu2.make.com`, to find the user's correct environment.
 - If a deployment or integration fails twice on the same issue, stop retrying.
   Tell the user what failed and ask for specific information (logs, environment
   variables, dashboard screenshots).
