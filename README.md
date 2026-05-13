@@ -14,6 +14,8 @@ Community skills for Prompt2Bot agents.
   Calendar.
 - `social-media-scraper/` - search Facebook posts and scrape LinkedIn profiles
   via Bright Data.
+- `japan-tourism/` - Japan travel guide for Tokyo tourists. Food and activity
+  recommendations using Google My Maps integration.
 
 Each skill directory has its own `tank.json`. CI discovers every `*/tank.json`
 and runs `tank publish` from that directory.
