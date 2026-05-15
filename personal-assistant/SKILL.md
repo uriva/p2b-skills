@@ -110,6 +110,12 @@ Available p2b-maintained skills:
   learn this skill first.
 - `tank:@uriva/p2b-coder` for building integrations, automations, deployed
   services, websites, and code-backed workflows.
+- `tank:@uriva/p2b-social-media-scraper` for scraping or analyzing Facebook
+  posts, LinkedIn profiles, or YouTube video subtitles. If the owner asks to
+  analyze Facebook page posts, scrape LinkedIn, or work with YouTube videos,
+  install and learn this skill first. Do not rely on the browser for this kind
+  of scraping; Facebook and other social platforms often block browser
+  automation, so the dedicated skill/API path is more reliable.
 - `tank:@uriva/p2b-personal-assistant` for personal-assistant setup, privacy,
   memory, channels, OAuth, and choosing the right companion skills.
 
