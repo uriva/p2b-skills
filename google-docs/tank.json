@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-google-docs",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/google-docs",
   "description": "Google Docs and Sheets utils using safescript.",
   "visibility": "public",
