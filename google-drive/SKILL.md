@@ -7,21 +7,16 @@ description: AI agent skill for interacting with Google Drive.
 
 Allows bot to interact with Google Drive.
 
-Pass the configured secret name as `googleToken` when calling tools. Do not pass
-env var names (for example `GOOGLE_TOKEN`) as the token value.
+All functions require a token parameter that must be mapped to a bot secret via
+`secretMapping`. The exact secret name varies per bot. To find the correct name:
+
+1. Call `secrets_and_variables/list_env_variables`
+2. Pick the secret whose hosts include `www.googleapis.com` or
+   `drive.googleapis.com`
+3. Pass that secret name in `secretMapping` (e.g.
+   `{ "googleToken": "GOOGLE_WORKSPACE_TOKEN" }`)
+
+Do not guess secret names. Do not pass env var names like `GOOGLE_TOKEN` as
+token values. Always discover the name first.
 
 All functions return `{ success, result, error }`.
-
-## Example usage
-
-```typescript
-import { listFilesByFolder, searchDrive } from "./scripts/google-drive.ss";
-
-export const myTask = async () => {
-  const files = await listFilesByFolder(
-    process.env.GOOGLE_TOKEN,
-    "some-folder-id",
-  );
-  console.log(files);
-};
-```

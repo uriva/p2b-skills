@@ -69,21 +69,27 @@ Delete an event from the user's calendar.
 
 ## Usage
 
-Pass secret names as the token parameters:
+All functions require a token parameter that must be mapped to a bot secret via
+`secretMapping`. The exact secret names vary per bot. To find the correct name:
 
-- For Calendly: pass `"calendly-token"` as the `calendlyToken` parameter
-- For Google Calendar: pass `"google-calendar"` as the `googleToken` parameter
-- For Microsoft 365 Calendar: pass `"microsoft-calendar"` as the
-  `microsoftToken` parameter
+1. Call `secrets_and_variables/list_env_variables`
+2. Pick the secret whose hosts match the service you need:
+   - **Google Calendar / Google Sheets**: look for a secret with host
+     `www.googleapis.com`
+   - **Calendly**: look for a secret with host `api.calendly.com`
+   - **Microsoft 365**: look for a secret with host `graph.microsoft.com`
+3. Pass that secret name in `secretMapping` (e.g.
+   `{ "googleToken": "GOOGLE_WORKSPACE_TOKEN" }`)
 
-Do not pass env var names like `GOOGLE_CALENDAR_TOKEN`, `CALENDLY_TOKEN`, or
-`MICROSOFT_CALENDAR_TOKEN` as token values. The skill expects the configured
-secret name, and using env var names will cause auth failures.
+Do not guess secret names. Do not pass env var names like
+`GOOGLE_CALENDAR_TOKEN` as token values. Always discover the name first.
 
 Example:
 
 ```
-getCalendlyEventTypes("calendly-token")
-searchCalendarEvents("google-calendar", "primary", "meeting", "2026-04-19T00:00:00Z", "2026-04-20T00:00:00Z")
-searchMicrosoftCalendarEvents("microsoft-calendar", "meeting", "2026-04-19T00:00:00Z", "2026-04-20T00:00:00Z")
+# 1. Discover secrets
+secrets_and_variables/list_env_variables
+
+# 2. Use the discovered Google Calendar secret (example: "GOOGLE_WORKSPACE_TOKEN")
+searchCalendarEvents("GOOGLE_WORKSPACE_TOKEN", "primary", "meeting", "2026-04-19T00:00:00Z", "2026-04-20T00:00:00Z")
 ```
