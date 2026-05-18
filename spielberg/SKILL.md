@@ -178,6 +178,130 @@ Ask if the user wants:
 If doing a multi-shot sequence, repeat Steps 5-7 for each shot, then offer to
 stitch them together if the user has video editing tools.
 
+## Cost-First Fix Strategy
+
+When the user is unhappy with a result — artifacts, wrong colors, bad anatomy,
+unwanted motion — **always try to fix the problem on the static image asset
+first**. Image generation is dramatically cheaper and faster than video
+generation. Only escalate to video re-generation when the image is perfect but
+the motion is still wrong.
+
+**Fix hierarchy:**
+1. **Edit the image prompt** — adjust subject, lighting, or style keywords.
+2. **Re-generate the image** — get a clean still frame first.
+3. **Re-approve the image** — confirm the static asset is flawless.
+4. **Re-generate the video** — only if the motion itself is the problem (e.g.
+   physics glitch, wrong camera movement).
+
+Never burn video credits chasing a visual problem that exists in the still
+frame. Treat every image as a "pre-vis" that must pass before it becomes a
+"final shot."
+
+## Content Type Playbooks
+
+Lock the content type during the brief. Each type has different camera, pacing,
+and prompt priorities. Use these playbooks as starting templates.
+
+### UGC (User Generated Content)
+
+**Goal:** Raw, authentic, unpolished. Looks like a real person filmed it on their
+phone.
+
+**Prompt emphasis:**
+- Camera: Handheld shake, selfie angle, phone-camera lens distortion, vertical
+  9:16.
+- Lighting: Natural room light, uneven exposure, window backlight.
+- Environment: Bedroom, car, kitchen, street. Clutter is OK.
+- Motion: Slight head movement, casual gestures, walking while filming.
+- Mood: Energetic, relatable, spontaneous, unscripted.
+
+**Common use cases:** Product reviews, unboxing, day-in-the-life, reaction
+videos.
+
+### Product Ad / Commercial
+
+**Goal:** Polished, aspirational, product is the hero.
+
+**Prompt emphasis:**
+- Camera: Smooth dolly or pedestal movement, macro close-ups, shallow depth of
+  field, glossy product reflections.
+- Lighting: Studio key + fill + rim light, soft even shadows, controlled
+  highlights.
+- Environment: Clean set, gradient backdrop, or aspirational lifestyle scene.
+- Motion: Slow, deliberate product rotation, liquid pour, fabric drape, elegant
+  hand interaction.
+- Mood: Premium, desirable, sleek, trustworthy.
+
+**Common use cases:** E-commerce listings, TV spots, Instagram carousel ads,
+DTC hero videos.
+
+### Podcast / Talking Head
+
+**Goal:** Clear, trustworthy, speaker-focused. Background supports but does not
+distract.
+
+**Prompt emphasis:**
+- Camera: Medium close-up (chest up), eye-level, static or very slow push-in.
+- Lighting: Three-point setup, soft key light, gentle shadows, no harsh glare on
+  glasses.
+- Environment: Bookshelf, home office, branded backdrop, or clean solid color.
+- Motion: Minimal — subtle head nods, hand gestures, slight lean-in for
+  emphasis.
+- Mood: Conversational, knowledgeable, calm, authoritative.
+
+**Common use cases:** Interview clips, thought leadership, news commentary,
+educational explainers.
+
+### Cinematic / Movie Scene
+
+**Goal:** Dramatic storytelling, emotional depth, high production value.
+
+**Prompt emphasis:**
+- Camera: Anamorphic lens characteristics, lens flares, motivated camera
+  movement (crane, Steadicam, handheld for tension), wide establishing shots
+  cutting to intimate close-ups.
+- Lighting: Chiaroscuro, practical sources, volumetric haze, motivated darkness.
+- Environment: Detailed world-building, weather, atmosphere, period-accurate
+  production design.
+- Motion: Character-driven blocking, environmental reactivity (wind, rain, dust),
+  deliberate pacing.
+- Mood: Epic, melancholic, tense, awe-inspiring, romantic.
+
+**Common use cases:** Title sequences, concept trailers, previsualization,
+storyboard animatics, short films.
+
+### Social Media Short (TikTok / Reels / Shorts)
+
+**Goal:** Thumb-stopping, fast-paced, vertical, optimized for sound-on.
+
+**Prompt emphasis:**
+- Camera: Quick cuts implied (if stitching), fast push-ins, whip pans, vertical
+  9:16, center-weighted framing.
+- Lighting: High contrast, saturated colors, ring-light catchlights in eyes.
+- Environment: Trending backdrops, transitions, bold props, maximalist sets.
+- Motion: Fast, energetic, dance, quick transitions, text-friendly negative
+  space.
+- Mood: Fun, provocative, trendy, meme-aware, FOMO-inducing.
+
+**Common use cases:** Hooks, viral challenges, brand trends, teaser clips.
+
+### Educational / Tutorial
+
+**Goal:** Clarity above all. Information must be easy to follow.
+
+**Prompt emphasis:**
+- Camera: Eye-level medium shot, steady tripod, occasional cut to close-up of
+  hands/props, clean screen-in-screen if applicable.
+- Lighting: Bright, even, no shadows on face or demonstration area, high
+  visibility.
+- Environment: Organized desk, whiteboard, neutral wall, minimal distractions.
+- Motion: Slow, deliberate hand movements, pointing, writing, step-by-step
+  demonstration.
+- Mood: Patient, clear, encouraging, professional but approachable.
+
+**Common use cases:** How-to videos, software tutorials, cooking, DIY, academic
+explainers.
+
 ## Prompt Engineering Reference
 
 ### Image Prompt Formula (Nano Banana / Imagen)
