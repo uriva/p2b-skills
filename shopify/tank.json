@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-shopify",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/shopify",
   "description": "Shopify order status, tracking, and catalog query tools using safescript.",
   "visibility": "public",

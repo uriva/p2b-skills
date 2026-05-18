@@ -37,7 +37,7 @@ testGetTracking = () => {
 
 testQueryCatalog = () => {
   f = override(shopifyQueryCatalog, { httpRequest: mockHttpRequest })
-  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"], limit: 10, min_price: 0, max_price: 0, price: 0 })
+  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"] })
   hasTitle = stringIncludes({ haystack: result, needle: "Cool Shoes" }).result
   assert({ condition: hasTitle, message: "catalog should contain product title Cool Shoes" })
   return true
@@ -66,7 +66,7 @@ testBareSubdomainUnchanged = () => {
 
 testProductUrlAddsMyshopifySuffix = () => {
   f = override(shopifyQueryCatalog, { httpRequest: mockHttpRequest })
-  result = f({ shopifyStoreDomain: "test", shopifyAccessToken: "token", query: ["shoes"], limit: 10, min_price: 0, max_price: 0, price: 0 })
+  result = f({ shopifyStoreDomain: "test", shopifyAccessToken: "token", query: ["shoes"] })
   hasUrl = stringIncludes({ haystack: result, needle: "https://test.myshopify.com/products/cool-shoes" }).result
   assert({ condition: hasUrl, message: "product URL should include .myshopify.com for bare subdomain" })
   return true
@@ -74,7 +74,7 @@ testProductUrlAddsMyshopifySuffix = () => {
 
 testCatalogCountLine = () => {
   f = override(shopifyQueryCatalog, { httpRequest: mockHttpRequest })
-  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"], limit: 10, min_price: 0, max_price: 0, price: 0 })
+  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"] })
   hasCount = stringIncludes({ haystack: result, needle: "Showing 1 matching products (1 visible products fetched)." }).result
   assert({ condition: hasCount, message: "catalog output should include count line" })
   return true
@@ -82,7 +82,7 @@ testCatalogCountLine = () => {
 
 testSearchProducts = () => {
   f = override(shopifySearchProducts, { httpRequest: mockHttpRequest })
-  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"], limit: 10 })
+  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"] })
   hasTitle = stringIncludes({ haystack: result, needle: "Cool Shoes" }).result
   assert({ condition: hasTitle, message: "searchProducts should return product title Cool Shoes" })
   return true
@@ -90,8 +90,8 @@ testSearchProducts = () => {
 
 testSearchProductsDefaultsLimit = () => {
   f = override(shopifySearchProducts, { httpRequest: mockHttpRequest })
-  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"], limit: 0 })
+  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"] })
   hasTitle = stringIncludes({ haystack: result, needle: "Cool Shoes" }).result
-  assert({ condition: hasTitle, message: "searchProducts with limit=0 should default to 10 and return product" })
+  assert({ condition: hasTitle, message: "searchProducts with omitted limit should default to 10 and return product" })
   return true
 }

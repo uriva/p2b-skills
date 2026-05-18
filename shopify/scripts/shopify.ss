@@ -66,7 +66,7 @@ shopifyGetTracking = (shopifyStoreDomain: string, shopifyAccessToken: string, or
   return searchOk ? resultStr.text : errorStr.result
 }
 
-doc({ text: "### Shopify Query Catalog\n\nQuery the Shopify product catalog with optional free-text and price filters. Returns visible products matching the criteria.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain or subdomain (e.g. `mystore` or `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `query` — Array of search terms to match against title, tags, vendor, type, and description. Pass `[]` to match all products.\n- `limit` — Max number of products to return. Sensible default is `10`. Max is `250`.\n- `min_price` — Minimum variant price. Pass `0` to disable.\n- `max_price` — Maximum variant price. Pass `0` to disable.\n- `price` — Exact variant price. Pass `0` to disable.\n\n#### Defaults you should use\nAlways pass these exact defaults unless the user asks otherwise:\n`limit: 10, min_price: 0, max_price: 0, price: 0`\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", query: [\"shoes\"], limit: 10, min_price: 0, max_price: 0, price: 0 }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```" })
+doc({ text: "### Shopify Query Catalog\n\nQuery the Shopify product catalog with optional free-text and price filters. Returns visible products matching the criteria.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain or subdomain (e.g. `mystore` or `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `query` — Array of search terms to match against title, tags, vendor, type, and description. Pass `[]` to match all products.\n- `limit` — Max number of products to return. Default is `10`. Max is `250`.\n- `min_price` — Minimum variant price. Default is `0` (disabled).\n- `max_price` — Maximum variant price. Default is `0` (disabled).\n- `price` — Exact variant price. Default is `0` (disabled).\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", query: [\"shoes\"] }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```" })
 
 termMatchAccumulator = (termAcc: { found: boolean, searchText: string }, term: string): { found: boolean, searchText: string } => {
   lowerTerm = stringLower({ text: term })
@@ -187,7 +187,7 @@ formatAccumulator = (acc: { lines: string[], storeDomain: string }, p: { title: 
   return { lines: newLines, storeDomain: acc.storeDomain }
 }
 
-shopifyQueryCatalog = (shopifyStoreDomain: string, shopifyAccessToken: string, query: string[], limit: number, min_price: number, max_price: number, price: number): string => {
+shopifyQueryCatalog = (shopifyStoreDomain: string, shopifyAccessToken: string, query: string[], limit: number = 10, min_price: number = 0, max_price: number = 0, price: number = 0): string => {
   subdomain = normalizeShopifySubdomain(shopifyStoreDomain)
   fullDomain = ensureMyshopifyDomain(shopifyStoreDomain)
   limitParam = limit > 0 ? limit : 10
@@ -215,9 +215,8 @@ shopifyQueryCatalog = (shopifyStoreDomain: string, shopifyAccessToken: string, q
   return isOk ? output : errorStr.result
 }
 
-doc({ text: "### Shopify Search Products\n\nSearch the Shopify product catalog by query terms. This is the simplest way to find products — it uses sensible defaults for all filters.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain or subdomain (e.g. `mystore` or `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `query` — Array of search terms to match against title, tags, vendor, type, and description. Pass `[]` to match all products.\n- `limit` — Max number of products to return. Default is `10`. Max is `250`.\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", query: [\"shoes\"], limit: 10 }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```\n\nUse this instead of `shopifyQueryCatalog` unless you need price filters." })
+doc({ text: "### Shopify Search Products\n\nSearch the Shopify product catalog by query terms. This is the simplest way to find products — it uses sensible defaults for all filters.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain or subdomain (e.g. `mystore` or `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `query` — Array of search terms to match against title, tags, vendor, type, and description. Pass `[]` to match all products.\n- `limit` — Max number of products to return. Default is `10`. Max is `250`.\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", query: [\"shoes\"] }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```\n\nUse this instead of `shopifyQueryCatalog` unless you need price filters." })
 
-shopifySearchProducts = (shopifyStoreDomain: string, shopifyAccessToken: string, query: string[], limit: number): string => {
-  actualLimit = limit > 0 ? limit : 10
-  return shopifyQueryCatalog(shopifyStoreDomain, shopifyAccessToken, query, actualLimit, 0, 0, 0)
+shopifySearchProducts = (shopifyStoreDomain: string, shopifyAccessToken: string, query: string[], limit: number = 10): string => {
+  return shopifyQueryCatalog({ shopifyStoreDomain, shopifyAccessToken, query, limit, min_price: 0, max_price: 0, price: 0 })
 }
