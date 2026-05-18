@@ -1,8 +1,21 @@
-doc({ text: "### Shopify Order Status\n\nGet the status of a Shopify order by order ID.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain (e.g. `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `orderId` — Shopify Order ID\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", orderId: \"12345\" }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```" })
+normalizeShopifySubdomain = (domain: string): string => {
+  hasSuffix = stringIncludes({ haystack: domain, needle: ".myshopify.com" }).result
+  stripped = hasSuffix ? stringReplace({ haystack: domain, needle: ".myshopify.com", replacement: "", all: false }).result : domain
+  return stripped
+}
+
+ensureMyshopifyDomain = (domain: string): string => {
+  hasSuffix = stringIncludes({ haystack: domain, needle: ".myshopify.com" }).result
+  fullDomain = hasSuffix ? domain : stringConcat({ parts: [domain, ".myshopify.com"] }).result
+  return fullDomain
+}
+
+doc({ text: "### Shopify Order Status\n\nGet the status of a Shopify order by order ID.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain or subdomain (e.g. `mystore` or `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `orderId` — Shopify Order ID\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", orderId: \"12345\" }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```" })
 
 shopifyOrderStatus = (shopifyStoreDomain: string, shopifyAccessToken: string, orderId: string): string => {
+  subdomain = normalizeShopifySubdomain(shopifyStoreDomain)
   path = stringConcat({ parts: ["/admin/api/2025-10/orders/", orderId, ".json"] })
-  res = httpRequest({ host: "myshopify.com", subdomain: shopifyStoreDomain, method: "GET", path: path.result, headers: { "X-Shopify-Access-Token": shopifyAccessToken } })
+  res = httpRequest({ host: "myshopify.com", subdomain: subdomain, method: "GET", path: path.result, headers: { "X-Shopify-Access-Token": shopifyAccessToken } })
   isOk = res.status == 200
   parsed = isOk ? jsonParse({ text: res.body }) : { value: { order: { id: "", financial_status: "", fulfillment_status: "", created_at: "", total_price: "" } } }
   order = parsed.value.order
@@ -12,7 +25,7 @@ shopifyOrderStatus = (shopifyStoreDomain: string, shopifyAccessToken: string, or
   return isOk ? resultStr.text : errorStr.result
 }
 
-doc({ text: "### Shopify Get Tracking\n\nGet tracking number(s) and tracking information for a Shopify order by order number (e.g. #1001).\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain\n- `shopifyAccessToken` — Shopify Admin API access token\n- `orderNumber` — Shopify Order Number (not the internal ID)\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", orderNumber: \"1001\" }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```" })
+doc({ text: "### Shopify Get Tracking\n\nGet tracking number(s) and tracking information for a Shopify order by order number (e.g. #1001).\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain or subdomain (e.g. `mystore` or `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `orderNumber` — Shopify Order Number (not the internal ID)\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", orderNumber: \"1001\" }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```" })
 
 trackingAccumulator = (acc: { items: { tracking_number: string, tracking_company: string, tracking_url: string }[] }, f: { tracking_number: string, tracking_numbers: string[], tracking_company: string, tracking_url: string, tracking_urls: string[] }): { items: { tracking_number: string, tracking_company: string, tracking_url: string }[] } => {
   numbers = f.tracking_numbers.length > 0 ? f.tracking_numbers : (f.tracking_number != "" ? [f.tracking_number] : [])
@@ -25,10 +38,11 @@ trackingAccumulator = (acc: { items: { tracking_number: string, tracking_company
 }
 
 shopifyGetTracking = (shopifyStoreDomain: string, shopifyAccessToken: string, orderNumber: string): string => {
+  subdomain = normalizeShopifySubdomain(shopifyStoreDomain)
   normalized = stringConcat({ parts: ["#", orderNumber] })
   encodedName = urlEncode({ text: normalized.result })
   searchPath = stringConcat({ parts: ["/admin/api/2025-10/orders.json?name=", encodedName.encoded, "&status=any&limit=1"] })
-  searchRes = httpRequest({ host: "myshopify.com", subdomain: shopifyStoreDomain, method: "GET", path: searchPath.result, headers: { "X-Shopify-Access-Token": shopifyAccessToken } })
+  searchRes = httpRequest({ host: "myshopify.com", subdomain: subdomain, method: "GET", path: searchPath.result, headers: { "X-Shopify-Access-Token": shopifyAccessToken } })
   searchOk = searchRes.status == 200
   searchParsed = searchOk ? jsonParse({ text: searchRes.body }) : { value: { orders: [] } }
   orders = searchParsed.value.orders
@@ -38,7 +52,7 @@ shopifyGetTracking = (shopifyStoreDomain: string, shopifyAccessToken: string, or
   orderName = order.name
 
   fulfillPath = stringConcat({ parts: ["/admin/api/2025-10/orders/", orderId, "/fulfillments.json"] })
-  fulfillRes = hasOrder ? httpRequest({ host: "myshopify.com", subdomain: shopifyStoreDomain, method: "GET", path: fulfillPath.result, headers: { "X-Shopify-Access-Token": shopifyAccessToken } }) : { status: 404, body: "{\"fulfillments\":[]}" }
+  fulfillRes = hasOrder ? httpRequest({ host: "myshopify.com", subdomain: subdomain, method: "GET", path: fulfillPath.result, headers: { "X-Shopify-Access-Token": shopifyAccessToken } }) : { status: 404, body: "{\"fulfillments\":[]}" }
   fulfillOk = fulfillRes.status == 200
   fulfillParsed = fulfillOk ? jsonParse({ text: fulfillRes.body }) : { value: { fulfillments: [] } }
   fulfillments = fulfillParsed.value.fulfillments
@@ -174,11 +188,13 @@ formatAccumulator = (acc: { lines: string[], storeDomain: string }, p: { title: 
 }
 
 shopifyQueryCatalog = (shopifyStoreDomain: string, shopifyAccessToken: string, query: string[], limit: number, min_price: number, max_price: number, price: number): string => {
+  subdomain = normalizeShopifySubdomain(shopifyStoreDomain)
+  fullDomain = ensureMyshopifyDomain(shopifyStoreDomain)
   limitParam = limit > 0 ? limit : 10
   cappedLimit = limitParam > 250 ? 250 : limitParam
   limitStr = jsonStringify({ value: cappedLimit })
   path = stringConcat({ parts: ["/admin/api/2025-10/products.json?limit=", limitStr.text] })
-  res = httpRequest({ host: "myshopify.com", subdomain: shopifyStoreDomain, method: "GET", path: path.result, headers: { "X-Shopify-Access-Token": shopifyAccessToken } })
+  res = httpRequest({ host: "myshopify.com", subdomain: subdomain, method: "GET", path: path.result, headers: { "X-Shopify-Access-Token": shopifyAccessToken } })
   isOk = res.status == 200
   parsed = isOk ? jsonParse({ text: res.body }) : { value: { products: [] } }
   allProducts = parsed.value.products
@@ -186,7 +202,7 @@ shopifyQueryCatalog = (shopifyStoreDomain: string, shopifyAccessToken: string, q
   filterResult = reduce(filterAccumulator, { items: [], queryTerms: query, exactPrice: price, minPrice: min_price, maxPrice: max_price }, allProducts)
   matchedProducts = filterResult.items
 
-  formatResult = reduce(formatAccumulator, { lines: [], storeDomain: shopifyStoreDomain }, matchedProducts)
+  formatResult = reduce(formatAccumulator, { lines: [], storeDomain: fullDomain }, matchedProducts)
   outputLines = formatResult.lines
 
   output = outputLines.length > 0 ? reduce(joinAccumulator, "", outputLines) : "No matching products found."

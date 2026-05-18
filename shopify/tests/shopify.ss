@@ -1,4 +1,4 @@
-import { shopifyOrderStatus, shopifyGetTracking, shopifyQueryCatalog, trackingAccumulator } from "../scripts/shopify.ss"
+import { shopifyOrderStatus, shopifyGetTracking, shopifyQueryCatalog, trackingAccumulator, normalizeShopifySubdomain, ensureMyshopifyDomain } from "../scripts/shopify.ss"
 
 mockHttpRequest = (host: string, method: string, path: string): { status: number, body: string } => {
   isOrder = stringIncludes({ haystack: path, needle: "/orders/3491.json" }).result
@@ -40,5 +40,34 @@ testQueryCatalog = () => {
   result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"], limit: 10, min_price: 0, max_price: 0, price: 0 })
   hasTitle = stringIncludes({ haystack: result, needle: "Cool Shoes" }).result
   assert({ condition: hasTitle, message: "catalog should contain product title Cool Shoes" })
+  return true
+}
+
+mockHttpRequestCaptureSubdomain = (host: string, method: string, path: string, subdomain: string): { status: number, body: string } => {
+  body = stringConcat({ parts: ["{\"order\":{\"id\":1,\"financial_status\":\"", subdomain, "\",\"fulfillment_status\":\"\",\"created_at\":\"\",\"total_price\":\"\"}}"] })
+  return { status: 200, body: body.result }
+}
+
+testFullDomainNormalizesSubdomain = () => {
+  f = override(shopifyOrderStatus, { httpRequest: mockHttpRequestCaptureSubdomain })
+  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", orderId: "3491" })
+  hasNormalized = stringIncludes({ haystack: result, needle: "\"status\":\"test\"" }).result
+  assert({ condition: hasNormalized, message: "full domain test.myshopify.com should normalize subdomain to test" })
+  return true
+}
+
+testBareSubdomainUnchanged = () => {
+  f = override(shopifyOrderStatus, { httpRequest: mockHttpRequestCaptureSubdomain })
+  result = f({ shopifyStoreDomain: "bare", shopifyAccessToken: "token", orderId: "3491" })
+  hasBare = stringIncludes({ haystack: result, needle: "\"status\":\"bare\"" }).result
+  assert({ condition: hasBare, message: "bare subdomain should remain unchanged" })
+  return true
+}
+
+testProductUrlAddsMyshopifySuffix = () => {
+  f = override(shopifyQueryCatalog, { httpRequest: mockHttpRequest })
+  result = f({ shopifyStoreDomain: "test", shopifyAccessToken: "token", query: ["shoes"], limit: 10, min_price: 0, max_price: 0, price: 0 })
+  hasUrl = stringIncludes({ haystack: result, needle: "https://test.myshopify.com/products/cool-shoes" }).result
+  assert({ condition: hasUrl, message: "product URL should include .myshopify.com for bare subdomain" })
   return true
 }
