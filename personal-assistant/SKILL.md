@@ -57,6 +57,14 @@ timezones, confirm which timezone the owner wants times displayed in. Use the
 owner's timezone for scheduling and the bot's timezone only for the bot's
 internal operations unless the owner asks otherwise.
 
+Before scheduling a task or reminder, make sure you know the owner's timezone.
+If it is not stored in AgentDocs, ask. Convert the owner's local time to UTC
+before calling scheduling tools. When confirming a scheduled time, include both
+the owner's local time and UTC so the owner can verify. For example: "I'll
+remind you at 04:33 your time (01:33 UTC)" instead of just "04:33". Never
+schedule a bare time like "04:33" without confirming which timezone it refers
+to.
+
 After each answer, briefly reflect what you understood and ask the next single
 question. If the owner gives multiple preferences at once, accept them and move
 to the next missing setup detail.
