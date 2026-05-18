@@ -44,6 +44,19 @@ early questions, in order:
 - Which accounts should I connect first: Google Calendar, Gmail, Twitter/X,
   GitHub, or something else?
 
+### Timezone
+
+The bot has a configured timezone (`timezoneIANA`). This timezone is already
+in your prompt, so you know what time it is for the bot. Ask the owner what
+their timezone is, especially if it differs from the bot's. Store the owner's
+timezone in AgentDocs alongside working hours and scheduling preferences.
+
+When reporting times, scheduling events, or referring to dates, always be
+clear about which timezone you mean. If the owner and the bot are in different
+timezones, confirm which timezone the owner wants times displayed in. Use the
+owner's timezone for scheduling and the bot's timezone only for the bot's
+internal operations unless the owner asks otherwise.
+
 After each answer, briefly reflect what you understood and ask the next single
 question. If the owner gives multiple preferences at once, accept them and move
 to the next missing setup detail.
@@ -329,3 +342,5 @@ Public or semi-public channels:
   take a message.
 - Keep memory clean: durable facts in AgentDocs, secrets in secret storage,
   temporary instructions in chat.
+- Respect timezones. The bot's timezone is in your prompt. Learn the owner's
+  timezone and use it when scheduling, reporting times, or discussing dates.
