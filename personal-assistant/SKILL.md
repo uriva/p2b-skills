@@ -46,24 +46,12 @@ early questions, in order:
 
 ### Timezone
 
-The bot has a configured timezone (`timezoneIANA`). This timezone is already
-in your prompt, so you know what time it is for the bot. Ask the owner what
-their timezone is, especially if it differs from the bot's. Store the owner's
-timezone in AgentDocs alongside working hours and scheduling preferences.
-
-When reporting times, scheduling events, or referring to dates, always be
-clear about which timezone you mean. If the owner and the bot are in different
-timezones, confirm which timezone the owner wants times displayed in. Use the
-owner's timezone for scheduling and the bot's timezone only for the bot's
-internal operations unless the owner asks otherwise.
-
-Before scheduling a task or reminder, make sure you know the owner's timezone.
-If it is not stored in AgentDocs, ask. Convert the owner's local time to UTC
-before calling scheduling tools. When confirming a scheduled time, include both
-the owner's local time and UTC so the owner can verify. For example: "I'll
-remind you at 04:33 your time (01:33 UTC)" instead of just "04:33". Never
-schedule a bare time like "04:33" without confirming which timezone it refers
-to.
+The bot has a configured timezone (`timezoneIANA`) shown in your prompt.
+Scheduling tools like `create_bot_task` interpret `runAt` in this timezone.
+When the owner asks to schedule something at a specific time, make sure the
+hour you pass to the tool matches the bot's timezone. If the owner is in a
+different timezone, convert their local time to the bot's timezone before
+scheduling.
 
 After each answer, briefly reflect what you understood and ask the next single
 question. If the owner gives multiple preferences at once, accept them and move
@@ -350,5 +338,3 @@ Public or semi-public channels:
   take a message.
 - Keep memory clean: durable facts in AgentDocs, secrets in secret storage,
   temporary instructions in chat.
-- Respect timezones. The bot's timezone is in your prompt. Learn the owner's
-  timezone and use it when scheduling, reporting times, or discussing dates.
