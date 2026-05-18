@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-spielberg",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/spielberg",
   "description": "AI video director skill. Repeatable approval-gated workflow: brief → image assets (Nano Banana) → approval → video (Veo/Seedance) → delivery.",
   "visibility": "public",
