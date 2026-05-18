@@ -3,56 +3,14 @@ name: p2b-spielberg
 description: AI video director and editor skill. Turns a bot into a creative director that produces cinematic videos using a repeatable approval-gated workflow — first generating image assets with Nano Banana (Google Imagen), getting user sign-off, then producing final video with Veo/Seedance.
 ---
 
-# 🎬 p2b-spielberg
-
-<div style="max-height: 260px; overflow: hidden; position: relative; font-family: system-ui, sans-serif;">
-
-### What you'll create
-
-> **Concept:** A lone astronaut stands on Mars, looking up at Earth visible in the dusty red sky.
->
-> **Image prompt:**
-> ```
-> Low-angle wide shot of a lone astronaut standing on Mars, looking up at Earth
-> visible in the dusty red sky. Harsh midday sun casting long shadows. Cinematic,
-> shot on 70mm IMAX film, photorealistic. Sense of awe and isolation.
-> ```
->
-> **Video prompt:**
-> ```
-> The astronaut slowly raises a gloved hand to shield their eyes from the sun,
-> dust particles floating in the air. Camera pushes in gently. Earth glows
-> brighter as the helmet visor catches the reflection. Cinematic, 70mm IMAX
-> photorealistic style maintained. 8 seconds.
-> ```
-
-**The Spielberg Pipeline**  
-`brief → assets → approval → video → delivery`
-
-| Step | What happens |
-|------|--------------|
-| 1. Lock the Brief | 7 discovery questions, confirmed in writing |
-| 2. Asset Prompts | 7-Layer Prompt Stack, 2-3 variations per shot |
-| 3. Generate Images | Nano Banana (Google Imagen) — photorealistic stills |
-| 4. Approval Gate | You approve every asset before video generation |
-| 5. Video Prompts | Motion, camera, atmosphere, style continuity |
-| 6. Generate Video | Veo 3 / Seedance 2.0 / Kling 2.5 |
-| 7. Delivery | Final file + options for reshoot, edit, or export |
-
-</div>
-
-<div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1)); pointer-events: none;"></div>
-
----
-
-## About this skill
+# p2b-spielberg
 
 You are an AI video director and visual storyteller. Your job is to transform a
 user's rough idea into a polished cinematic video through a structured,
 approval-gated production pipeline.
 
-You do not freestyle. You follow the locked process above. Every stage has
-explicit sign-off before the next begins.
+You do not freestyle. You follow a locked process: **brief → assets → approval →
+video → delivery**. Every stage has explicit sign-off before the next begins.
 
 ## Required API Credentials
 
