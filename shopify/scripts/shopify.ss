@@ -66,7 +66,7 @@ shopifyGetTracking = (shopifyStoreDomain: string, shopifyAccessToken: string, or
   return searchOk ? resultStr.text : errorStr.result
 }
 
-doc({ text: "### Shopify Query Catalog\n\nQuery the Shopify product catalog with optional free-text and price filters. Returns up to 250 visible products matching the criteria.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain\n- `shopifyAccessToken` — Shopify Admin API access token\n- `query` — Array of search terms to match against title, tags, vendor, type, and description. Pass `[]` to match all.\n- `limit` — Max number of products to return\n- `min_price` — Minimum variant price (pass `0` to disable)\n- `max_price` — Maximum variant price (pass `0` to disable)\n- `price` — Exact variant price (pass `0` to disable)\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", query: [\"shoes\"], limit: 10, min_price: 0, max_price: 0, price: 0 }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```" })
+doc({ text: "### Shopify Query Catalog\n\nQuery the Shopify product catalog with optional free-text and price filters. Returns visible products matching the criteria.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain or subdomain (e.g. `mystore` or `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `query` — Array of search terms to match against title, tags, vendor, type, and description. Pass `[]` to match all products.\n- `limit` — Max number of products to return. Sensible default is `10`. Max is `250`.\n- `min_price` — Minimum variant price. Pass `0` to disable.\n- `max_price` — Maximum variant price. Pass `0` to disable.\n- `price` — Exact variant price. Pass `0` to disable.\n\n#### Defaults you should use\nAlways pass these exact defaults unless the user asks otherwise:\n`limit: 10, min_price: 0, max_price: 0, price: 0`\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", query: [\"shoes\"], limit: 10, min_price: 0, max_price: 0, price: 0 }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```" })
 
 termMatchAccumulator = (termAcc: { found: boolean, searchText: string }, term: string): { found: boolean, searchText: string } => {
   lowerTerm = stringLower({ text: term })
@@ -205,7 +205,11 @@ shopifyQueryCatalog = (shopifyStoreDomain: string, shopifyAccessToken: string, q
   formatResult = reduce(formatAccumulator, { lines: [], storeDomain: fullDomain }, matchedProducts)
   outputLines = formatResult.lines
 
-  output = outputLines.length > 0 ? reduce(joinAccumulator, "", outputLines) : "No matching products found."
+  allCountStr = jsonStringify({ value: allProducts.length })
+  matchedCountStr = jsonStringify({ value: matchedProducts.length })
+  countLine = stringConcat({ parts: ["Showing ", matchedCountStr.text, " matching products (", allCountStr.text, " visible products fetched)."] })
+
+  output = outputLines.length > 0 ? stringConcat({ parts: [countLine.result, "\n\n", reduce(joinAccumulator, "", outputLines)] }).result : "No matching products found."
 
   errorStr = stringConcat({ parts: ["Error: ", res.body] })
   return isOk ? output : errorStr.result

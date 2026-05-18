@@ -71,3 +71,11 @@ testProductUrlAddsMyshopifySuffix = () => {
   assert({ condition: hasUrl, message: "product URL should include .myshopify.com for bare subdomain" })
   return true
 }
+
+testCatalogCountLine = () => {
+  f = override(shopifyQueryCatalog, { httpRequest: mockHttpRequest })
+  result = f({ shopifyStoreDomain: "test.myshopify.com", shopifyAccessToken: "token", query: ["shoes"], limit: 10, min_price: 0, max_price: 0, price: 0 })
+  hasCount = stringIncludes({ haystack: result, needle: "Showing 1 matching products (1 visible products fetched)." }).result
+  assert({ condition: hasCount, message: "catalog output should include count line" })
+  return true
+}
