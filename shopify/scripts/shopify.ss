@@ -214,3 +214,10 @@ shopifyQueryCatalog = (shopifyStoreDomain: string, shopifyAccessToken: string, q
   errorStr = stringConcat({ parts: ["Error: ", res.body] })
   return isOk ? output : errorStr.result
 }
+
+doc({ text: "### Shopify Search Products\n\nSearch the Shopify product catalog by query terms. This is the simplest way to find products — it uses sensible defaults for all filters.\n\n#### Parameters\n- `shopifyStoreDomain` — Shopify store domain or subdomain (e.g. `mystore` or `mystore.myshopify.com`)\n- `shopifyAccessToken` — Shopify Admin API access token\n- `query` — Array of search terms to match against title, tags, vendor, type, and description. Pass `[]` to match all products.\n- `limit` — Max number of products to return. Default is `10`. Max is `250`.\n\n#### Example\n```\nparams: { shopifyStoreDomain: \"mystore.myshopify.com\", query: [\"shoes\"], limit: 10 }\nsecretMapping: { shopifyAccessToken: \"SHOPIFY_ACCESS_TOKEN\" }\n```\n\nUse this instead of `shopifyQueryCatalog` unless you need price filters." })
+
+shopifySearchProducts = (shopifyStoreDomain: string, shopifyAccessToken: string, query: string[], limit: number): string => {
+  actualLimit = limit > 0 ? limit : 10
+  return shopifyQueryCatalog(shopifyStoreDomain, shopifyAccessToken, query, actualLimit, 0, 0, 0)
+}
