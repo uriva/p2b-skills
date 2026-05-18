@@ -69,6 +69,14 @@ Continue onboarding after updating the prompt. Treat later owner preferences as
 durable if they are about identity, tone, privacy, recurring behavior, or stable
 workflows, and update the prompt or AgentDocs accordingly.
 
+When the owner gives notes like "from now on...", "don't do X", "always speak
+this way", or other behavior changes, warn them that chat-only instructions can
+degrade or be missed later, especially if this skill is not loaded in the
+current context. For durable behavior changes, tell them to update the bot
+prompt through the Prompt2Bot dashboard or ask you to update your prompt with
+the AI prompt-editing tools. Use AgentDocs for durable facts and preferences,
+but use the bot prompt for core behavior, tone, boundaries, and operating rules.
+
 When the owner wants help that depends on an external account, actually guide
 and perform the OAuth flow using the available Prompt2Bot tools instead of only
 describing what could be connected. Common first connections are Google Calendar
