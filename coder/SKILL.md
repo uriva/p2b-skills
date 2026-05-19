@@ -421,11 +421,62 @@ user to set env vars in the dashboard when the CLI can do it; set them yourself
 with `deno deploy env set KEY=VALUE ...`, then verify with `deno deploy env
 list`.
 
-The user may need to do the initial GitHub integration/setup in the Deno Deploy
-dashboard, and you may need to ask them for the Deno org name and deployed app
-URL. Beyond that initial account/dashboard step, you should be able to create
-apps, set env vars, deploy, view logs, and manage normal follow-up work yourself
-with the `deno deploy` CLI.
+**Create every app from the VM via CLI. Never use the dashboard's "+ New app"
+or GitHub-integration flow.** The only things the user does in the Deno dashboard
+are: create their account, generate a `ddo_` token, and (optionally) tell you
+their org slug. Everything else — creating apps, setting env vars, deploying,
+viewing logs — is done by you from the VM with the `deno deploy` CLI.
+
+Use `--source local`, never `--source github`. With `--source github`, the
+dashboard owns the build pipeline and watches specific commits; your VM-side
+`deno deploy --app=...` calls will either return "app not found" or upload code
+that the dashboard build ignores. The two paths do not mix.
+
+Standard non-interactive create command:
+
+```bash
+deno deploy create \
+  --org <org> --app <slug> \
+  --source local \
+  --runtime-mode dynamic --entrypoint main.ts \
+  --build-timeout 5 --build-memory-limit 1024 --region us
+```
+
+For Next.js or other frameworks, swap the runtime/entrypoint flags for
+`--framework-preset <preset>` (see "Deploying a Next.js app to Deno Deploy"
+below).
+
+**Recovery — user already created an app via the dashboard GitHub flow:**
+Signs: the user is looking at an Entrypoint / Edit App Config screen, a Retry
+Build button, or Build Triggers showing GitHub commits. Pushing different file
+layouts to the linked repo will not fix this — you must switch paths.
+
+First, check whether the app holds any state:
+
+```bash
+deno deploy env list --org <org> --app <slug>      # any env vars?
+deno deploy database list --org <org>              # any database linked?
+# Also check the dashboard for successful prior revisions.
+```
+
+- **If the app is empty** (no env vars, no linked database, no successful prior
+  deploys, no real traffic), delete it and recreate via CLI:
+
+  ```bash
+  curl -X DELETE -H "Authorization: Bearer $DENO_DEPLOY_TOKEN" \
+    https://api.deno.com/v2/apps/<slug>
+  # then deno deploy create --source local ... as above
+  ```
+
+- **If the app has state** (env vars set, database linked, prior successful
+  deploys, or any user traffic), do NOT delete it. Ask the user to disconnect
+  the GitHub repo from the app in the dashboard (or remove the Build Trigger),
+  then deploy to the same app from the VM with
+  `deno deploy --app=<slug> --prod`. This preserves env vars, database links,
+  and the URL.
+
+Never delete an app that holds user data or has served traffic without an
+explicit confirmation from the user.
 
 `deno deploy --app=<slug> --prod` is the standard way to deploy. It does
 diff-sync file upload, tracks the build via SSE (building -> warming ->
@@ -581,10 +632,13 @@ headaches.
     Deploy API calls.** The base URL is `https://api.deno.com/v2`. In v2,
     "projects" are called "apps" and "deployments" are called "revisions". Use
     `deno deploy` CLI commands for standard operations (deploy, env, logs).
-  - **Initial dashboard setup:** the user may need to connect GitHub in the Deno
-    dashboard and tell you the Deno org name and app URL. After that, use the CLI
-    to do the rest yourself: create apps, set env vars, deploy, inspect logs, and
-    iterate.
+  - **Dashboard usage is limited to one-time account setup.** The user creates
+    their Deno account and generates a `ddo_` token in the dashboard, and may
+    tell you the org slug. Do not have the user click "+ New app" or use the
+    dashboard's GitHub-integration flow — always create apps from the VM with
+    `deno deploy create --source local`. See the recovery rule in the "deno
+    deploy" section above for what to do if the user already created an app via
+    the dashboard.
   - **Deno Deploy tokens**: Valid tokens start with `ddo_` (e.g.
     `ddo_abc123...`). If a user gives you a token that doesn't start with
     `ddo_`, it's wrong — likely from the old Deno Deploy dashboard
