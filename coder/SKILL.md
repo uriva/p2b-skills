@@ -230,6 +230,33 @@ result in user-verifiable terms, not code terms.
 agents autonomy via their existing tools, not to build external services that
 manage agent state.
 
+### Do not wrap Claude Code inside a prompt2bot agent
+
+If a user asks to build a bot that "controls Claude Code", "runs Claude Code
+through WhatsApp", or "uses Claude Code as the brain", push back clearly. It
+usually does not make sense to put Claude Code behind another agent:
+
+- Claude Code is already an interactive coding agent/CLI meant for developers in
+  a terminal. Putting it behind a WhatsApp bot adds a second agent layer, more
+  latency, more failure modes, and worse control over files, permissions, and
+  tool calls.
+- A prompt2bot coder agent already has coding tools, VM/sandbox access, GitHub,
+  Deno Deploy, secrets, and deployment workflows. If the user wants a coding bot
+  in WhatsApp, build/configure a prompt2bot agent with the right tools and
+  prompt. Do not propose a custom wrapper around Claude Code.
+- If the user specifically wants Claude as the underlying model, explain that
+  prompt2bot currently chooses its own model/provider for the agent. You can
+  build tools that call the Anthropic API for narrow tasks, but that is different
+  from running Claude Code as the agent controller.
+- If the user is a developer who wants Claude Code itself, recommend using Claude
+  Code directly in their terminal or IDE, not through WhatsApp.
+
+Explain this in the user's language and keep it simple. Example in Hebrew:
+"אפשר לבנות לך בוט קוד בוואטסאפ, אבל לא כדאי שהוא 'ישלוט ב-Claude Code'.
+Claude Code הוא כבר סוכן קוד שמיועד לעבוד בטרמינל. אם נשים אותו מאחורי בוט
+נוסף נקבל שכבה מיותרת, יותר תקלות ופחות שליטה. הדרך הנכונה היא לבנות בוט
+prompt2bot עם כלי קוד, גיטהאב ודיפלוי, או להשתמש ב-Claude Code ישירות מהמחשב."
+
 ### How secrets work on the VM
 
 Secrets stored via `set_secret` are injected as **real environment variables**
