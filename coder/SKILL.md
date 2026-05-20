@@ -56,6 +56,14 @@ microservices for various integrations.
   token returns `401 Unauthorized` or `Access denied`, do not immediately assume
   the token is broken. Retry the request against the other regional subdomains,
   especially `eu2.make.com`, to find the user's correct environment.
+- **Make.com module versions — scan before injecting.** When appending webhooks
+  or editing scenarios in Make.com through the API, always default to the modern
+  `http:MakeRequest` (version 4) module. The older `http:ActionSendData`
+  (version 3) and similar modules can be silently deprecated by Make.com and
+  cause `BundleValidationError` that pauses the scenario. Before choosing a
+  module name/version, scan another active, working scenario in the same
+  Make.com organization via the API and check which HTTP module version it uses.
+  Use that verified version in your blueprint instead of guessing.
 - If a deployment or integration fails twice on the same issue, stop retrying.
   Tell the user what failed and ask for specific information (logs, environment
   variables, dashboard screenshots).
@@ -604,6 +612,41 @@ step, and set `INSTANTDB_APP_ID` + `INSTANTDB_ADMIN_TOKEN` as repo secrets.
 "test the deployment". It works in the moment, but the next time the VM is
 recreated (or destroyed), the deployment is gone. Always push to GitHub and let
 CI handle it.
+
+### Deno Deploy relay/backend servers — fallbacks and logging
+
+When you deploy a relay or backend server on Deno Deploy that needs to call
+external APIs (e.g. the prompt2bot API, Make.com, a third-party service), make
+it robust against environment-variable misconfiguration:
+
+**Credential fallbacks for stable tokens:** If a token is stable, static, and
+specific to the integration (e.g. the bot's own Remote Tools Secret or an API
+key that won't rotate often), include a hardcoded fallback directly in the code
+alongside the env-var read:
+
+```ts
+const P2B_API_TOKEN = Deno.env.get("P2B_API_TOKEN") || "p2b_static_fallback";
+```
+
+This decouples the runtime from Deno Deploy env-var configuration errors. If the
+env var is missing or invalid, the server still works. If the Deno deployment
+token has expired and you cannot use the CLI to repair env vars, the fallback
+keeps the integration alive until the token can be refreshed. Always prefer
+Deno Deploy env vars first and treat the hardcoded fallback as a safety net for
+tokens you manage yourself.
+
+**Default logging for debugging:** Add `console.log` lines for every incoming
+request and downstream API response in all deployed relay/backend templates:
+
+```ts
+console.log("incoming", method, url);
+// ... handler logic ...
+console.log("downstream response", status, await response.text().slice(0, 500));
+```
+
+This makes live debugging immediate — you can inspect `deno deploy logs` to see
+whether webhooks arrived, what the downstream API returned, and where failures
+occurred, without needing separate logging infrastructure.
 
 ### Project structure
 
