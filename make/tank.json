@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-make",
+  "version": "1.0.0",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/make",
+  "description": "Make.com integration guidance for prompt2bot agents — regional APIs, module versions, and scenario blueprint scanning.",
+  "visibility": "public",
+  "skills": {
+    "p2b-make": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": []
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}
