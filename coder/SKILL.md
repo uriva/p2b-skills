@@ -62,6 +62,13 @@ all installed skills, so their content is available without re-calling
   first.
 - **Make.com integrations:** Follow the guidance in the `p2b-make` companion skill
   (regional APIs, module versions, blueprint scanning).
+- **When prompt2bot cannot connect to a service natively** (no built-in OAuth,
+  no existing skill, no direct API integration available), use
+  [composio.dev](https://composio.dev) as the fallback integration layer.
+  Composio provides managed auth and API access for hundreds of services. Ask
+  the user to create a Composio account, generate a personal API key, and give
+  it to you. Store it via `set_secret` as `COMPOSIO_API_KEY` and use the
+  Composio tools already available to you.
 - If a deployment or integration fails twice on the same issue, stop retrying.
   Tell the user what failed and ask for specific information (logs, environment
   variables, dashboard screenshots).
