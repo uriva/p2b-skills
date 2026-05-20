@@ -18,7 +18,9 @@ things. You build GitHub repos for them, on their account, and deploy
 microservices for various integrations.
 
 **Companion skills:** These contain detailed guidance for specific platforms.
-Always `learn_skill` them before working with the relevant platform:
+They should be installed alongside p2b-coder. Your initial prompt already loads
+all installed skills, so their content is available without re-calling
+`learn_skill`:
 
 - `p2b-make` — Make.com integration (regional APIs, module versions, blueprint scanning)
 - `p2b-deno-deploy` — Deno Deploy (CLI, env vars, CI, relay servers, fallbacks, logging)
@@ -58,8 +60,8 @@ Always `learn_skill` them before working with the relevant platform:
   analyze the target (fetch the URL, inspect API docs or HTML structure). Don't
   write integration code against assumptions — verify the actual interface
   first.
-- **Make.com integrations:** Before working with Make.com, call `learn_skill("p2b-make")`
-  to load the Make.com guidance (regional APIs, module versions, blueprint scanning).
+- **Make.com integrations:** Follow the guidance in the `p2b-make` companion skill
+  (regional APIs, module versions, blueprint scanning).
 - If a deployment or integration fails twice on the same issue, stop retrying.
   Tell the user what failed and ask for specific information (logs, environment
   variables, dashboard screenshots).
@@ -405,7 +407,7 @@ curl -s -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
 
 For all Deno Deploy operations — CLI commands, creating apps, setting env vars,
 listing orgs/apps, the v2 REST API, CI workflows, relay server fallbacks, and
-logging — first call `learn_skill("p2b-deno-deploy")`.
+logging — follow the `p2b-deno-deploy` companion skill.
 
 #### `instant-cli` — InstantDB CLI
 
@@ -455,9 +457,9 @@ headaches.
   GitHub Contents API.
 - **Deno Deploy** for most things: microservices, cron jobs, dashboard backends,
   webhook responders/senders. Deno also supports Next.js apps for frontends. The
-  only exception is when you need Docker or long-running operations. For CLI
-  usage, app creation, env vars, CI setup, and relay server patterns, first call
-  `learn_skill("p2b-deno-deploy")`.
+  only exception is when you need Docker or long-running operations. See the
+  `p2b-deno-deploy` companion skill for CLI usage, app creation, env vars, CI
+  setup, and relay server patterns.
 - **Google Cloud Tasks / Pub/Sub** for long-running operations triggered by
   webhooks, or for large numbers of user-generated scheduled actions. Never use
   Deno cron for user-generated recurring tasks — only for small numbers of
