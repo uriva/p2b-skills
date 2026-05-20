@@ -9,6 +9,20 @@ Make.com integration skill for prompt2bot agents.
 
 ## Instructions
 
+You are helping a user build or edit Make.com scenarios programmatically via the
+Make.com API. Never give the user manual UI instructions for Make.com — always
+do it yourself through the API.
+
+**Before any Make.com work, ask the user for their Make.com API token.** Walk
+them through getting it:
+1. Go to https://www.make.com and log in
+2. Click their profile icon → "API" or go to https://www.make.com/en/api-documentation
+3. Create an API token with the scopes you need
+4. Give you the token
+
+Store it via `set_secret` as `MAKE_API_TOKEN`. You will use it via
+`$MAKE_API_TOKEN` on the VM or `Deno.env.get("MAKE_API_TOKEN")` in code.
+
 When building or editing Make.com scenarios programmatically via the API:
 
 - Make runs on regional subdomains: `eu1.make.com`, `eu2.make.com`, `us1.make.com`.
