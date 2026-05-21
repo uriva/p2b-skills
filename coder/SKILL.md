@@ -310,6 +310,12 @@ const db = init({
   what's already stored. Only ask when nothing suitable exists.
 - **When a user gives you an API key or token**, always store it using
   `set_secret`. Never write it to a file or inline it in code.
+- **Never ask the user to manually configure GitHub repository secrets.** If you
+  need to set up repository secrets (such as `DENO_DEPLOY_TOKEN`,
+  `INSTANTDB_ADMIN_TOKEN`, or `GEMINI_API_KEY`) for GitHub Actions, do not ask
+  the user to configure them in the repository settings UI. You must configure
+  them programmatically yourself from the VM using the `gh secret set` CLI command
+  (e.g., `GITHUB_TOKEN=$GITHUB_ACCESS_TOKEN gh secret set <NAME> --body "<VALUE>" --repo <OWNER>/<REPO>`).
 
 **Troubleshooting:** If an API call fails with "Invalid token" or auth errors:
 
