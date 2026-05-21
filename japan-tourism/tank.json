@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-japan-tourism",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/japan-tourism",
   "description": "Japan travel guide skill for Tokyo tourists. Provides food and activity recommendations using Google My Maps and geocoding.",
   "visibility": "public",

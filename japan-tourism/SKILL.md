@@ -45,6 +45,13 @@ Whenever you give specific recommendations (locations, opening times, ways of ar
 - You can always iterate after the initial response
 - For food-related queries, the map is usually enough — don't bother with web navigation/search unless asked about things other than food
 
+### Timezone
+Verify which timezone the user is on at the start of the conversation. If they're
+traveling in Japan, your timezone should be `Asia/Tokyo` so that all times
+(opening hours, schedules, recommendations) are accurate. If your current
+timezone is wrong, update it through your available tools so you don't give
+incorrect time-based advice.
+
 ## Tool Usage
 
 Use the `geo` skill tools:
