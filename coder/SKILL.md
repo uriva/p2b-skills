@@ -952,3 +952,25 @@ packages, git operations, starting servers, curl requests, etc.
 any time. After completing a meaningful unit of work, push files to GitHub via
 the Contents API immediately. Don't accumulate changes that only exist on the
 VM.
+
+### Architectural Scaling & Test-Driven Development (TDD) Guidelines
+
+#### 1. Shift-Left Test-Driven Development (TDD)
+When building microservices, webhook receivers, or API relays, always write a comprehensive unit/integration test suite (e.g., using `deno test` with mock HTTP requests) **before** or **alongside** implementing the main server logic.
+* **Why:** Webhook and edge platforms (like Deno Deploy) have strict runtime, syntax, and dependency validation checks. Writing tests upfront catches critical, silent runtime bugs (such as operator precedence issues, un-awaited promises, and missing environment variables) locally inside your VM sandbox in milliseconds before you push code to GitHub or attempt live deployments.
+
+#### 2. Scaling Boundaries: Centralized vs. Component-Driven Agentic Design
+When planning the architecture and development execution of a project, analyze the scale and complexity to choose the correct agentic execution model:
+
+* **Centralized VM Execution (Lean scale):**
+  * *Scale:* Under 5-10 core files (e.g., simple microservices, small API relays).
+  * *Approach:* Keep all development, testing, and debugging in your primary single-agent session thread.
+  * *Reasoning:* Spawning subagents for micro-scale tasks introduces communication latency and integration overhead. Centralized execution provides a fast, tight, low-latency loop with the compiler.
+
+* **Component-Driven Agentic Design (Large/Multi-service scale):**
+  * *Scale:* Complex, multi-tenant bot platforms, modular SaaS integrations, or monorepos with parallel services.
+  * *Approach:* 
+    1. Define strict **Interface Contracts and Unit/Integration Tests** for each component upfront.
+    2. Spawn **independent subagents in parallel**, placing each in its own isolated VM sandbox with the single instruction: *write the module implementation until its specific test suite runs 100% green.*
+    3. Retrieve the verified green files and plug them into the main architecture.
+  * *Reasoning:* This eliminates integration errors, delegates compilation debugging entirely to subagents, and accelerates development speed 10x through parallel, self-verifying execution.
