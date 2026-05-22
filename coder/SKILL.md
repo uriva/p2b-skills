@@ -525,6 +525,74 @@ headaches.
   decisions, accessibility, and component choices that would otherwise take you
   hours to rediscover. Only build from scratch if nothing matches.
 
+### InstantDB User Authentication in 1:1 Chats (WhatsApp / Telegram)
+
+When building 1:1 chat bots (e.g. WhatsApp spam filters, Telegram assistants) that have a companion web dashboard (e.g. built with Next.js and InstantDB), you need a secure way to onboard and verify users directly in the conversation, linking their chat handle/phone to their authenticated web profile (`$users` table).
+
+#### The Native InstantDB Auth Pattern (Recommended)
+
+Never build a custom manual email/PIN verification system unless strictly necessary. Instead, use InstantDB's native authentication flow (`db.auth.sendMagicCode` and `db.auth.verifyMagicCode`) directly inside the chat tools:
+
+1. **Step 1: Initiate Verification (`send_verification_email` Tool):**
+   When the user provides their email in the chat, call `db.auth.sendMagicCode` from the tool handler. InstantDB will automatically generate a magic code and send it to the user's email address.
+   At the same time, store the pending verification (mapping the user's phone number to the provided email) in a temporary table (e.g., `pending_verifications`):
+   ```typescript
+   // In send_verification_email tool handler:
+   const phone = userPhone(); // retrieve from conversation context
+   await db.auth.sendMagicCode(email);
+   await db.transact([
+     db.tx.pending_verifications[id()].update({ phone, email, createdAt: Date.now() })
+   ]);
+   return `A verification code has been sent to ${email}. Please check your inbox and reply with the code here.`;
+   ```
+
+2. **Step 2: Complete Verification (`verify_email` Tool):**
+   When the user replies with the code, retrieve their pending email address, call `db.auth.verifyMagicCode` to verify the code, and then **link the newly authenticated `$users` account to their profile (`users` table)** so that they are instantly logged into the companion web dashboard:
+   ```typescript
+   // In verify_email tool handler:
+   const phone = userPhone();
+   const email = await getPendingVerification(phone); // helper to query pending_verifications
+   
+   // 1. Verify code natively with InstantDB
+   await db.auth.verifyMagicCode(email, code); // throws if invalid/expired
+   
+   // 2. Find or create the user profile in the "users" table
+   let profileId = await getProfileByPhone(phone);
+   if (!profileId) {
+     profileId = id();
+     await db.transact([
+       db.tx.users[profileId].update({ phone, email })
+     ]);
+   }
+   
+   // 3. Query the authenticated $users account created by verifyMagicCode
+   const { $users } = await db.query({
+     $users: { $: { where: { email } } }
+   });
+   
+   // 4. Link the authenticated $users account to the users profile
+   if ($users[0]) {
+     await db.transact([
+       db.tx.$users[$users[0].id].link({ profile: profileId })
+     ]);
+   }
+   
+   // 5. Clean up pending verifications
+   await deletePendingVerification(phone);
+   return `Verification successful! Your email ${email} is now linked to your WhatsApp number. You can log into the dashboard at any time!`;
+   ```
+
+Using this pattern:
+- **Zero Session Friction:** InstantDB's Admin SDK allows Deno backend servers to trigger and verify magic codes seamlessly without requiring a web-browser session cookie.
+- **Flawless Sync:** The web dashboard (which typically uses `db.useAuth()` to retrieve the logged-in Google OAuth or Email user) will instantly resolve the linked `users` profile using the `userAuth` relationship defined in the schema:
+  ```typescript
+  // Link schema definition:
+  userAuth: {
+    forward: { on: "$users", has: "one", label: "profile" },
+    reverse: { on: "users", has: "one", label: "authUser" },
+  }
+  ```
+
 ### Two-legged systems: CI as the source of truth
 
 Most non-trivial bots are **two-legged**:
