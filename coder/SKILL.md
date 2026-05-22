@@ -714,6 +714,34 @@ prompt:**
 Without this, the bot won't load the skill's instructions and will miss critical
 guidance (secret handling, tech stack, etc.).
 
+#### Safe Registration & Bootstrapping Best Practices
+
+To prevent silent failures where a bot appears to deploy successfully but fails to register its custom prompts/tools on prompt2bot (due to an invalid secret, malformed tool schema, or network error):
+
+1. **Enforce Fail-on-Boot (Crash on Failure):**
+   When writing the bot's server bootstrapping or startup logic (such as in `src/server.ts`), **never** catch and silently ignore registration errors. Always check the response of `setBotPrompt()` and `setCustomTools()` and crash the server if they fail:
+   ```typescript
+   // In server.ts on boot:
+   const baseUrl = "https://your-bot.deno.dev";
+   await setBotPrompt().then((res) => {
+     if (res && !res.success) throw new Error(`Prompt registration failed: ${res.error}`);
+   });
+   await setCustomTools(baseUrl).then((res) => {
+     if (res && !res.success) throw new Error(`Custom tools registration failed: ${res.error}`);
+   });
+   ```
+   This ensures that any registration or token configuration error instantly crashes the deployment isolate on Deno Deploy, making the failure highly visible in the dashboard.
+
+2. **CI/CD Pipeline Validation Check:**
+   When defining the GitHub Actions workflow (`deploy.yml`), always add an automated verification step immediately after the deployment step that runs a lightweight script (e.g. `src/verify.ts`) to assert that the prompt and tools are successfully accepted by prompt2bot:
+   ```yaml
+         - name: Verify Prompt & Tools Registration with prompt2bot
+           run: deno run -A src/verify.ts
+           env:
+             PROMPT2BOT_SECRET: ${{ secrets.PROMPT2BOT_SECRET }}
+   ```
+   And `src/verify.ts` should throw an error and exit with status `1` if prompt2bot returns `success: false`. This guarantees a red build/check on GitHub if the credentials are ever changed, broken, or expired.
+
 Full API reference: https://prompt2bot.com/llms.txt
 
 ### WhatsApp: Supergreen vs prompt2bot
