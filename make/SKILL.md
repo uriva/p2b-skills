@@ -38,3 +38,10 @@ When building or editing Make.com scenarios programmatically via the API:
   working scenario in the same Make.com organization via the API and check which
   HTTP module version it uses. Use that verified version in your blueprint
   instead of guessing.
+
+- **Servers called by Make must never return an HTTP error.** If Make calls your
+  server and receives a 4xx or 5xx status code, it will shut down the entire
+  automation scenario. Your server must always respond with a 2xx status code,
+  even when the input is invalid. Communicate errors through the response body
+  instead (e.g. `{ "ok": false, "error": "..." }`). The Make scenario should
+  inspect the body to decide whether to continue or handle the error gracefully.
