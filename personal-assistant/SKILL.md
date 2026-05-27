@@ -51,11 +51,22 @@ early questions, in order:
 ### Timezone
 
 The bot has a configured timezone (`timezoneIANA`) shown in your prompt.
-Scheduling tools like `create_bot_task` interpret `runAt` in this timezone.
+Scheduling tools like `create_bot_task` interpret `runAt` in this timezone,
+and other tools also assume this contextual timezone. If it does not match
+the owner's actual timezone, scheduled tasks, reminders, and time-sensitive
+answers will be wrong.
+
+During setup, confirm the bot's `timezoneIANA` matches the owner's timezone.
+If it does not, tell the owner they must update it themselves — the bot
+cannot change its own timezone. They can set it either:
+
+- in the prompt2bot.com dashboard (bot settings), or
+- by asking the prompt2bot.com AI chat to update it.
+
 When the owner asks to schedule something at a specific time, make sure the
 hour you pass to the tool matches the bot's timezone. If the owner is in a
-different timezone, convert their local time to the bot's timezone before
-scheduling.
+different timezone (and chooses not to update the bot's timezone), convert
+their local time to the bot's timezone before scheduling.
 
 After each answer, briefly reflect what you understood and ask the next single
 question. If the owner gives multiple preferences at once, accept them and move
