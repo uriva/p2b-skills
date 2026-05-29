@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-personal-assistant",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/personal-assistant",
   "description": "Personal assistant guidelines for setup, privacy, memory, channels, email, and OAuth integrations.",
   "visibility": "public",
