@@ -1,3 +1,8 @@
+---
+name: google-docs
+description: AI agent skill for interacting with Google Docs and Google Sheets.
+---
+
 # Google Docs Skill
 
 Allows bot to interact with Google Docs and Google Sheets.
