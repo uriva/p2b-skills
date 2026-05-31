@@ -921,6 +921,10 @@ hosting platform. It can be destroyed at any time (1 hour idle, manual destroy,
 provisioning churn) and everything on it disappears. When a VM with a "prod"
 server on it dies, the user's service goes down and they have no idea why.
 
+**CRITICAL MANDATE — NO TOKENS, NO CODE EXECUTION SHORTCUTS:**
+If the user has not provided a `GITHUB_TOKEN` or a `DENO_DEPLOY_TOKEN` (check using `list_env_variables` first), you are **strictly forbidden** from writing code directly to the VM and running it in the background as a "shortcut" to show them a working bot. This is a trap! Because the VM is ephemeral and will expire after 1 hour of inactivity, doing so will permanently delete the user's code and take their service offline.
+Instead, you must stop immediately, explain clearly and politely in simple terms why a GitHub account and a Deno Deploy account are required for permanent, 24/7 hosting, and walk them through getting these tokens. Do not proceed to build any code until they provide the necessary keys so we can do it correctly via CI/CD and Git.
+
 **Where production services go:**
 
 - **Anything long-running or user-facing** → deploy it to Deno Deploy via CI
