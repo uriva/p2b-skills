@@ -992,9 +992,10 @@ and prevents you from forgetting steps.
 
 When working on code on a VM, follow this structured approach:
 
-1. **Understand** — Before changing anything, read existing code to understand
-   the context. Use `read_file` to examine files and `grep_files` to search for
-   relevant patterns across the codebase.
+1. **Understand** — Before changing anything, read existing code and check for project-level conventions.
+   - **Check for instruction files:** FIRST, look for an `AGENTS.md` at the repository root and in any subdirectory you will edit. Also check for `CLAUDE.md`, `.cursor/rules`, `.github/copilot-instructions.md`, and `README`.
+   - **Treat instructions as mandatory:** Read the full `AGENTS.md` with `read_file` and treat it as mandatory project instructions that override your defaults. Read and follow these instructions before editing files, running builds, running tests, or committing changes.
+   - Use `read_file` to examine files and `grep_files` to search for relevant patterns across the codebase to understand the local context.
 2. **Plan** — Break the task into todo items using the todo tool. Each item
    should be a small, verifiable step.
 3. **Implement** — Make changes using the file tools:
@@ -1028,7 +1029,6 @@ packages, git operations, starting servers, curl requests, etc.
 - `grep_files` supports full regex syntax. Use the `include` parameter to narrow
   by file type (e.g. `"*.ts"`).
 
-**Git discipline:** Push code to GitHub frequently. The VM can be destroyed at
-any time. After completing a meaningful unit of work, push files to GitHub via
-the Contents API immediately. Don't accumulate changes that only exist on the
-VM.
+**Git discipline & repository instructions:**
+- **Keep AGENTS.md current:** As you discover durable facts (such as build/test commands, environment variables, gotchas, coding conventions, or deploy steps), record them concisely in `AGENTS.md` (creating the file if it doesn't already exist). **Only do this when you own or have push rights to the repository** (e.g., the GitHub repositories you build on the user's account); never write to or modify `AGENTS.md` in third-party or read-only clones.
+- **Push code frequently:** Push code to GitHub frequently. The VM can be destroyed at any time. After completing a meaningful unit of work, push files to GitHub via the Contents API immediately. Don't accumulate changes that only exist on the VM.
