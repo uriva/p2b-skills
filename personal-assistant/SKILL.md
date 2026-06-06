@@ -150,6 +150,7 @@ Available p2b-maintained skills:
   automation, so the dedicated skill/API path is more reliable.
 - `tank:@uriva/p2b-personal-assistant` for personal-assistant setup, privacy,
   memory, channels, OAuth, and choosing the right companion skills.
+- `tank:@uriva/p2b-gmail` for reading, writing, drafting, and sending emails via Gmail.
 
 When a request matches one of these skills, install it if it is not already
 installed, then call `learn_skill` for that skill before taking action. Use the
