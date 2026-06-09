@@ -818,42 +818,29 @@ Supergreen is the pipe that sends and receives WhatsApp messages; prompt2bot is
 the brain that makes the conversation smart. For a simple ping you only need the
 pipe, but for anything interactive you need the brain too.
 
-### Webhooks over polling — no high-frequency cron
+### Scheduling, Webhooks & Background Tasks
 
-Never design polling-based systems. Deno Deploy charges per request, so polling
-loops will drain the user's credits fast.
+Never design polling-based systems. Deno Deploy charges per request, so polling loops will drain the user's credits fast.
 
-**Hard rule: cron jobs must never run more frequently than once per hour.**
-Daily is preferred, hourly is the absolute maximum. A cron that runs every
-minute or every 5 minutes will burn through Deno Deploy's free tier in days. If
-you find yourself reaching for a short-interval cron, you are using the wrong
-pattern — stop and rethink.
+#### 1. Avoid Polling (Use Webhooks or Wakeup Timers)
+Always seek push-based patterns over pull-based ones:
+1. **Webhooks:** Have the external service push events to your Deno Deploy endpoint. This is always the first option to explore.
+2. **Streaming / change-notification APIs:** Some services offer long-lived connections or change feeds.
+3. **prompt2bot's built-in wakeup timer:** If an agent needs to check back on something later (e.g. "did I get a reply?", "has the deployment finished?"), it can set a timeout in its own prompt. The prompt2bot API lets a bot schedule itself to wake up after N milliseconds via `timeout-wakeup`. This means the agent can say "check again in 10 minutes" without any cron job at all—the platform handles the timer.
+   - *Example — agent waiting for an external response:* Bad: set up a cron that runs every minute to check if a reply arrived. Good: the prompt2bot agent uses its wakeup timer (`timeout-wakeup`) to schedule itself 10 minutes in the future. When it wakes up, it checks for the reply. If not yet received, it sets another timer. Zero cron, zero Deno credits burned—it's all handled by the prompt2bot platform.
 
-The correct alternatives, in order of preference:
+#### 2. Hard Limits on Cron Frequency
+- **Hard rule: cron jobs must never run more frequently than once per hour.** Daily is preferred, hourly is the absolute maximum. A cron that runs every minute or every 5 minutes will burn through Deno Deploy's free tier in days. If you find yourself reaching for a short-interval cron, you are using the wrong pattern—stop and rethink.
+- If no alternatives are feasible and you genuinely need frequent polling, **do not implement it**. Instead, notify admins and explain the constraint. Let them decide the architecture.
 
-1. **Webhooks** — have the external service push events to your Deno Deploy
-   endpoint. This is always the first thing to look for.
-2. **Streaming / change-notification APIs** — some services offer long-lived
-   connections or change feeds.
-3. **prompt2bot's built-in wakeup timer** — if an agent needs to check back on
-   something later (e.g. "did I get a reply?", "has the deployment finished?"),
-   it can set a timeout in its own prompt. The prompt2bot API lets a bot
-   schedule itself to wake up after N milliseconds. This means the agent can say
-   "check again in 10 minutes" without any cron job at all — the platform
-   handles the timer. Use this instead of cron for any "wait and check" pattern.
-4. **Hourly or daily cron** — only if none of the above work and you've
-   documented why.
+#### 3. Scaling & Architecture Choice (Google Cloud Tasks vs. Deno Cron)
+- **Deno Cron:** Use Deno cron **only** for small numbers of system-level background/recurring jobs (e.g. exporting a daily read-only report to Google Sheets). Never use Deno cron for user-generated recurring tasks.
+- **Google Cloud Tasks / Pub/Sub:** For long-running operations triggered by webhooks, or for handling a large number of user-generated scheduled actions, use Google Cloud Tasks or Google Cloud Pub/Sub.
 
-If none of these are feasible and you genuinely need frequent polling, **do not
-implement it**. Instead, notify admins and explain the constraint. Let them
-decide the architecture.
-
-**Example — agent waiting for an external response:** Bad: set up a cron that
-runs every minute to check if a reply arrived. Good: the prompt2bot agent uses
-its wakeup timer (`timeout-wakeup`) to schedule itself 10 minutes in the future.
-When it wakes up, it checks for the reply. If not yet received, it sets another
-timer. Zero cron, zero Deno credits burned — it's all handled by the prompt2bot
-platform.
+#### 4. Reminders & User-Facing Scheduling vs. Internal Tools
+- **Do NOT use your own `automation/schedule_action` tool** to implement scheduling features in applications you're building. That tool is for YOUR OWN task management—it schedules YOU (the p2b-coder bot) to send messages in your own conversations. It has nothing to do with the applications or bots you're building for users.
+- **To schedule target bots to message their users:** When the application you're building needs scheduled or recurring messages (e.g. daily check-ins, reminders), use the prompt2bot `create-remote-task` API with `recurrenceRule`.
+- **For inactivity nudges or turn-level timeouts:** Define recurring behavior directly in the target bot's prompt using the `timeout-wakeup` tool. The bot must always be the sender so it maintains full context.
 
 ### Images, video, and media analysis
 
