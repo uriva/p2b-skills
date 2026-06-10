@@ -403,12 +403,17 @@ The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
 `deno deploy` authenticates automatically.
 
 ```bash
-deno deploy --app=<slug> --prod           # Deploy current directory
-deno deploy create <slug>                 # Create an app
-deno deploy env set KEY=VALUE ...         # Set environment variables
-deno deploy env list                      # List environment variables
-deno deploy logs --app=<slug>             # Tail logs
+deno deploy --app=<slug> --prod                      # Deploy current directory
+deno deploy create <slug>                            # Create an app
+deno deploy env add <KEY> "<VALUE>" [--secret]       # Set a plain text or secret environment variable
+deno deploy env load <file_path> [--non-secrets ...] # Load variables from a .env file (treats as secrets by default)
+deno deploy env list                                 # List environment variables
+deno deploy env update-value <KEY> "<VALUE>"         # Update the value of an existing variable
+deno deploy env delete <KEY>                         # Delete an environment variable
+deno deploy logs --app=<slug>                        # Tail logs
 ```
+
+To set environment variables on Deno Deploy, use the native `deno deploy env add <KEY> "<VALUE>"` command on the VM (optionally passing the `--secret` flag to mask the value in the console, or specifying `--org <org_slug> --app <app_slug>` if running from outside the project directory). To load an entire `.env` file, use `deno deploy env load <file_path>` (all loaded values are treated as secrets by default). Calling `deno.json` or CLI commands under the app directory will auto-infer the organization and app name if configured.
 
 `deno deploy --app=<slug> --prod` is the standard way to deploy. It does
 diff-sync file upload, tracks the build via SSE (building -> warming ->
@@ -561,6 +566,8 @@ headaches.
     Deploy API calls.** The base URL is `https://api.deno.com/v2`. In v2,
     "projects" are called "apps" and "deployments" are called "revisions". Use
     `deno deploy` CLI commands for standard operations (deploy, env, logs).
+  - **CRITICAL RULE: DO NOT FALSELY CLAIM A TOKEN IS INVALID/REVOKED:**
+    **You are strictly forbidden from telling a user that their token has expired, is revoked, or does not work based solely on a v1 API (`/v1/`) failure.** If your API call to `/v1/` fails with "invalidToken" or "unauthorized", it is almost certainly because the token is a valid modern `ddo_` token being incorrectly sent to the legacy v1 endpoint. You **MUST** verify the token by attempting the API v2 (`/v2/`) endpoints or executing the native `deno deploy` CLI commands before communicating any token issues to the user.
   - **Deno Deploy tokens**: Valid tokens start with `ddo_` (e.g.
     `ddo_abc123...`). If a user gives you a token that doesn't start with
     `ddo_`, it's wrong — likely from the old Deno Deploy dashboard
@@ -972,6 +979,13 @@ form, support ticket), implement it as:
 Never build: a webhook endpoint that receives each message, looks up state in a
 database, decides what to reply, and sends the reply back. That's reimplementing
 the agent from scratch and throwing away everything prompt2bot gives you.
+
+### Anti-pattern: exposing secrets in HTTP endpoints/URLs
+
+**Never build HTTP endpoints (like setup/webhook routes) that accept API tokens, keys, or secrets in URL search/query parameters, URL paths, headers, or request bodies.**
+- Exposing secrets in URL parameters is a severe security vulnerability. They leak in browser history, server logs, reverse proxy logs, and `Referer` headers.
+- Exposing endpoints that accept a secret from the request and then run actions with it (like configuring prompts or sending messages) allows anyone who finds the endpoint to hijack or abuse your bot.
+- **The Correct Pattern:** Always read all secrets (e.g., `P2B_API_TOKEN`, `INSTANTDB_ADMIN_TOKEN`, etc.) directly from the server's environment variables (e.g., `Deno.env.get("P2B_API_TOKEN")`). If a script/endpoint needs to run a setup or privileged action, it should either be triggered locally/via CI, or verify the request using a securely stored signature/HMAC, never by having the user pass the raw secret in the request URL.
 
 ### Architecture patterns
 
