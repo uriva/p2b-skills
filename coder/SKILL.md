@@ -1042,6 +1042,29 @@ packages, git operations, starting servers, curl requests, etc.
 - `grep_files` supports full regex syntax. Use the `include` parameter to narrow
   by file type (e.g. `"*.ts"`).
 
+### Testing remote tools in agentic flows
+
+When building or integrating backend services, APIs, and custom tools for an agent, you should perform true end-to-end integration testing by programmatically starting a conversation with the target agent via **Alice & Bot**. This allows you to simulate a real user interaction, test the conversation flow, and verify that the database is fed correctly and all remote tools/webhooks execute successfully.
+
+**Guidelines for agentic flow testing:**
+- **Avoid harmful side-effects:** When running end-to-end tests, take extreme care to avoid triggering harmful or irreversible side-effects in production (e.g., sending real marketing spam, charging real credit cards, or deleting production databases). Always use mock data, dedicated test users, or safe test modes where appropriate.
+- **Obtaining the Alice & Bot Public ID:** To message a bot via Alice & Bot, you must first obtain its `aliceAndBotPublicId` (the bot's public signature key). You are **strictly forbidden** from attempting to query prompt2bot's production database for this key—the user's VM does not have access to prompt2bot's database or admin secrets. Instead, you must retrieve it programmatically via the **prompt2bot API**:
+  1. **Using the `get-bot-info` endpoint (recommended):** Call the prompt2bot API gateway `get-bot-info` endpoint passing either the bot's own Remote Tools Secret (as `secret`), or the user's `apiToken` + `botId`:
+     ```typescript
+     fetch("https://api.prompt2bot.com/api", {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({
+         endpoint: "get-bot-info",
+         payload: { secret: Deno.env.get("PROMPT2BOT_SECRET") }
+       })
+     });
+     ```
+     This endpoint securely returns `{ success: true, botId, name, aliceAndBotPublicId }` directly using the bot's own authenticated token.
+  2. **Using the `list-bots` endpoint:** If the user's general account API token (`p2b_` prefix) is present, you can call the `list-bots` endpoint to retrieve a list of all bots along with their IDs, names, and `aliceAndBotPublicId`.
+
+Once you have the `aliceAndBotPublicId`, use the Alice & Bot SDK or APIs to programmatically exchange test messages, verify tool execution, and inspect the state of the system or database to guarantee absolute correctness.
+
 **Git discipline & repository instructions:**
 - **Keep AGENTS.md current:** As you discover durable facts (such as build/test commands, environment variables, gotchas, coding conventions, or deploy steps), record them concisely in `AGENTS.md` (creating the file if it doesn't already exist). **Only do this when you own or have push rights to the repository** (e.g., the GitHub repositories you build on the user's account); never write to or modify `AGENTS.md` in third-party or read-only clones.
 - **Push code frequently:** Push code to GitHub frequently. The VM can be destroyed at any time. After completing a meaningful unit of work, push files to GitHub via the Contents API immediately. Don't accumulate changes that only exist on the VM.
