@@ -399,6 +399,8 @@ install it (`deno install jsr:@deno/deployctl`), do not run it, do not fall back
 to it. If `deno deploy` fails, report the error — do not try `deployctl` as an
 alternative.
 
+**Before doing any work with Deno Deploy (including listing apps, creating apps, deploying, or setting env variables), you MUST immediately call `learn_skill("p2b-deno-deploy")` to load the complete Deno Deploy guidelines and CLI reference.**
+
 The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
 `deno deploy` authenticates automatically.
 
@@ -561,6 +563,8 @@ headaches.
   only exception is when you need Docker or long-running operations. Use the
   native `deno deploy` subcommand on the VM for all Deno Deploy operations
   (create apps, deploy, set env vars). Never use `deployctl` — it is deprecated.
+
+  **IMPORTANT:** Before working on any Deno Deploy tasks, you **MUST** load the specialized Deno Deploy guidelines by calling `learn_skill("p2b-deno-deploy")`.
   - **Deno Deploy v2 API — IMPORTANT: The v1 API (`/v1/`) rejects `ddo_`
     organization tokens with "invalidToken". Always use `/v2/` for all Deno
     Deploy API calls.** The base URL is `https://api.deno.com/v2`. In v2,
@@ -812,7 +816,7 @@ bad response. There is no reason to leave this off.
 
 **When creating a bot that has the `p2b-coder` skill, include this in the bot's
 prompt:**
-`Before starting any development task, call learn_skill("p2b-coder") to load your coding guidelines and follow them throughout.`
+`Before starting any development task, call learn_skill("p2b-coder") to load your coding guidelines and follow them throughout. If the project uses Deno Deploy, you must also immediately call learn_skill("p2b-deno-deploy") to load the specialized Deno Deploy guidelines.`
 Without this, the bot won't load the skill's instructions and will miss critical
 guidance (secret handling, tech stack, etc.).
 
