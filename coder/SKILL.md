@@ -86,6 +86,32 @@ microservices for various integrations.
   confusing responses from services — stop immediately and ask the user to get
   admin attention. Don't try to work around it.
 
+### Planning, Technical Design & Threaded Implementation (CRITICAL)
+
+Before starting the implementation of any project or significant feature, you must rigorously design and verify your approach using this structured workflow. **All design, planning, and testing documents must be written in Markdown files directly inside the project's GitHub repository** (e.g., under a `docs/` directory or as design documents in the root) to serve as the version-controlled source of truth.
+
+1. **Natural Language Planning & Breakdown:**
+   - First, write a complete plan in natural language.
+   - **User Description:** Draft a high-level, clear description of the feature or project tailored for non-technical, non-tech-savvy users. This is your primary way of communicating the project's goals, scope, and behavior to the user.
+   - **Meticulous Technical Details:** Alongside the user description, specify meticulous technical implementation details (architecture, database schema, API contracts, directories, files to modify) for developers. This must be as detailed and precise as possible.
+
+2. **Testing Plan & Individual Units:**
+   - Devise a comprehensive testing plan to self-verify your work.
+   - Break down the requirements into self-contained, individual units that can be tested independently.
+   - Explicitly note subtleties, potential edge cases, risks, constraints, and things to look out for in the planning and testing documents.
+
+3. **Stronger Model Consultation:**
+   - Once you have written and pushed these planning and design documents (Markdown files) to the GitHub repository, you **MUST** consult at least once with a stronger model (e.g., by spawning a child thread/subagent with a meticulous prompt) to review, critique, and confirm your design plans.
+   - Revise and refine the documents based on this expert architectural feedback.
+
+4. **User Confirmation:**
+   - Only after confirming the plan with the stronger model should you present the natural language version of the plan to the user.
+   - Seek and obtain the user's explicit confirmation of the plan before starting any code implementation.
+
+5. **Threaded Implementation:**
+   - Once the user has confirmed the plan, begin implementation.
+   - To ensure maximum efficiency, isolation, and safety, break the work into individual parts and delegate those parts to separate threads (subagents / child threads).
+
 ### Workflow
 
 - **VM vs. Safescript Decision (Cost Optimization):** Spinning up or maintaining a persistent VM has significant compute costs. Whenever a task is limited purely to **making network calls (HTTP requests/API calls)**—such as fetching a webpage, calling an external REST API (like Make.com, GitHub API, custom webhooks, etc.), checking integration health, or querying a web service—you **MUST** write a Safescript program and execute it via the `run_safescript` tool under the `safescript` skill, rather than provisioning a VM.
@@ -984,9 +1010,8 @@ When working on code on a VM, follow this structured approach:
    - **Check for instruction files:** FIRST, look for an `AGENTS.md` at the repository root and in any subdirectory you will edit. Also check for `CLAUDE.md`, `.cursor/rules`, `.github/copilot-instructions.md`, and `README`.
    - **Treat instructions as mandatory:** Read the full `AGENTS.md` with `read_file` and treat it as mandatory project instructions that override your defaults. Read and follow these instructions before editing files, running builds, running tests, or committing changes.
    - Use `read_file` to examine files and `grep_files` to search for relevant patterns across the codebase to understand the local context.
-2. **Plan** — Break the task into todo items using the todo tool. Each item
-   should be a small, verifiable step.
-3. **Implement** — Make changes using the file tools:
+ 2. **Plan** — Follow the "Planning, Technical Design & Threaded Implementation" workflow: write natural language and technical design docs in Markdown inside the GitHub repository, devise a test plan with a breakdown of requirements, consult a stronger model for feedback, obtain explicit user confirmation, and break the implementation tasks down into todo items using the todo tool.
+ 3. **Implement** — Make changes using the file tools:
    - Use `read_file` before editing to see exact content with line numbers.
    - Use `edit_file` for targeted changes — it does exact string replacement, so
      provide enough surrounding context to make matches unique.
