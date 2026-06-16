@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-stripe",
+  "version": "1.0.3",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/stripe",
+  "description": "Stripe subscription and payment billing integration for prompt2bot agents — tool design, Stripe checkout links, dynamic customer portal sessions, webhooks, and secure sandbox routing.",
+  "visibility": "public",
+  "skills": {
+    "p2b-stripe": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": []
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}
