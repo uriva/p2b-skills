@@ -8,6 +8,21 @@ description: Read and edit GitHub repositories through the GitHub REST API using
 Use this skill to read and edit GitHub repositories without creating a VM or
 cloning the repository.
 
+## Read the repo's instructions FIRST (mandatory)
+
+Before you read, write, or patch ANY file in a repository — on your first action
+against that repo, and again whenever you switch repos or branches — you MUST
+call `repoInstructions` for that `owner`/`repo`/`ref` and follow what it returns.
+
+`repoInstructions` fetches the project's agent instruction files in one call:
+`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`,
+`.cursorrules`, and `.windsurfrules`. These hold the repo's conventions,
+runbooks, and "how we do X here" knowledge. Skipping this is the most common
+cause of wrong or low-quality changes — do not guess what you could have read.
+
+If it returns `NO_INSTRUCTION_FILES_FOUND`, proceed but infer conventions from
+the codebase.
+
 Pass the configured GitHub token secret as `githubToken` through
 `secretMapping`. Usually this should be:
 
@@ -20,6 +35,10 @@ The token must have access to the repository and must allow requests to
 
 ## Tools
 
+- `repoInstructions`: fetches the repo's agent instruction files (`AGENTS.md`,
+  `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules`,
+  `.windsurfrules`) in one call. Call this FIRST for any repo, before reading or
+  editing files (see "Read the repo's instructions FIRST" above).
 - `readGithubFile`: reads a file from a branch or ref.
 - `writeGithubFile`: commits a full file replacement using the Git Data API.
 - `patchGithubFile`: reads a file, performs an exact string replacement, and

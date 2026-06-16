@@ -31,6 +31,24 @@ readGithubFile = (githubToken: string, owner: string, repo: string, path: string
   return res.status == 200 ? { success: true, result: res.body, error: "" } : { success: false, result: "", error: error.result }
 }
 
+instructionFileBlock = (label: string, read: { success: boolean, result: string, error: string }): string => {
+  shown = stringConcat({ parts: ["\n===== ", label, " =====\n", read.result, "\n"] })
+  return read.success ? shown.result : ""
+}
+
+repoInstructions = (githubToken: string, owner: string, repo: string, ref: string): { success: boolean, result: string, error: string } => {
+  agents = readGithubFile(githubToken, owner, repo, "AGENTS.md", ref)
+  claude = readGithubFile(githubToken, owner, repo, "CLAUDE.md", ref)
+  copilot = readGithubFile(githubToken, owner, repo, ".github/copilot-instructions.md", ref)
+  cursor = readGithubFile(githubToken, owner, repo, ".cursorrules", ref)
+  gemini = readGithubFile(githubToken, owner, repo, "GEMINI.md", ref)
+  windsurf = readGithubFile(githubToken, owner, repo, ".windsurfrules", ref)
+  combined = stringConcat({ parts: [instructionFileBlock("AGENTS.md", agents), instructionFileBlock("CLAUDE.md", claude), instructionFileBlock(".github/copilot-instructions.md", copilot), instructionFileBlock(".cursorrules", cursor), instructionFileBlock("GEMINI.md", gemini), instructionFileBlock(".windsurfrules", windsurf)] })
+  anyFound = agents.success ? true : (claude.success ? true : (copilot.success ? true : (cursor.success ? true : (gemini.success ? true : windsurf.success))))
+  emptyError = stringConcat({ parts: ["NO_INSTRUCTION_FILES_FOUND: none of AGENTS.md, CLAUDE.md, .github/copilot-instructions.md, .cursorrules, GEMINI.md, .windsurfrules exist in ", owner, "/", repo, " at ref \"", ref, "\". Proceed, but infer conventions from the codebase."] })
+  return anyFound ? { success: true, result: combined.result, error: "" } : { success: false, result: "", error: emptyError.result }
+}
+
 patchTextForTest = (content: string, searchText: string, replaceText: string, replaceAll: boolean): { success: boolean, result: string, error: string, count: number } => {
   replaced = stringReplace({ haystack: content, needle: searchText, replacement: replaceText, all: replaceAll })
   notFound = replaced.count == 0
