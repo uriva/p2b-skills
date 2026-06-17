@@ -1039,14 +1039,33 @@ Always seek push-based patterns over pull-based ones:
   not implement it**. Instead, notify admins and explain the constraint. Let
   them decide the architecture.
 
-#### 3. Scaling & Architecture Choice (Google Cloud Tasks vs. Deno Cron)
+#### 3. Scaling & Architecture Choice (Upstash QStash vs. Deno Cron)
 
 - **Deno Cron:** Use Deno cron **only** for small numbers of system-level
   background/recurring jobs (e.g. exporting a daily read-only report to Google
-  Sheets). Never use Deno cron for user-generated recurring tasks.
-- **Google Cloud Tasks / Pub/Sub:** For long-running operations triggered by
-  webhooks, or for handling a large number of user-generated scheduled actions,
-  use Google Cloud Tasks or Google Cloud Pub/Sub.
+  Sheets). Never use Deno cron for user-generated recurring tasks or high-frequency polling, as it burns unnecessary compute hours on Deno Deploy.
+- **Upstash QStash (Recommended):** For scheduling events/scripts at arbitrary timestamps, long-running delayed tasks, or handling a large volume of user-generated scheduled actions, use **Upstash QStash** as your event queue.
+
+##### Why Upstash QStash?
+* **How it works:** QStash holds your timer/delay in the cloud entirely over stateless HTTP. You publish a delayed execution payload to QStash, and when the timestamp is reached, QStash fires an HTTP POST request back to your webhook endpoint to execute the task. It requires zero idle compute or open connections on Deno Deploy.
+* **How to get API Key:** Sign up at [console.upstash.com](https://console.upstash.com/), go to the **QStash** tab, and copy your `QSTASH_TOKEN` (Current Signing Key) into your project's environment variables (`QSTASH_TOKEN`).
+* **Pricing:** An extremely generous free tier of **10,000 scheduled requests per day** ($0, no credit card required). Pay-as-you-go thereafter is just $1.00 per 100,000 requests.
+* **How to use (Example):**
+  Schedule an execution at a specific Unix timestamp (in milliseconds) using the `Upstash-Not-Before` header:
+  ```typescript
+  const qstashToken = Deno.env.get("QSTASH_TOKEN");
+  const targetUrl = `https://your-app.deno.dev/w/your-route-id`;
+  
+  const response = await fetch(`https://qstash.upstash.io/v2/publish/${targetUrl}`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${qstashToken}`,
+      "Content-Type": "application/json",
+      "Upstash-Not-Before": String(Math.floor(targetTimestampMs / 1000)),
+    },
+    body: JSON.stringify(payload),
+  });
+  ```
 
 #### 4. Reminders & User-Facing Scheduling vs. Internal Tools
 
