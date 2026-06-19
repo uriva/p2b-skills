@@ -515,17 +515,53 @@ deno deploy logs --app=<slug>                        # Tail logs (live stream - 
 
 ### Webhook & Integration Debugging (CRITICAL)
 
-When a custom tool fails or an integration doesn't seem to work, you must inspect the application logs on Deno Deploy.
-- **Never use standard live-stream tail commands:** Running raw `deno deploy logs --app=<slug>` opens an infinite live connection. This will hang in a non-interactive VM, resulting in timeouts or connection-read errors (e.g., `TypeError: error reading a body from connection`).
-- **Fetch historical log slices instead:** To debug errors and see past logs (for example, to inspect the HTTP 400 error payload from 5 minutes ago), always fetch a specific window of historical logs using the `--start` and `--end` flags. The command will output the logs in that window and immediately terminate:
+When a custom tool fails or an integration doesn't seem to work, you must
+inspect the application logs on Deno Deploy.
+
+- **Never fabricate or lie about delivery or integration failures:** If a test
+  message, webhook, or scheduled action fails to deliver, **NEVER** fabricate
+  technical explanations or invent system myths (such as claiming a phone number
+  is in a "Cold State", or that the WhatsApp server is "sleeping" and needs a
+  "Hi" message to wake it up). If you don't know why a message failed to deliver,
+  be exceptionally honest and transparent. State that you do not know the exact
+  reason yet, and guide the user to check real logs, Deno Deploy log historical
+  slices, or DB task queue states.
+- **Ensure custom tool schemas are Gemini-safe (CRITICAL):** When writing JSON
+  schemas or parameters for custom/remote tools, be extremely careful: **Gemini
+  does NOT support `anyOf`, `oneOf`, or nested `const` in function declarations.**
+  Always define flat, simple, strongly-typed parameters (like strings, booleans,
+  arrays, or numbers) with flat `enum` types instead of complex union types
+  (like `z.union`) to prevent terminal Google API schema-validation crashes
+  (`INVALID_ARGUMENT` / `Unknown name "const" / Cannot find field`).
+- **Verify channel capabilities and tokens before testing:** Before claiming that
+  a message flow is working, verify that the target bot actually has its WhatsApp for Business Token (`whatsappForBusinessToken`) or other necessary tokens
+  configured in InstantDB. If a bot does not have an active token configured,
+  proactively inform the user instead of letting the task fail silently.
+- **Never use standard live-stream tail commands:** Running raw
+  `deno deploy logs --app=<slug>` opens an infinite live connection. This will
+  hang in a non-interactive VM, resulting in timeouts or connection-read errors
+  (e.g., `TypeError: error reading a body from connection`).
+- **Fetch historical log slices instead:** To debug errors and see past logs
+  (for example, to inspect the HTTP 400 error payload from 5 minutes ago),
+  always fetch a specific window of historical logs using the `--start` and
+  `--end` flags. The command will output the logs in that window and immediately
+  terminate:
   ```bash
   # Get historical logs for the last 15 minutes and immediately exit:
   deno deploy logs --app=<slug> --start="$(date -u -d '15 minutes ago' +'%Y-%m-%dT%H:%M:%SZ')" --end="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
   ```
-- **Never guess dashboard states on empty/failed logs:** If you cannot find any logged requests or if log-fetching fails, **do not assume** the tool has been turned off or disabled in the user's dashboard. Do not ask the user for screenshots of the settings page or instruct them to check dashboard toggles. Instead, programmatically check your local code configuration:
-  1. Call `get-bot-info` using the API to inspect the actual list of registered tools, URLs, and active prompt of your bot on Prompt2Bot.
-  2. Ensure your local custom tool schemas and handler routes match the wrapped payload format (`body.payload.params`), rather than parsing properties from the top-level body.
-  3. Verify that the webhook URL registered on Prompt2Bot matches the actual deployed URL of your server.
+- **Never guess dashboard states on empty/failed logs:** If you cannot find any
+  logged requests or if log-fetching fails, **do not assume** the tool has been
+  turned off or disabled in the user's dashboard. Do not ask the user for
+  screenshots of the settings page or instruct them to check dashboard toggles.
+  Instead, programmatically check your local code configuration:
+  1. Call `get-bot-info` using the API to inspect the actual list of registered
+     tools, URLs, and active prompt of your bot on Prompt2Bot.
+  2. Ensure your local custom tool schemas and handler routes match the wrapped
+     payload format (`body.payload.params`), rather than parsing properties from
+     the top-level body.
+  3. Verify that the webhook URL registered on Prompt2Bot matches the actual
+     deployed URL of your server.
 
 To set environment variables on Deno Deploy, use the native
 `deno deploy env add <KEY> "<VALUE>"` command on the VM (optionally passing the
@@ -1043,28 +1079,44 @@ Always seek push-based patterns over pull-based ones:
 
 - **Deno Cron:** Use Deno cron **only** for small numbers of system-level
   background/recurring jobs (e.g. exporting a daily read-only report to Google
-  Sheets). Never use Deno cron for user-generated recurring tasks or high-frequency polling, as it burns unnecessary compute hours on Deno Deploy.
-- **Upstash QStash (Recommended):** For scheduling events/scripts at arbitrary timestamps, long-running delayed tasks, or handling a large volume of user-generated scheduled actions, use **Upstash QStash** as your event queue.
+  Sheets). Never use Deno cron for user-generated recurring tasks or
+  high-frequency polling, as it burns unnecessary compute hours on Deno Deploy.
+- **Upstash QStash (Recommended):** For scheduling events/scripts at arbitrary
+  timestamps, long-running delayed tasks, or handling a large volume of
+  user-generated scheduled actions, use **Upstash QStash** as your event queue.
 
 ##### Why Upstash QStash?
-* **How it works:** QStash holds your timer/delay in the cloud entirely over stateless HTTP. You publish a delayed execution payload to QStash, and when the timestamp is reached, QStash fires an HTTP POST request back to your webhook endpoint to execute the task. It requires zero idle compute or open connections on Deno Deploy.
-* **How to get API Key:** Sign up at [console.upstash.com](https://console.upstash.com/), go to the **QStash** tab, and copy your `QSTASH_TOKEN` (Current Signing Key) into your project's environment variables (`QSTASH_TOKEN`).
-* **Pricing:** An extremely generous free tier of **10,000 scheduled requests per day** ($0, no credit card required). Pay-as-you-go thereafter is just $1.00 per 100,000 requests.
-* **How to use (Example):**
-  Schedule an execution at a specific Unix timestamp (in milliseconds) using the `Upstash-Not-Before` header:
+
+- **How it works:** QStash holds your timer/delay in the cloud entirely over
+  stateless HTTP. You publish a delayed execution payload to QStash, and when
+  the timestamp is reached, QStash fires an HTTP POST request back to your
+  webhook endpoint to execute the task. It requires zero idle compute or open
+  connections on Deno Deploy.
+- **How to get API Key:** Sign up at
+  [console.upstash.com](https://console.upstash.com/), go to the **QStash** tab,
+  and copy your `QSTASH_TOKEN` (Current Signing Key) into your project's
+  environment variables (`QSTASH_TOKEN`).
+- **Pricing:** An extremely generous free tier of **10,000 scheduled requests
+  per day** ($0, no credit card required). Pay-as-you-go thereafter is just
+  $1.00 per 100,000 requests.
+- **How to use (Example):** Schedule an execution at a specific Unix timestamp
+  (in milliseconds) using the `Upstash-Not-Before` header:
   ```typescript
   const qstashToken = Deno.env.get("QSTASH_TOKEN");
   const targetUrl = `https://your-app.deno.dev/w/your-route-id`;
-  
-  const response = await fetch(`https://qstash.upstash.io/v2/publish/${targetUrl}`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${qstashToken}`,
-      "Content-Type": "application/json",
-      "Upstash-Not-Before": String(Math.floor(targetTimestampMs / 1000)),
+
+  const response = await fetch(
+    `https://qstash.upstash.io/v2/publish/${targetUrl}`,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${qstashToken}`,
+        "Content-Type": "application/json",
+        "Upstash-Not-Before": String(Math.floor(targetTimestampMs / 1000)),
+      },
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+  );
   ```
 
 #### 4. Reminders & User-Facing Scheduling vs. Internal Tools
