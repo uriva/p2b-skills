@@ -42,11 +42,36 @@ early questions, in order:
 - How should I communicate with you: brief, warm, direct, playful, formal, or
   something else?
 - If our language uses gendered phrasing, how should I address you?
+- Who are you? (Please tell me your name, what you do, or a bit about your
+  background!)
 - Are there any special instructions for how I should talk, decide, or behave?
 - What should I help you with first?
 - Which topics, people, or information should I treat as private?
 - Which accounts should I connect first: Google Calendar, Gmail, Twitter/X,
   GitHub, or something else?
+
+### Researching and Understanding the Owner
+
+When the owner tells you who they are (answering the "Who are you?" question):
+
+1. Immediately run a quick Google search (using any available web search or
+   search tools, e.g. `google_search`, `web_search`, or browser search) on their
+   name, background, or organization to find who and what they are and get more
+   context.
+2. Based on the search results and what they shared, try to infer their key
+   responsibilities, interests, and likely workflows. Figure out what they would
+   want and benefit from in a personal AI assistant (e.g., email management,
+   scheduling, code development, or social media tracking).
+3. Present a warm, brief reflection of what you discovered and inferred (e.g.,
+   "I searched and saw you are active in open-source development and run a
+   startup! Based on that, I think you'd really benefit from connecting your
+   GitHub for repository management, and maybe setting up automated email
+   handling...").
+4. Propose 2-3 specific, tailored skills or workflows from the available p2b
+   skills that match their profile, and ask which one they'd like to set up or
+   focus on first.
+5. Save this background and the inferred preferences under durable context in
+   AgentDocs or the bot prompt.
 
 ### Timezone
 
@@ -150,6 +175,8 @@ Available p2b-maintained skills:
   automation, so the dedicated skill/API path is more reliable.
 - `tank:@uriva/p2b-personal-assistant` for personal-assistant setup, privacy,
   memory, channels, OAuth, and choosing the right companion skills.
+- `tank:@uriva/p2b-gmail` for reading, writing, drafting, and sending emails via
+  Gmail.
 
 When a request matches one of these skills, install it if it is not already
 installed, then call `learn_skill` for that skill before taking action. Use the
@@ -225,11 +252,18 @@ What belongs in AgentDocs:
 
 - Owner preferences, writing style, timezone, working hours, and communication
   rules.
-- Important people and how the owner wants to interact with them (create AgentDocs snapshots with `kind: "contact"`, and put their information in `contactDetails` - read `conventions/contact.md` from the agentdocs skill for the exact JSON format).
+- Important people and how the owner wants to interact with them (create
+  AgentDocs snapshots with `kind: "contact"`, and put their information in
+  `contactDetails` - read `conventions/contact.md` from the agentdocs skill for
+  the exact JSON format).
 - Recurring tasks, project notes, and stable personal context.
 - Privacy rules, delegation rules, and escalation rules.
 
-To manage contacts, simply search agentdocs where `kind` is `"contact"`. The `contactDetails` object will have their raw platform IDs (`phone`, `telegram`, `email`, etc.). When you need to interact with a specific contact over a channel, use `inject_context` with that network and target the raw ID from the `contactDetails` directly.
+To manage contacts, simply search agentdocs where `kind` is `"contact"`. The
+`contactDetails` object will have their raw platform IDs (`phone`, `telegram`,
+`email`, etc.). When you need to interact with a specific contact over a
+channel, use `inject_context` with that network and target the raw ID from the
+`contactDetails` directly.
 
 What does not belong in AgentDocs:
 
@@ -304,7 +338,8 @@ How to use it:
 
 - Call `learn_skill("composio")` when the owner asks for an external-service
   action that may be available through Composio.
-- Use `list_composio_tools` first to discover available tool slugs and schemas.
+- Use `list_composio_tools` with the 'app' parameter (e.g. 'github') first to discover available tool slugs.
+- Call `inspect_composio_tool` with the selected `tool_slug` to inspect its exact JSON argument schema.
 - Use `execute_composio_tool` with the exact slug and JSON arguments.
 - If the needed Composio account is not connected, explain that the owner needs
   to connect that service through Composio/Prompt2Bot before you can act.

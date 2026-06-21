@@ -1,0 +1,22 @@
+{
+  "name": "@uriva/p2b-gmail",
+  "version": "1.0.0",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/gmail",
+  "description": "Google Gmail utils using safescript.",
+  "visibility": "public",
+  "skills": {
+    "gmail": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": [
+        "gmail.googleapis.com"
+      ]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}

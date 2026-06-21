@@ -26,8 +26,12 @@ jobs:
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "${BEFORE:-}" ] || [[ "$BEFORE" =~ ^0+$ ]]; then
             files=$(git ls-files '*/tank.json')
-          else
+          elif git rev-parse --verify --quiet "$BEFORE"^{commit} >/dev/null 2>&1; then
             files=$(git diff --name-only "$BEFORE" "$SHA")
+          elif git rev-parse --verify --quiet "$SHA~1"^{commit} >/dev/null 2>&1; then
+            files=$(git diff --name-only "$SHA~1" "$SHA")
+          else
+            files=$(git ls-files '*/tank.json')
           fi
 
           dirs=$(
