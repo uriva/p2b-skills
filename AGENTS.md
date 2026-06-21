@@ -26,3 +26,7 @@
 
 ### Environment Hygiene
 *   **Guideline:** Never let skills execute generic commands or download tools (e.g., re-installing runtimes/packages) inside external unconfigured sandboxes. Always leverage built-in, pre-baked persistent VMs where required tools are already cached.
+
+### Use General Phrasing for Skill Learning & Models
+*   **Guideline:** When instructing agents to learn or load other skills, or when referring to AI model capabilities, always use abstract, future-proof phrasing (e.g., "learn the p2b-document-pipeline skill", "use the latest Gemini/Claude models") instead of pinning specific tool/command syntaxes (such as `learn_skill("...")`) or specific model version numbers.
+*   **Rationale:** Command interfaces and model versions change rapidly over time. General phrasing prevents instruction guidelines from becoming obsolete or breaking when platform toolsets or models are upgraded.
