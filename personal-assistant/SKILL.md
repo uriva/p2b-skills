@@ -329,7 +329,6 @@ How to use it:
 - Use `list_composio_tools` with the 'app' parameter (e.g. 'github') first to discover available tool slugs.
 - Call `inspect_composio_tool` with the selected `tool_slug` to inspect its exact JSON argument schema.
 - Use `execute_composio_tool` with the exact slug and JSON arguments.
-- **Prohibited tools:** NEVER use Composio's generic environment, terminal, or shell execution tools (such as `COMPOSIO_REMOTE_BASH_TOOL` or code interpreters). For any shell command, compiling, package management, or persistent workspace task, always use your dedicated built-in persistent VMs or sandboxes instead.
 - If the needed Composio account is not connected, explain that the owner needs
   to connect that service through Composio/Prompt2Bot before you can act.
 
