@@ -69,6 +69,15 @@ When building a bot, don't implement its behavioral logic as an external state m
 
 ---
 
+## Writing Prompts and Injecting Thoughts
+
+When writing prompts for prompt2bot agents or injecting thoughts via the `inject-context` API, focus purely on defining clear instructions, scenario details, and business behavior.
+
+- **Avoid prompt workarounds for platform bugs:** Never add defensive instructions, lists of behaviors to avoid, or negative guardrails (especially using words like "CRITICAL", "WARNING", "never do X") to cover up bugs elsewhere in the system, particularly bugs in prompt2bot itself (e.g., leaking thoughts or other agent misbehaviors). The prompt or thought injection should be concise, direct, and just work.
+- **Identify systemic or tooling misfits:** If an agent misbehaves or leaks thoughts, it means there is either a platform bug that needs to be reported, or the tooling itself confuses the agent or does not fit the scenario. Report the bug or fix the tools, instead of cluttering agent prompts with defensive rules.
+
+---
+
 ## Project Structure
 
 Use a **monorepo** when building a project with multiple components (e.g. server, frontend, shared types). Keep everything in a single Git repo with top-level directories for each component — e.g. `server/`, `web/`, `shared/`. Don't create separate repos for parts of the same project. This keeps dependencies in sync, simplifies deployment, and avoids cross-repo coordination headaches.
