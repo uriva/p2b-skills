@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-document-pipeline",
+  "version": "1.0.1",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/document-pipeline",
+  "description": "Guidelines and architecture insights for building document extraction and parsing pipelines (handling JPG/PNG images vs. PDFs, OCR choices, and robust structured mapping).",
+  "visibility": "public",
+  "skills": {
+    "p2b-document-pipeline": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": []
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}

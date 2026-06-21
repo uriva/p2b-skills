@@ -6,6 +6,7 @@ Community skills for Prompt2Bot agents.
 
 - `github/` - read and edit GitHub repositories through the GitHub REST API.
 - `coder/` - coding and integration guidelines for Prompt2Bot builder agents.
+- `document-pipeline/` - guidelines and best practices for building document ingestion, parsing, and extraction pipelines.
 - `google-docs/` - interact with Google Docs and Google Sheets.
 - `google-drive/` - search and list Google Drive files.
 - `personal-assistant/` - personal assistant setup, privacy, memory, channels,
