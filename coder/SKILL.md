@@ -1155,7 +1155,7 @@ from a storage bucket). For anything sent by users in chat, the agent does it.
 #### Document Extraction & Parsing Pipelines
 
 When building pipelines to parse and extract structured data from documents (such as insurance policy documents, CRM onboarding forms, or legal files), there are strict precision, cost, and architecture rules to follow:
-- **Always load the document-pipeline skill:** For tasks requiring document processing and extraction pipelines, **immediately call `learn_skill("p2b-document-pipeline")`** to load the complete document-pipeline guidelines and best practices.
+- **Always load the document-pipeline skill:** For tasks requiring document processing and extraction pipelines, **immediately learn the p2b-document-pipeline skill** to load the complete document-pipeline guidelines and best practices.
 - **Image vs. PDF strategy:** Avoid running heavy vision models directly on raw images (JPG/PNG) when extracting precise structured values. Use OCR-first (Google Cloud Vision OCR) to extract text, and run text models on that text instead. For native PDFs with selectable text, avoid OCR completely and convert them directly to text programmatically.
 - **Model Selection:** Avoid using the latest Claude directly on raw document images as they can occasionally hallucinate or miss details. Prefer the latest Gemini models for native, high-precision structured data extraction over large multimodal document contexts.
 
