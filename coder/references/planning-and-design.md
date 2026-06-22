@@ -231,25 +231,18 @@ fetch("https://api.prompt2bot.com/api", {
 ```
 
 ### Key API endpoints (all use the bot's Remote Tools Secret):
-- **`createRemoteTask`** — Schedule the bot to proactively message a user. Use for reminders, notifications, follow-ups. The `description` is an internal thought the bot acts on — it will compose the actual message.
-  - **WhatsApp Official Integration Template Constraint:** When scheduling a proactive WhatsApp message using `createRemoteTask` with `preferredNetwork: "whatsapp"`, if the target bot only has the official WhatsApp integration (rather than an unofficial WhatsApp line like Supergreen), the outbound message is strictly limited to using pre-approved WhatsApp templates. You MUST consult the prompt2bot API reference/docs (`https://prompt2bot.com/llms.txt`) on how to correctly format template parameters (using `whatsappTemplateName`, `whatsappTemplateLanguage`, and `whatsappTemplateVariables`). Note that creating or adding new templates cannot be done programmatically via the prompt2bot API; they must be created and approved inside the Meta Business Manager before they can be called.
+- **`createRemoteTask`** — Schedule the bot to proactively message a user. Use for reminders, notifications, follow-ups. The `description` is an internal thought the bot acts on — it will compose the actual message. (Note: For WhatsApp-specific template and integration constraints, learn the `p2b-whatsapp` skill).
 - **`injectContext`** — Push context into an active conversation immediately (no queue). Use for real-time reactions to webhooks or delivering deferred tool results.
 - **`setCustomTools`** — Register HTTP tool endpoints on the bot programmatically. Never ask users to add tools in the dashboard. A tool named `remote_config` is special — see "Per-user prompt variation" above.
 - **`setPrompt`** — Set the bot's default system prompt. Call this from CI on every push to `main` so the prompt is always in sync with the repo. For per-conversation variation, use `remote_config` instead — do NOT call `setPrompt` per message.
-- **`setSupergreenWhatsapp`** — Connect a Supergreen WhatsApp line to the bot.
 
 **When creating bots via `create-bot-api`, always pass `checkForHallucinations: true`.** This enables automatic hallucination detection — every bot response is verified by a secondary AI model for factual accuracy. If a hallucination is detected, the bot self-corrects before the user sees the bad response. There is no reason to leave this off.
 
 ---
 
-## WhatsApp: Supergreen vs prompt2bot
+## WhatsApp Integrations
 
-When a user asks to "send something on WhatsApp", first determine whether it's a one-way notification or an interactive experience:
-- **One-way message, no response needed** (e.g. "send a reminder", "notify me when X happens") → use Supergreen directly.
-- **Back-and-forth conversation, tools, or knowledge required** (e.g. "let users ask questions on WhatsApp", "expose my API to WhatsApp users") → use a prompt2bot agent with Supergreen as the WhatsApp channel.
-- **Official WhatsApp Integration Constraint (Templates):** If the target agent uses the official WhatsApp integration (instead of an unofficial connection like Supergreen) and you use the prompt2bot `create-remote-task` API with `preferredNetwork: "whatsapp"`, the outbound message is strictly limited to using pre-approved WhatsApp templates. You MUST consult the prompt2bot API reference/docs (`https://prompt2bot.com/llms.txt`) on how to correctly format template parameters (using `whatsappTemplateName`, `whatsappTemplateLanguage`, and `whatsappTemplateVariables`). Note that creating or adding new templates cannot be done programmatically via the prompt2bot API; they must be created and approved inside the Meta Business Manager before they can be called. Free-form outbound messages will fail outside the 24-hour window.
-
-When using prompt2bot's Supergreen integration, just say you're using prompt2bot — don't mention both services unless the user needs to understand the distinction. If you're unsure or the user is confused, explain it simply: Supergreen is the pipe that sends and receives WhatsApp messages; prompt2bot is the brain that makes the conversation smart. For a simple ping you only need the pipe, but for anything interactive you need the brain too.
+Before doing any work with WhatsApp integrations (including using Supergreen or the official WhatsApp Cloud API), you MUST learn the `p2b-whatsapp` skill to understand the official vs. unofficial pathways, template requirements, and configuration rules.
 
 ---
 
