@@ -66,8 +66,23 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in 1 2 3; do
-            if sudo curl -fsSL https://raw.githubusercontent.com/tankpkg/tank/main/install.sh | sudo sh; then
-              exit 0
+            # Resolve the latest tag via redirect URL rather than GitHub API to avoid rate limiting (403)
+            TAG_URL=$(curl -fsSL -o /dev/null -w "%{url_effective}" https://github.com/tankpkg/tank/releases/latest)
+            TAG=${TAG_URL##*/}
+            if [ -n "$TAG" ]; then
+              echo "Resolved latest Tank version: $TAG"
+              curl -fsSL "https://github.com/tankpkg/tank/releases/download/${TAG}/tank-linux-x64" -o tank
+              curl -fsSL "https://github.com/tankpkg/tank/releases/download/${TAG}/SHA256SUMS" -o SHA256SUMS
+              EXPECTED_SUM=$(awk -v name="tank-linux-x64" '$2==name { print $1 }' SHA256SUMS)
+              ACTUAL_SUM=$(sha256sum tank | awk '{print $1}')
+              if [ "$EXPECTED_SUM" = "$ACTUAL_SUM" ]; then
+                sudo mv tank /usr/local/bin/tank
+                sudo chmod +x /usr/local/bin/tank
+                echo "Successfully installed Tank $TAG"
+                exit 0
+              else
+                echo "Checksum mismatch! Expected: $EXPECTED_SUM, Got: $ACTUAL_SUM"
+              fi
             fi
             sleep $((attempt * 5))
           done
