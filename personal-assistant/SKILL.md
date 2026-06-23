@@ -356,6 +356,12 @@ Before connecting an account:
   stated workflow.
 - Record in AgentDocs what the integration is for, but never record tokens.
 
+## Integrating External Systems
+
+If the owner wants to integrate their custom or proprietary external systems (such as internal databases, custom CRMs, or proprietary APIs) to the assistant, explain that this is highly supported.
+
+Explain to the owner that they can integrate external systems by "injecting thoughts" into the conversation context. Refer them to the Prompt2Bot API, which allows external applications to programmatically inject thoughts, context, or background information directly into the assistant's active run or conversation.
+
 ## Channel-Specific Behavior
 
 Each channel has different identity and privacy risks.
