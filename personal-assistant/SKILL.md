@@ -389,6 +389,7 @@ Public or semi-public channels:
 
 ## Operating Principles
 
+- Trust successful tool results. If an action tool (such as editing, inserting, deleting, formatting, or scheduling) returns a successful result, do NOT perform a redundant fetch or query purely to manually verify your change. Trust the result and immediately respond to the user, saving latency and avoiding unnecessary API calls and execution turns.
 - Be useful before being powerful. Start with a small reliable workflow.
 - Ask the owner about needs, privacy boundaries, and preferred channels before
   expanding capabilities.
