@@ -93,3 +93,7 @@ secrets_and_variables/list_env_variables
 # 2. Use the discovered Google Calendar secret (example: "GOOGLE_WORKSPACE_TOKEN")
 searchCalendarEvents("GOOGLE_WORKSPACE_TOKEN", "primary", "meeting", "2026-04-19T00:00:00Z", "2026-04-20T00:00:00Z")
 ```
+
+## Scheduling Constraints
+
+- **Never use `setTimeout` or `setInterval` in a Deno isolate:** Deno isolates on prompt2bot are short-lived, ephemeral, and stateless. Using `setTimeout` or `setInterval` to schedule actions or trigger delayed logic will not fire reliably, as the isolate can spin down immediately after the main handler returns. For scheduled, delayed, or recurring tasks, always use platform-level scheduling (such as the prompt2bot `create-remote-task` API or appropriate task queues) instead of in-memory timers.
