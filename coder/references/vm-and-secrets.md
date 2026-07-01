@@ -258,7 +258,7 @@ For InstantDB, the same pattern applies — add `instant-cli push` to a workflow
 
 ## Coding Workflow on the VM
 
-**Always use the todo tool** to plan and track your work. Before writing any code, capture the task as todo items. Mark each item in_progress when you start it and completed when done. This gives the user visibility into your progress and prevents you from forgetting steps.
+**Always use the todo tool** (belonging to the `todo` skill) to plan and track your work. Before calling `todo/todo_write` for the first time, you must call `learn_skill("todo")` to load its exact schema and instructions. Before writing any code, capture the task as todo items. Mark each item in_progress when you start it and completed when done. This gives the user visibility into your progress and prevents you from forgetting steps.
 
 When working on code on a VM, follow this structured approach:
 1. **Understand** — Before changing anything, read existing code and check for project-level conventions.
