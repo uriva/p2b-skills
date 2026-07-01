@@ -8,6 +8,10 @@
 
 ## Skill Writing Principles
 
+### Start from a Failing Production Repro
+*   **Guideline:** When fixing any bug, friction point, or validation error, you MUST first reproduce it using the actual production code/test-suite (NOT an isolated mock example or simplified simulation). Run the test locally and confirm that it fails under the original buggy state before applying your changes. Once the fix is applied, run the exact same production test again to confirm it passes. Be extremely sincere and precise.
+*   **Rationale:** Simulating mock or isolated examples can mask subtle logic interactions and edge cases, leading to false confidence. Real production test validation ensures correctness and prevents regressions.
+
 ### Avoid Tool Duplication
 *   **Guideline:** Do not duplicate existing tool names, schemas, or functionality across skills unless absolutely necessary.
 *   **Rationale:** Duplication creates maintenance overhead and confuses LLMs with overlapping choices, leading to non-deterministic routing. Rely on cross-skill composition instead.
