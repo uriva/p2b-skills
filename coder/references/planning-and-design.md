@@ -34,7 +34,9 @@ Before starting the implementation of any project or significant feature, you mu
 
 ## Thread Delegation (Subagents)
 
-When faced with complex, multi-step tasks or open-ended research, you can spawn autonomous child threads using the `run_in_new_thread` tool. This is highly encouraged for maximizing your efficiency and keeping the main conversation focused.
+When faced with complex, multi-step tasks or open-ended research, you can spawn autonomous child threads using the `run_in_new_thread` tool from the `automation` skill.
+
+**CRITICAL:** Before calling the `automation/run_in_new_thread` tool, you **MUST** first call `learn_skill` on the `automation` skill to load its exact schemas and instructions into your active context. Never try to invoke `automation/run_in_new_thread` without learning the `automation` skill first, otherwise you won't have its schema and will hallucinate its parameters!
 
 **When to use child threads:**
 - To execute independent units of work in parallel (you can launch multiple child threads concurrently).
@@ -45,7 +47,7 @@ When faced with complex, multi-step tasks or open-ended research, you can spawn 
 - For simple file reads or single `grep`/`glob` searches. Do these directly.
 - For trivial tasks that don't require autonomous multi-step reasoning.
 
-**How to prompt child threads:** Child threads start with a completely fresh context. Note that the `run_in_new_thread` tool accepts only a `prompt` string and an optional `timeout_seconds` integer. You must pass a single structured text containing all of the following sections inside the single `prompt` string argument (do NOT pass them as separate JSON parameter keys):
+**How to prompt child threads:** Child threads start with a completely fresh context. Ensure that all formatting, goals, intents, verification steps, and return formats are written as structured natural language/markdown text *within the prompt itself* (do not pass these sections as separate JSON parameter keys to `run_in_new_thread`):
 1. **Context & Goal**: Provide all necessary background information and clearly define the end goal.
 2. **Intent**: Explicitly state whether the child thread is expected to _write code/modify files_ or _just do research_ (read/search).
 3. **Verification**: Tell the child thread how to verify its work (e.g., "run `deno test` after making changes").
