@@ -323,3 +323,4 @@ If you need to give the user a URL, the answer is always a proper domain pointin
     - `https://share.streamlit.io` (Streamlit Cloud dashboard)
     - `https://github.com/settings/tokens/new` (GitHub PAT generation)
     - `https://github.com/settings/tokens` (GitHub PAT management)
+    - `https://console.deno.com` (Deno Deploy Console)
