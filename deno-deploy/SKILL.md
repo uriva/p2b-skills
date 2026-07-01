@@ -21,6 +21,8 @@ as an alternative.
 The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
 `deno deploy` authenticates automatically.
 
+**Mandatory safety rule to prevent VM hangs:** Always verify that the `DENO_DEPLOY_TOKEN` environment variable is present (non-empty) in your VM shell before running any `deno deploy` commands (e.g., by running `echo $DENO_DEPLOY_TOKEN` or checking environment variables). If the token is missing, do NOT run any `deno deploy` subcommands (including `whoami`, `orgs list`, or `create`), as they will attempt to run interactively and hang the VM indefinitely. Instead, immediately ask the user to provide their Deno Deploy access token in the chat first!
+
 ```bash
 deno deploy --app=<slug> --prod           # Deploy current directory
 deno deploy create <slug>                 # Create an app
