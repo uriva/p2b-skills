@@ -131,7 +131,7 @@ slugs.
 
 Valid tokens start with `ddo_` (e.g. `ddo_abc123...`). If a user gives you a
 token that doesn't start with `ddo_`, it's wrong — likely from the old Deno
-dashboard (dash.deno.com), which is deprecated. The correct place to
+dashboard, which is deprecated. The correct place to
 create a token is the **new** Deno Deploy console at
 **https://console.deno.com**.
 
@@ -142,7 +142,7 @@ Walk the user through the token generation steps:
 2. Go to the account settings / access tokens page at **https://console.deno.com/account/tokens**.
 3. Create a new token, copy it (it will start with `ddo_`), and paste it here.
 
-This is a common friction point — users often end up on the old dash.deno.com instead of console.deno.com, paste the wrong value, or hit 404s due to a missing organization.
+This is a common friction point — users often end up on the old deprecated dashboard instead of console.deno.com, paste the wrong value, or hit 404s due to a missing organization.
 
 ### v2 REST API
 
