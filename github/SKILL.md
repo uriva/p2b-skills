@@ -68,8 +68,10 @@ Use `createGithubIssue`, `addGithubIssueComment`, and `createGithubPullRequest`
 for project-management tasks instead of shelling out to `curl`. This avoids VM
 state issues and command-length limits for long issue/comment bodies.
 
-Use `createGithubRepository` to create a new repository under the authenticated user's account. This automatically initializes the repository with a default `main` branch and a `README.md` file to prevent subsequent commit errors.
+Use `createGithubRepository` to create a new repository under the specified owner. This automatically initializes the repository with a default `main` branch and a `README.md` file to prevent subsequent commit errors.
 
-Pass `private` as `true` (default) to create a private repository, or `false` for a public repository.
+Pass `isPrivate` as `true` (default) to create a private repository, or `false` for a public repository.
+
+**(Note on Personal Accounts)**: GitHub Apps are restricted by platform policy from programmatically creating repositories on personal (non-organization) accounts. If `createGithubRepository` returns a `PERSONAL_ACCOUNT_RESTRICTION` error, you must explain this to the user and instruct them to manually create a private repository named `<repo_name>` at `https://github.com/new` with 'Add a README file' checked. This avoids 403 authorization failures and empty-repository commit errors.
 
 Pass `issueNumber` as a string, for example `"11"`.
