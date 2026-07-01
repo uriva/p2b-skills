@@ -62,6 +62,17 @@ writeGithubFile = (githubToken: string, owner: string, repo: string, branch: str
   refPath = branchRefPath(owner, repo, branch)
   refRes = httpRequest({ host: "api.github.com", method: "GET", path: refPath, headers: githubHeaders(githubToken) })
   refOk = refRes.status == 200
+  
+  // If the ref is not found (404), fallback to the Contents API (creates file in empty repo)
+  urlSafe = refOk ? { encoded: "" } : base64urlEncode({ text: content })
+  withPlus = refOk ? { result: "" } : stringReplace({ haystack: urlSafe.encoded, needle: "-", replacement: "+", all: true })
+  withSlash = refOk ? { result: "" } : stringReplace({ haystack: withPlus.result, needle: "_", replacement: "/", all: true })
+  fallbackBody = refOk ? { text: "" } : jsonStringify({ value: { message: commitMessage, content: withSlash.result, branch: branch } })
+  fallbackPath = refOk ? "" : stringConcat({ parts: ["/contents/", path] }).result
+  fallbackRes = refOk ? { status: 0, body: "" } : httpRequest({ host: "api.github.com", method: "PUT", path: repoPath(owner, repo, fallbackPath), headers: githubHeaders(githubToken), body: fallbackBody.text })
+  fallbackOk = fallbackRes.status == 201
+  fallbackParsed = fallbackOk ? jsonParse(fallbackRes.body) : { value: { content: { html_url: "" } } }
+  
   refParsed = refOk ? jsonParse(refRes.body) : { value: { object: { sha: "" } } }
   headSha = refParsed.value.object.sha
 
@@ -87,7 +98,7 @@ writeGithubFile = (githubToken: string, owner: string, repo: string, branch: str
   updateRes = newCommitOk ? httpRequest({ host: "api.github.com", method: "PATCH", path: refPath, headers: githubHeaders(githubToken), body: updateBody.text }) : { status: 0, body: newCommitRes.body }
   errorStep = refOk ? (commitOk ? (treeOk ? (newCommitOk ? "update_ref" : "create_commit") : "create_tree") : "get_commit") : "get_ref"
   errorBody = stringConcat({ parts: ["GITHUB_WRITE_FILE_ERROR ", errorStep, ": ", updateRes.body] })
-  return updateRes.status == 200 ? { success: true, result: newCommitParsed.value.html_url, error: "" } : { success: false, result: "", error: errorBody.result }
+  return refOk ? (updateRes.status == 200 ? { success: true, result: newCommitParsed.value.html_url, error: "" } : { success: false, result: "", error: errorBody.result }) : (fallbackOk ? { success: true, result: fallbackParsed.value.content.html_url, error: "" } : { success: false, result: "", error: stringConcat({ parts: ["GITHUB_WRITE_FILE_ERROR fallback_contents: ", fallbackRes.body] }).result })
 }
 
 patchGithubFile = (githubToken: string, owner: string, repo: string, branch: string, path: string, searchText: string, replaceText: string, replaceAll: boolean, commitMessage: string): { success: boolean, result: string, error: string } => {
