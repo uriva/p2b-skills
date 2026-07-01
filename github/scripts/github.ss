@@ -128,10 +128,20 @@ createGithubPullRequest = (githubToken: string, owner: string, repo: string, tit
   return res.status == 201 ? { success: true, result: parsed.value.html_url, error: "" } : { success: false, result: "", error: error.result }
 }
 
-createGithubRepository = (githubToken: string, repo_name: string, private: boolean = true): { success: boolean, result: string, error: string } => {
-  requestBody = jsonStringify({ value: { name: repo_name, private: private, auto_init: true } })
-  res = httpRequest({ host: "api.github.com", method: "POST", path: "/user/repos", headers: githubHeaders(githubToken), body: requestBody.text })
-  parsed = res.status == 201 ? jsonParse(res.body) : { value: { html_url: "" } }
-  error = stringConcat({ parts: ["GITHUB_CREATE_REPOSITORY_ERROR: ", res.body] })
-  return res.status == 201 ? { success: true, result: parsed.value.html_url, error: "" } : { success: false, result: "", error: error.result }
+createGithubRepository = (githubToken: string, owner: string, repo_name: string, isPrivate: boolean): { success: boolean, result: string, error: string } => {
+  userPath = stringConcat({ parts: ["/users/", owner] })
+  userRes = httpRequest({ host: "api.github.com", method: "GET", path: userPath.result, headers: githubHeaders(githubToken) })
+  userOk = userRes.status == 200
+  userParsed = userOk ? jsonParse(userRes.body) : { value: { type: "" } }
+  isOrg = userParsed.value.type == "Organization"
+  
+  createPath = isOrg ? stringConcat({ parts: ["/orgs/", owner, "/repos"] }).result : ""
+  createBody = jsonStringify({ value: { name: repo_name, private: isPrivate, auto_init: true } })
+  createRes = isOrg ? httpRequest({ host: "api.github.com", method: "POST", path: createPath, headers: githubHeaders(githubToken), body: createBody.text }) : { status: 0, body: "" }
+  createOk = createRes.status == 201
+  createParsed = createOk ? jsonParse(createRes.body) : { value: { html_url: "" } }
+  
+  errorMsg = isOrg ? stringConcat({ parts: ["GITHUB_CREATE_REPOSITORY_ERROR: ", createRes.body] }).result : stringConcat({ parts: ["PERSONAL_ACCOUNT_RESTRICTION: GitHub Apps cannot programmatically create repositories on personal accounts like ", owner, ". Please create the repository manually at https://github.com/new, name it \"", repo_name, "\", set it to Private, and check \"Add a README file\" so it is initialized."] }).result
+  
+  return createOk ? { success: true, result: createParsed.value.html_url, error: "" } : { success: false, result: "", error: errorMsg }
 }
