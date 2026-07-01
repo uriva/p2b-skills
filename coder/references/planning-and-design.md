@@ -45,7 +45,7 @@ When faced with complex, multi-step tasks or open-ended research, you can spawn 
 - For simple file reads or single `grep`/`glob` searches. Do these directly.
 - For trivial tasks that don't require autonomous multi-step reasoning.
 
-**How to prompt child threads:** Child threads start with a completely fresh context. Your prompt to `run_in_new_thread` must be extremely explicit:
+**How to prompt child threads:** Child threads start with a completely fresh context. Note that the `run_in_new_thread` tool accepts only a `prompt` string and an optional `timeout_seconds` integer. You must pass a single structured text containing all of the following sections inside the single `prompt` string argument (do NOT pass them as separate JSON parameter keys):
 1. **Context & Goal**: Provide all necessary background information and clearly define the end goal.
 2. **Intent**: Explicitly state whether the child thread is expected to _write code/modify files_ or _just do research_ (read/search).
 3. **Verification**: Tell the child thread how to verify its work (e.g., "run `deno test` after making changes").
