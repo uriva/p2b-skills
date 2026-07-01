@@ -129,6 +129,11 @@ When building or integrating with agents that use remote skills or tools, **you 
 
 This keeps the bot's behavior version-controlled, reviewable in PRs, and reproducible across environments. The dashboard becomes a read-only view for debugging, not a place where configuration lives.
 
+### Deployment Verification (CRITICAL)
+- **Never claim a deployed service is running or live based on assumptions or simply because the code was pushed to main.**
+- You **MUST** write and execute a quick script (using Safescript or any code execution tool) that performs an HTTP `fetch` against the deployed endpoint.
+- Verify that the live endpoint actually responds successfully with a `200 OK` status before presenting the link or announcing completion to the user. If it fails with `404` or `503`, check if repository secrets are missing, wait for JSR CDN propagation, or guide the user on necessary steps.
+
 **Typical repo layout for a two-legged system:**
 ```
 my-bot/
