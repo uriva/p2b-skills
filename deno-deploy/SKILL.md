@@ -131,12 +131,18 @@ slugs.
 
 Valid tokens start with `ddo_` (e.g. `ddo_abc123...`). If a user gives you a
 token that doesn't start with `ddo_`, it's wrong — likely from the old Deno
-Deploy dashboard (dash.deno.com), which is deprecated. The correct place to
+dashboard (dash.deno.com), which is deprecated. The correct place to
 create a token is the **new** Deno Deploy console at
-**https://console.deno.com**. Walk the user through it: go to that URL, find
-Access Tokens in account settings, create a new token, and copy it (it will
-start with `ddo_`). This is a common friction point — users often end up on the
-old dash.deno.com instead of console.deno.com, or paste the wrong value.
+**https://console.deno.com**.
+
+**Critical organization requirement:** Deno Deploy console organizes all apps and resources under organizations. If a user has not created an organization on the new console yet, visiting settings or token pages directly will result in a `404 ORGANIZATION_NOT_FOUND` error. Therefore, you **MUST** instruct the user to first sign up/sign in to `https://console.deno.com` and ensure they have created a new organization before generating a token.
+
+Walk the user through the token generation steps:
+1. Log in to **https://console.deno.com** and ensure an organization is created.
+2. Go to the account settings / access tokens page at **https://console.deno.com/account/tokens**.
+3. Create a new token, copy it (it will start with `ddo_`), and paste it here.
+
+This is a common friction point — users often end up on the old dash.deno.com instead of console.deno.com, paste the wrong value, or hit 404s due to a missing organization.
 
 ### v2 REST API
 
