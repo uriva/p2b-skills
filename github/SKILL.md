@@ -46,6 +46,7 @@ The token must have access to the repository and must allow requests to
 - `createGithubIssue`: creates a GitHub issue.
 - `addGithubIssueComment`: adds a comment to an issue or pull request.
 - `createGithubPullRequest`: creates a pull request.
+- `createGithubRepository`: creates and automatically initializes a new repository (with a default main branch and README.md).
 - `patchTextForTest`: pure helper used for testing patch semantics.
 
 ## Editing Rules
@@ -66,5 +67,9 @@ than a precise patch.
 Use `createGithubIssue`, `addGithubIssueComment`, and `createGithubPullRequest`
 for project-management tasks instead of shelling out to `curl`. This avoids VM
 state issues and command-length limits for long issue/comment bodies.
+
+Use `createGithubRepository` to create a new repository under the authenticated user's account. This automatically initializes the repository with a default `main` branch and a `README.md` file to prevent subsequent commit errors.
+
+Pass `private` as `true` (default) to create a private repository, or `false` for a public repository.
 
 Pass `issueNumber` as a string, for example `"11"`.

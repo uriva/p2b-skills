@@ -127,3 +127,11 @@ createGithubPullRequest = (githubToken: string, owner: string, repo: string, tit
   error = stringConcat({ parts: ["GITHUB_CREATE_PULL_REQUEST_ERROR: ", res.body] })
   return res.status == 201 ? { success: true, result: parsed.value.html_url, error: "" } : { success: false, result: "", error: error.result }
 }
+
+createGithubRepository = (githubToken: string, repo_name: string, private: boolean = true): { success: boolean, result: string, error: string } => {
+  requestBody = jsonStringify({ value: { name: repo_name, private: private, auto_init: true } })
+  res = httpRequest({ host: "api.github.com", method: "POST", path: "/user/repos", headers: githubHeaders(githubToken), body: requestBody.text })
+  parsed = res.status == 201 ? jsonParse(res.body) : { value: { html_url: "" } }
+  error = stringConcat({ parts: ["GITHUB_CREATE_REPOSITORY_ERROR: ", res.body] })
+  return res.status == 201 ? { success: true, result: parsed.value.html_url, error: "" } : { success: false, result: "", error: error.result }
+}
