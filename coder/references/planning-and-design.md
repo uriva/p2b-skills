@@ -125,6 +125,7 @@ When building or integrating with agents that use remote skills or tools, **you 
 - **Never ask users to paste prompts or tools into the dashboard by hand.**
 - Both the backend server and the bot's prompt/tools should be configured by CI on push to `main`:
   - **Backend code** is deployed to Deno Deploy automatically on push (GitHub integration).
+  - **Automated InstantDB Schema & Perms Push:** If the application uses InstantDB, you **MUST** include an automated step in your GitHub Actions deployment pipeline (`deploy.yml`) that executes **`instant-cli push`** to automatically deploy the latest database schemas and permissions to production on every push to `main`. Never rely on manual database updates.
   - **Bot prompt and custom tools** are pushed by a CI step that calls `setPrompt` and `setCustomTools` against the prompt2bot API, using the bot's Remote Tools Secret stored as a GitHub Actions secret.
 
 This keeps the bot's behavior version-controlled, reviewable in PRs, and reproducible across environments. The dashboard becomes a read-only view for debugging, not a place where configuration lives.
