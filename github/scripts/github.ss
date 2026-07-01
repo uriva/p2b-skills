@@ -146,13 +146,13 @@ createGithubRepository = (githubToken: string, owner: string, repo_name: string,
   userParsed = userOk ? jsonParse(userRes.body) : { value: { type: "" } }
   isOrg = userParsed.value.type == "Organization"
   
-  createPath = isOrg ? stringConcat({ parts: ["/orgs/", owner, "/repos"] }).result : ""
+  createPath = isOrg ? stringConcat({ parts: ["/orgs/", owner, "/repos"] }).result : "/user/repos"
   createBody = jsonStringify({ value: { name: repo_name, private: isPrivate, auto_init: true } })
-  createRes = isOrg ? httpRequest({ host: "api.github.com", method: "POST", path: createPath, headers: githubHeaders(githubToken), body: createBody.text }) : { status: 0, body: "" }
+  createRes = httpRequest({ host: "api.github.com", method: "POST", path: createPath, headers: githubHeaders(githubToken), body: createBody.text })
   createOk = createRes.status == 201
   createParsed = createOk ? jsonParse(createRes.body) : { value: { html_url: "" } }
   
-  errorMsg = isOrg ? stringConcat({ parts: ["GITHUB_CREATE_REPOSITORY_ERROR: ", createRes.body] }).result : stringConcat({ parts: ["PERSONAL_ACCOUNT_RESTRICTION: GitHub Apps cannot programmatically create repositories on personal accounts like ", owner, ". Please create the repository manually at https://github.com/new, name it \"", repo_name, "\", set it to Private, and check \"Add a README file\" so it is initialized."] }).result
+  errorMsg = stringConcat({ parts: ["GITHUB_CREATE_REPOSITORY_ERROR: ", createRes.body] }).result
   
   return createOk ? { success: true, result: createParsed.value.html_url, error: "" } : { success: false, result: "", error: errorMsg }
 }

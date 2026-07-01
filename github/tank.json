@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-github",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/github",
   "description": "GitHub repository, issue, comment, and pull request tools using safescript. Includes repoInstructions to fetch a repo's agent instruction files (AGENTS.md, CLAUDE.md, etc.).",
   "visibility": "public",
