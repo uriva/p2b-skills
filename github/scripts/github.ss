@@ -141,7 +141,7 @@ createGithubPullRequest = (githubToken: string, owner: string, repo: string, tit
 
 createGithubRepository = (githubToken: string, owner: string, repo_name: string, isPrivate: boolean): { success: boolean, result: string, error: string } => {
   userPath = stringConcat({ parts: ["/users/", owner] })
-  userRes = httpRequest({ host: "api.github.com", method: "GET", path: userPath.result, headers: githubHeaders(githubToken), body: "" })
+  userRes = httpRequest({ host: "api.github.com", method: "GET", path: userPath.result, headers: githubHeaders(githubToken) })
   userOk = userRes.status == 200
   userParsed = userOk ? jsonParse(userRes.body) : { value: { type: "" } }
   isOrg = userParsed.value.type == "Organization"
