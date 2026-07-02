@@ -156,10 +156,13 @@ has actually burned a real deployment.
   "apps.setEnvVariables"` when trying to set env vars via a tRPC call.
 - **Why:** Version-dependent. On the **old CLI (v0.0.99)** `--non-interactive`
   does not exist and is misparsed as a positional `[root-path]`. On the
-  **modern CLI (≥ 0.0.9901, what CI and current VMs run)** `--non-interactive`
-  is valid and you SHOULD pass it. Regardless of version, `env` has no `set`
-  subcommand and does not accept `KEY=VALUE`, and there is no
-  `apps.setEnvVariables` tRPC procedure.
+  **modern CLI (≥ 0.0.9901)** `--non-interactive` is valid and you SHOULD pass
+  it; on **≥ 0.0.9902** also pass `--apply` for any `create`/`deploy` that must
+  provision cloud resources (without it a non-interactive run refuses and exits).
+  VMs run the base-image shim (≥ 0.0.9902); CI's stock deno pins the built-in to
+  0.0.9901, so pin explicitly there (`deno run -A jsr:@deno/deploy@0.0.9902`, see
+  #14). Regardless of version, `env` has no `set` subcommand and does not accept
+  `KEY=VALUE`, and there is no `apps.setEnvVariables` tRPC procedure.
 - **Fix:**
   - Prefer the VM-less `setDenoDeployEnvVar` / `getDenoDeployApp` safescript tools
     (or REST `PATCH/GET https://api.deno.com/v2/apps/<slug>`) — no CLI, no hang.
@@ -195,18 +198,24 @@ has actually burned a real deployment.
   spinner for minutes afterward until the job hits `timeout-minutes` and GitHub
   reports `The operation was canceled`. The build is red despite a successful
   deploy.
-- **Why:** A confirmed bug in the deploy CLI (reproduced locally on deno 2.9.1
-  with `@deno/deploy@0.0.9901` and in CI). After a successful deploy the CLI's
-  success path never calls `Deno.exit(0)` and leaks open handles (an
-  `EventSource`/tRPC subscription + a progress-bar timer), so the process stays
-  alive forever. The failure path DOES `Deno.exit(1)`; only success hangs.
-  **`--no-wait` does NOT fix it** — the upload path leaks too (verified).
-- **Fix:** Do NOT rely on the CLI exiting. Wrap the deploy in `timeout` and key
-  success off the "Successfully uploaded/deployed" marker rather than the exit
-  code — a post-success `timeout` expiry (exit 124) means success, not failure.
-  Use the `timeout`-wrapped Deploy step from the canonical workflow in the main
-  skill (`SKILL.md` → "The canonical workflow"). Never emit a bare
-  `run: deno deploy --app --org --prod` as the CI Deploy step.
+- **Why:** A confirmed bug in `@deno/deploy@0.0.9901` (reproduced locally on deno
+  2.9.1 and in CI). After a successful deploy the 9901 success path never calls
+  `Deno.exit(0)` and leaks open handles (an `EventSource`/tRPC subscription + a
+  progress-bar timer), so the process stays alive forever. The failure path DOES
+  `Deno.exit(1)`; only success hangs. **`--no-wait` does NOT fix it** — the
+  upload path leaks too (verified). The trap: the `deno` binary PINS its built-in
+  `deno deploy` to a specific CLI version (deno 2.9.1 → 0.0.9901), so a stock
+  `denoland/setup-deno` in CI silently gets the hanging CLI.
+- **Fix:** Use `@deno/deploy@0.0.9902`, which calls `Deno.exit(0)` after a
+  successful deploy (verified in the JSR source). Because the built-in
+  `deno deploy` is still pinned to 9901, invoke the fixed CLI EXPLICITLY:
+  `deno run -A jsr:@deno/deploy@0.0.9902 --app --org --prod --non-interactive
+  --apply`. Then key success off the normal exit code (no marker grep needed);
+  keep `timeout` + `timeout-minutes` only as insurance. Never emit a bare
+  `run: deno deploy … --prod` as the CI Deploy step — that runs the pinned 9901
+  and hangs. On VMs the base image already shims `deno deploy` to 9902, so a bare
+  `deno deploy` there is fine; the explicit `deno run` pin is specifically for
+  CI's stock deno. See `SKILL.md` → "The canonical workflow".
 
 ## 15. `invalidToken` from `curl` to a NON-v2 REST path (token is fine)
 

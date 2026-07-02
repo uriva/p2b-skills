@@ -86,23 +86,23 @@ Deploys and app creation run in CI (see "Deployments are CI-only" below). For
 app/env-var inspection and changes, **prefer the VM-less safescript tools
 above** over the CLI. If you do use the CLI on a VM, follow these rules:
 
-**Always wrap every VM `deno deploy` command in `timeout`.** The CLI has NO
-internal request timeout, so a stalled call blocks forever (you must otherwise
-`pkill` it). Bound it: `timeout 120 deno deploy … < /dev/null`.
-
-**There is NO `--non-interactive` flag on the CLI baked into older VM images**
-(it exists only in `deno deploy` ≥ 0.0.9901). On the old CLI, passing it makes
-the word a positional `[root-path]` → `readdir '--non-interactive'`. To run
-non-interactively, supply every REQUIRED flag AND close stdin with `< /dev/null`.
+The VM base image shims `deno deploy` to ≥ 0.0.9902, which exits cleanly after a
+successful deploy, adds `--apply` (authorize non-interactive resource creation
+without a prompt), and `logs --once` (drain current logs then exit). Still wrap
+every VM `deno deploy` in `timeout … < /dev/null` as insurance. Pass
+`--non-interactive` (fast-fail on missing input) plus, for `create`/`deploy`
+that provision cloud resources, `--apply` (without it a non-interactive run
+refuses and exits). Always supply every REQUIRED flag.
 
 ```bash
-timeout 300 deno deploy --app=<slug> --org=<org> --prod < /dev/null                        # Deploy
-timeout 180 deno deploy create --app=<slug> --org=<org> --source local --region global < /dev/null  # Create app
-timeout 120 deno deploy logs --app=<slug> --org=<org> < /dev/null                          # Tail logs
+timeout 300 deno deploy --app=<slug> --org=<org> --prod --non-interactive --apply < /dev/null   # Deploy (exits 0 on success)
+timeout 180 deno deploy create --app=<slug> --org=<org> --source local --region global --non-interactive --apply < /dev/null  # Create app
+timeout 120 deno deploy logs --app=<slug> --org=<org> --once --non-interactive < /dev/null       # Capture current logs then exit
 ```
 
-`deno deploy create` REQUIRES `--source` (use `--source local`) and `--region`
-(one of `us`, `eu`, `global`) in addition to `--app`/`--org`.
+`deno deploy create` REQUIRES `--source local` and `--region` (`us`|`eu`|`global`)
+plus `--app`/`--org`. Use `logs --once` (not a bare `logs`, which tails forever)
+for a bounded snapshot; widen with `--start`.
 
 **Why the `env` CLI hangs (use the safescript tools / REST instead):**
 `deno deploy env list`/`env add` make a **streaming tRPC call** to
@@ -271,41 +271,41 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: 2.x
-      # Create the app if missing. Every required flag + closed stdin means it
-      # can't prompt/hang; CONFLICT (exit 5) = already exists, so `|| true`.
+      # The `deno` binary pins its built-in `deno deploy` to an OLD Deploy CLI
+      # (2.9.x -> 0.0.9901) that HANGS after a successful `--prod` deploy. Pin the
+      # fixed CLI (>= 0.0.9902: clean exit on success, `--apply`) explicitly via
+      # `deno run` so CI does not inherit the stale built-in. (common-mistakes #14)
+      # Create the app if missing. Every required flag + `--apply` + closed stdin
+      # means it can't prompt/hang; CONFLICT (exit 5) = already exists, so `|| true`.
       - name: Ensure app exists
         run: |
-          deno deploy create --app=<slug> --org=<org> \
-            --source local --region global --json < /dev/null || true
+          deno run -A jsr:@deno/deploy@0.0.9902 create --app=<slug> --org=<org> \
+            --source local --region global --json --non-interactive --apply < /dev/null || true
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
-      # `deno deploy --prod` leaks a handle and never exits after success (it
-      # hangs till timeout-minutes though the deploy landed). Wrap in `timeout`
-      # and key success off the marker, not the exit code. (common-mistakes #14)
+      # 0.0.9902 exits 0 after a successful deploy, so key success off the exit
+      # code. `timeout` stays as insurance only. Never use the built-in
+      # `deno deploy` here (it is 0.0.9901 and hangs after success).
       - name: Deploy
         run: |
-          set -uo pipefail
-          log="$(mktemp)"
-          timeout 180 deno deploy --app=<slug> --org=<org> --prod \
-            --non-interactive < /dev/null 2>&1 | tee "$log"
-          code="${PIPESTATUS[0]}"
-          if grep -qiE "Successfully (uploaded|deployed)" "$log"; then exit 0; fi
-          echo "::error::deno deploy did not confirm upload (exit $code)." >&2
-          exit "${code:-1}"
+          set -euo pipefail
+          timeout 300 deno run -A jsr:@deno/deploy@0.0.9902 --app=<slug> --org=<org> \
+            --prod --non-interactive --apply < /dev/null
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
 ```
 
 Non-negotiable details for CI (they prevent hangs and "app not found"):
 
-- **`deno deploy --prod` does not exit after success — always wrap it in
-  `timeout` and key success off the "Successfully uploaded/deployed" marker, not
-  the exit code** (confirmed CLI bug; `--no-wait` does not fix it). Use the
-  Deploy step above verbatim; never a bare `deno deploy ... --prod`. Detail +
-  repro in `common-mistakes.md` #14.
-- CI runs a modern `deno`, so pass `--non-interactive` (fast-fail) + `< /dev/null`
-  + every required flag (`create`: `--source local --region global --app --org`).
-  Give the job `timeout-minutes: 10`.
+- **Never call the built-in `deno deploy` in CI.** `denoland/setup-deno` gives a
+  stock `deno` whose built-in Deploy CLI is 0.0.9901, which HANGS after a
+  successful `--prod` deploy (runs until `timeout-minutes`). Invoke the fixed CLI
+  explicitly: `deno run -A jsr:@deno/deploy@0.0.9902 …`. It `Deno.exit(0)`s after
+  success, so key success off the exit code (no marker grep). See
+  `common-mistakes.md` #14.
+- Pass `--non-interactive` + `--apply` (authorize resource creation) + `<
+  /dev/null` + every required flag (`create`: `--source local --region global
+  --app --org`). Keep `timeout-minutes: 10` as insurance.
 - **Always pass both `--app` and `--org`** — omitting `--org` causes NOT_FOUND
   even when the app exists.
 - Exit codes: `0` OK, `3` AUTH, `4` NOT_FOUND, `5` CONFLICT (already exists) —
@@ -330,16 +330,16 @@ the **`deploy`** step positional-free (the `timeout`-wrapped step above).
   ```yaml
   - name: Ensure app exists
     run: |
-      deno deploy create --app=<slug> --org=<org> \
+      deno run -A jsr:@deno/deploy@0.0.9902 create --app=<slug> --org=<org> \
         --source local --runtime-mode static --static-dir out \
-        --region global --json < /dev/null || true
+        --region global --json --non-interactive --apply < /dev/null || true
     env:
       DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
   ```
   (use `--static-dir dist` for Vite, `--single-page-app` for a client-routed
-  SPA). The `deploy` step is unchanged — still the `timeout`-wrapped Deploy step
-  from the canonical workflow above (never a bare `deno deploy --prod`, which
-  hangs after success).
+  SPA). The `deploy` step is unchanged — still the pinned `deno run -A
+  jsr:@deno/deploy@0.0.9902 … --prod` step above (never the built-in
+  `deno deploy`, which is 0.0.9901 and hangs after success).
 
 - **Framework with a build step** (let Deno detect/run the build):
   add `--framework-preset <preset>` (and optionally `--build-command`) to the

@@ -53,17 +53,17 @@ curl -s -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
 
 **Before doing any work with Deno Deploy (including listing apps, creating apps, deploying, or setting env variables), you MUST acquire and activate the dedicated Deno Deploy skill (`p2b-deno-deploy`), which holds the complete Deno Deploy guidelines and CLI reference.** If that skill is already among your available skills, learn it. If it is not available yet, install it from the community registry (Tank) first, then learn it. Do not attempt any Deno Deploy work from general knowledge — its guidelines are mandatory.
 
-The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so `deno deploy` authenticates automatically.
+The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so `deno deploy` authenticates automatically. The VM's `deno deploy` is the base-image shim (≥ 0.0.9902): it exits 0 after a successful deploy, supports `--apply` (authorize non-interactive resource creation), and `logs --once` (drain then exit). Pass `--non-interactive --apply` for `create`/`deploy`.
 
 ```bash
-deno deploy --app=<slug> --prod                      # Deploy current directory
-deno deploy create <slug>                            # Create an app
+deno deploy --app=<slug> --prod --non-interactive --apply   # Deploy current directory (exits 0 on success)
+deno deploy create <slug> --non-interactive --apply         # Create an app
 deno deploy env add <KEY> "<VALUE>" [--secret]       # Set a plain text or secret environment variable
 deno deploy env load <file_path> [--non-secrets ...] # Load variables from a .env file (treats as secrets by default)
 deno deploy env list                                 # List environment variables
 deno deploy env update-value <KEY> "<VALUE>"         # Update the value of an existing variable
 deno deploy env delete <KEY>                         # Delete an environment variable
-deno deploy logs --app=<slug>                        # Tail logs (live stream - will hang in non-interactive VM)
+deno deploy logs --app=<slug> --once                 # Capture current logs then exit (bounded; bare `logs` tails forever)
 ```
 
 ### `instant-cli` — InstantDB CLI
@@ -97,9 +97,11 @@ When a custom tool fails or an integration doesn't seem to work, you must inspec
 - **Ensure custom tool schemas are Gemini-safe (CRITICAL):** When writing JSON schemas or parameters for custom/remote tools, be extremely careful: **Gemini does NOT support `anyOf`, `oneOf`, or nested `const` in function declarations.** Always define flat, simple, strongly-typed parameters (like strings, booleans, arrays, or numbers) with flat `enum` types instead of complex union types (like `z.union`) to prevent terminal Google API schema-validation crashes (`INVALID_ARGUMENT` / `Unknown name "const" / Cannot find field`).
 - **Verify channel capabilities and tokens before testing (WhatsApp):** Before doing any work with WhatsApp integrations, you MUST learn the `p2b-whatsapp` skill to understand official/unofficial integration paths, token configuration, and template/capability constraints. Programmatically verify that the target bot actually has its WhatsApp for Business Token (`whatsappForBusinessToken`) or other necessary tokens configured in InstantDB before claiming that a message flow is working.
 - **Never use standard live-stream tail commands:** Running raw `deno deploy logs --app=<slug>` opens an infinite live connection. This will hang in a non-interactive VM, resulting in timeouts or connection-read errors (e.g., `TypeError: error reading a body from connection`).
-- **Fetch historical log slices instead:** To debug errors and see past logs (for example, to inspect the HTTP 400 error payload from 5 minutes ago), always fetch a specific window of historical logs using the `--start` and `--end` flags. The command will output the logs in that window and immediately terminate:
+- **Use `--once` (or a `--start`/`--end` window) for bounded logs:** The VM CLI (≥ 0.0.9902) supports `--once`, which drains the currently-available logs and then exits — the right default for a non-interactive VM. Add `--start`/`--end` to widen or bound the window. Both terminate on their own:
   ```bash
-  # Get historical logs for the last 15 minutes and immediately exit:
+  # Drain the last hour of logs and exit:
+  deno deploy logs --app=<slug> --once
+  # Or a specific 15-minute window (also exits immediately):
   deno deploy logs --app=<slug> --start="$(date -u -d '15 minutes ago' +'%Y-%m-%dT%H:%M:%SZ')" --end="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
   ```
 - **Never guess dashboard states on empty/failed logs:** If you cannot find any logged requests or if log-fetching fails, **do not assume** the tool has been turned off or disabled in the user's dashboard. Do not ask the user for screenshots of the settings page or instruct them to check dashboard toggles. Instead, programmatically check your local code configuration:
