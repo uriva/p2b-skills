@@ -55,11 +55,11 @@ These do NOT deploy code — a production deploy still runs through CI (see
   wrong URL scheme, VM/CI hangs, slug guessing, ephemeral deploys) with symptom →
   cause → fix. **Load and skim it before any deploy** and re-check whenever a
   deploy misbehaves — most incidents are one of these.
-- `build-config.md`: Build/entrypoint configuration for Deno Deploy, excluding
-  heavy frontend deps from the root `deno.json`, lockfile sync, VM CLI-loop
-  prevention, and the Next.js default-framework policy. **Read it when setting up
-  a project's build/entrypoint** or the Deploy compiler crashes/hangs on
-  frontend deps.
+- `build-config.md`: Build/entrypoint config, excluding heavy frontend deps from
+  root `deno.json`, lockfile sync, VM CLI-loop prevention, Next.js default-framework
+  policy, and **§6 making a Next.js build succeed under Deno** (`.mjs` config, skip
+  the crashing type-check/lint, keep client-only hooks out of prerender). **Read
+  when setting up a build/entrypoint, using Next.js, or a revision fails** (see #16).
 
 ## Instructions
 

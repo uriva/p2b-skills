@@ -239,3 +239,28 @@ has actually burned a real deployment.
   curl means wrong path, not a bad token. Prefer the VM-less safescript tools,
   which target `/v2/` correctly. Do not tell the user to regenerate a `ddo_`
   token on the basis of a non-v2 curl failure.
+
+## 16. Next.js `next build` fails on Deno's builder AFTER a clean upload
+
+- **Symptom:** The deploy CLI prints `✔ Successfully uploaded` and a build URL,
+  then `✗ The revision failed`. The build log (`GET
+  https://api.deno.com/v2/revisions/<id>/build_logs`) shows one of:
+  (a) `✓ Compiled successfully` → `Linting and checking validity of types ...`
+  → `Cannot read properties of undefined (reading 'bold')`; (b)
+  `TypeError: <x>.useQuery is not a function` / `Error occurred prerendering
+  page "/"`; or (c) `module is not defined` while loading `next.config.js`.
+  The agent wrongly suspects the token, the CLI hang, or an approval gate —
+  none of which are involved; the upload already succeeded.
+- **Why:** These are Next-on-Deno build-time bugs, independent of Deploy auth/CLI.
+  (a) `next build`'s type-check/lint pass crashes under Deno
+  (vercel/next.js#72591). (b) Next 14 App Router prerenders `"use client"` pages
+  at build time, so a client-only data hook (InstantDB `useQuery`, any
+  WebSocket/browser API) throws during prerender. (c) Deno loads a bare
+  `next.config.js` as ESM, so `module.exports` is undefined.
+- **Fix:** Configure for all three before the first deploy (see build-config.md
+  §6): use `next.config.mjs` with `export default`; set
+  `typescript.ignoreBuildErrors` + `eslint.ignoreDuringBuilds`; and keep
+  client-only hooks out of prerender by gating the data component behind a
+  client-mount check. To diagnose any failed revision, always pull
+  `/v2/revisions/<id>/build_logs` — the CLI output alone won't show the real
+  cause.

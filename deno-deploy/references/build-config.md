@@ -70,3 +70,37 @@ framework for a new dynamic project.
 ## 5. Next.js as the Default Framework for Dynamic Projects
 * **Standard Decision:** For all new project architectures that require dynamic content, blog posts, documentation pages, dynamically generated specifications (like `/llms.txt`), dynamic OpenGraph (OG) image generation, or search engine indexing (SEO), **Next.js must be configured as the default framework**.
 * **Reasoning:** Next.js provides native Server-Side Rendering (SSR) capabilities. Unlike standard React Single-Page Apps (SPAs) which render as a blank HTML shell requiring client-side JS hydration, Next.js dynamic endpoints deliver fully populated, text-ready HTML directly in the raw response. This ensures 100% readability and immediate indexing by lightweight web crawlers, search engines, and LLM scrappers that cannot execute client-side JavaScript.
+
+## 6. Making a Next.js Build Actually Succeed Under Deno Deploy
+
+Deno Deploy's `nextjs` preset runs `deno install` then `deno task build`
+(`next build`) on its builder. Two failure modes are near-certain on a fresh
+Next app and both abort the deploy AFTER the CLI has already reported
+"Successfully uploaded" — so the CLI/upload looks fine and only the *revision*
+fails. Always configure for both up front; do not wait for the red build.
+
+* **`next build` crashes in its type-check/lint pass under Deno.** After
+  `✓ Compiled successfully` the build enters "Linting and checking validity of
+  types" and dies with `Cannot read properties of undefined (reading 'bold')`
+  (an unresolved Next-on-Deno bug, vercel/next.js#72591). The build never
+  reaches deployment.
+  * **Fix:** disable those passes at build time in the Next config —
+    `typescript: { ignoreBuildErrors: true }` and
+    `eslint: { ignoreDuringBuilds: true }`. (Type-check separately in CI with
+    `deno check`/`tsc` if you want a gate; it just must not run inside
+    `next build`.)
+  * **Also:** author the Next config as **`next.config.mjs` with
+    `export default`**, not `next.config.js` with `module.exports`. Deno resolves
+    a bare `.js` config as ESM and throws `module is not defined`.
+
+* **Prerender crashes on client-only data hooks.** Next 14 App Router still
+  statically prerenders `"use client"` pages at build time. A page that calls a
+  client-only hook at module/render time — e.g. InstantDB's `db.useQuery`, or any
+  WebSocket/browser-only API — throws during prerender
+  (`TypeError: <x>.useQuery is not a function` / `Error occurred prerendering
+  page "/"`) and fails the build.
+  * **Fix (principle):** never let a client-only data hook execute during
+    prerender. Gate the data-backed component behind a client-mount check (render
+    a loader until `useEffect` has fired, then render the child that calls the
+    hook), and keep the hook out of any Server Component. `export const dynamic`
+    does NOT help here — it is ignored in `"use client"` files.
