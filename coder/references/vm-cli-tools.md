@@ -53,11 +53,11 @@ curl -s -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
 
 **Before doing any work with Deno Deploy (including listing apps, creating apps, deploying, or setting env variables), you MUST acquire and activate the dedicated Deno Deploy skill (`p2b-deno-deploy`), which holds the complete Deno Deploy guidelines and CLI reference.** If that skill is already among your available skills, learn it. If it is not available yet, install it from the community registry (Tank) first, then learn it. Do not attempt any Deno Deploy work from general knowledge — its guidelines are mandatory.
 
-The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so `deno deploy` authenticates automatically. The VM's `deno deploy` is the base-image shim (≥ 0.0.9902): it exits 0 after a successful deploy, supports `--apply` (authorize non-interactive resource creation), and `logs --once` (drain then exit). Pass `--non-interactive --apply` for `create`/`deploy`.
+The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so `deno deploy` authenticates automatically. The VM's `deno deploy` is the base-image shim (≥ 0.0.9902): it exits 0 after a successful deploy and supports `logs --once` (drain then exit). Pass `--non-interactive` for scripted create/deploy.
 
 ```bash
-deno deploy --app=<slug> --prod --non-interactive --apply   # Deploy current directory (exits 0 on success)
-deno deploy create <slug> --non-interactive --apply         # Create an app
+deno deploy --app=<slug> --prod --non-interactive           # Deploy current directory (exits 0 on success)
+deno deploy create <slug> --non-interactive                 # Create an app
 deno deploy env add <KEY> "<VALUE>" [--secret]       # Set a plain text or secret environment variable
 deno deploy env load <file_path> [--non-secrets ...] # Load variables from a .env file (treats as secrets by default)
 deno deploy env list                                 # List environment variables
