@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-deno-deploy",
-  "version": "1.0.11",
+  "version": "2.0.0",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/deno-deploy",
   "description": "Deno Deploy guidance and VM-less safescript tools for prompt2bot agents — REST API v2 app/env-var/revision operations, CLI usage, CI deployment, and logging.",
   "visibility": "public",
@@ -9,7 +9,7 @@
   },
   "permissions": {
     "network": {
-      "outbound": []
+      "outbound": ["api.deno.com"]
     },
     "filesystem": {
       "read": [],
