@@ -118,3 +118,24 @@ has actually burned a real deployment.
   (CONFLICT / exit 5 means it already exists — ignore it), then the deploy step.
   Always pass BOTH `--app` and `--org`; omitting `--org` also triggers
   NOT_FOUND. See the canonical workflow in the main skill.
+
+## 11. Passing the build-output dir as a positional (`deno deploy out ...`)
+
+- **Symptom:** For a static/framework site (Next.js export, Vite), CI runs
+  `deno deploy create out --app=<slug> --org=<org> ...` and/or
+  `deno deploy out --app=<slug> --org=<org> --prod ...`. The build "succeeds"
+  but the deploy fails with a generic `The revision failed` (or `app not found`,
+  exit 4). The agent then loops: delete the app, push an empty commit, retry —
+  for many minutes, without ever telling the user.
+- **Why:** `deno deploy` has NO positional for the output directory. The bare
+  word `out` is parsed as the `[root-path]`, so the app is created/deployed with
+  the wrong serving configuration. There is nothing to "retry" — the command
+  shape is wrong.
+- **Fix:** The static/framework serving config is set on the app at **create**
+  time, not passed to `deploy`. On the "Ensure app exists" step use
+  `deno deploy create --app=<slug> --org=<org> --source local --runtime-mode static --static-dir <out|dist> --region global --non-interactive --json < /dev/null || true`
+  (or `--framework-preset <preset>` for a build-step framework). Keep the deploy
+  step a plain
+  `deno deploy --app=<slug> --org=<org> --prod --non-interactive < /dev/null`
+  with **no positional**. Confirm flags with `deno deploy create --help`. See
+  the "Static sites and frameworks" section in the main skill.
