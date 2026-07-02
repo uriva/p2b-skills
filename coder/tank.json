@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-coder",
-  "version": "1.1.49",
+  "version": "1.1.50",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/coder",
   "description": "Coder/integrator skill for building integrations, automations, and deployed services.",
   "visibility": "public",
