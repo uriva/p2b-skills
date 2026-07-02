@@ -86,14 +86,19 @@ has actually burned a real deployment.
   `orgs.list` / `apps.list` tRPC endpoints (see the main skill), then use the
   exact values.
 
-## 8. Wrong token or missing org
+## 8. Wrong token: personal (`ddp_`) instead of organization (`ddo_`)
 
-- **Symptom:** Token doesn't start with `ddo_`, or the user hits
-  `404 ORGANIZATION_NOT_FOUND` on the settings/token pages.
-- **Why:** The token came from the deprecated dashboard, or the user has no
-  organization yet on the new console.
-- **Fix:** Tokens must be `ddo_...` from `https://console.deno.com`, and the
-  user must create an organization there first. Walk them through it if needed.
+- **Symptom:** Token starts with `ddp_`, or the v2 REST tools fail with
+  `INVALID_TOKEN`, or the user hits `404 ORGANIZATION_NOT_FOUND` on token pages.
+- **Why:** The agent sent the user to the **personal** "Account Settings →
+  Access Tokens" page, which produces a `ddp_` personal token — the v2 REST API
+  rejects it. Or the token came from the deprecated dashboard, or the user has no
+  organization yet.
+- **Fix:** Require an **organization** token (`ddo_`). Have the user create/pick
+  an org at `https://console.deno.com`, then **inside the org** go to
+  **Settings → Organization Tokens**. Never point them at the personal Account
+  Settings token page. If a pasted token starts with `ddp_`, ask for a `ddo_`
+  org token instead.
 
 ## 9. Treating a VM-only deploy as permanent
 

@@ -8,16 +8,22 @@ description: Deno Deploy guidance and VM-less safescript tools for prompt2bot ag
 Deno Deploy skill for prompt2bot agents. Covers deploying, managing environment
 variables, CI setup, and relay/backend server patterns.
 
-## The token: use a `ddo_` org token (works with BOTH the CLI and REST v2)
+## The token: require an `ddo_` ORGANIZATION token (never a personal token)
 
-Use a `ddo_` organization access token from `https://console.deno.com` — the
-universal token, verified to work with **both** the `deno deploy` CLI and the
-REST v2 API, so one token covers everything here. (A `ddp_` personal token works
-with the CLI but is rejected by REST v2; prefer `ddo_`.) If you get
-`invalidToken: The bearer token is invalid`, it's almost always a **wrong URL
-path, not a bad token** — use `https://api.deno.com/v2/...`, never
-`api.deno.com/organizations` or `/v1/`. Confirm the token is truly bad
-(malformed/missing/expired) before asking the user to regenerate it.
+You need an **organization** access token (starts with `ddo_`). A **personal**
+token (starts with `ddp_`) is **rejected by the REST v2 API** (`INVALID_TOKEN`),
+so it breaks the VM-less tools below. Always require `ddo_`.
+
+**How the user creates it (exact path):** sign in at `https://console.deno.com`,
+select or create an **organization** first (token pages 404 with
+`ORGANIZATION_NOT_FOUND` before an org exists), then **inside that organization**
+go to **Settings → Organization Tokens** and create the token. Do NOT send them
+to the personal **Account Settings → Access Tokens** page — that yields a `ddp_`
+token which fails. When a token is pasted, verify it starts with `ddo_`.
+
+If you get `invalidToken: The bearer token is invalid`, it's almost always a
+**wrong URL path, not a bad token** — use `https://api.deno.com/v2/...`, never
+`api.deno.com/organizations` or `/v1/` (see common-mistakes #15).
 
 ## VM-less tools (prefer these for app + env-var operations)
 
@@ -213,16 +219,10 @@ Never guess, and never ask the user for, an org or app slug.
 
 ### Deno Deploy tokens
 
-Get a `ddo_` token from the **new** console at **https://console.deno.com**
-(the old Deno dashboard is deprecated and its tokens won't work).
-
-**Org must exist first:** the console organizes everything under organizations,
-and hitting settings/token pages before creating one gives
-`404 ORGANIZATION_NOT_FOUND`. So instruct the user to (1) sign in at
-https://console.deno.com and create an organization, (2) go to Account Settings →
-Access Tokens via the UI (avoids 404s), (3) create a token (`ddo_...`) and paste
-it. Users often paste an old-dashboard value or hit 404s from a missing org —
-watch for that.
+See the top **"The token"** section for the full rule: require a `ddo_`
+**organization** token created **inside the org** at **Settings → Organization
+Tokens** on `https://console.deno.com`; never the personal Account Settings page
+(yields a `ddp_` token the v2 REST API rejects), never the deprecated dashboard.
 
 ### v2 REST API (backs the safescript tools)
 
