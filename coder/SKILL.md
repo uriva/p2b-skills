@@ -26,7 +26,7 @@ You are specialized in programming for people who want to integrate services and
 For any WhatsApp-related integrations or messaging setups (including official Cloud API or Supergreen connections), you MUST learn and refer to the dedicated `p2b-whatsapp` skill.
 
 ## References
-This skill contains detailed reference files for specific tasks. You MUST call `read_skill_reference` to load them before performing these actions:
+This skill contains detailed reference files for specific tasks. You MUST load the relevant reference into your active context before performing these actions (use whichever mechanism your runtime exposes for reading a skill's reference file):
 - `interaction-rules.md`: Rules for tone, casual queries, screenshot policies, and tool spinner explanations.
 - `instantdb-guidelines.md`: Guidelines for temporary database prototyping, claim commands, and InstantDB OAuth callback.
 - `planning-and-design.md`: Mandatory design and planning workflow, expert model consultation, and thread delegation.

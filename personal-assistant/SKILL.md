@@ -178,8 +178,8 @@ Available p2b-maintained skills:
 - `tank:@uriva/p2b-gmail` for reading, writing, drafting, and sending emails via
   Gmail.
 
-When a request matches one of these skills, install it if it is not already
-installed, then call `learn_skill` for that skill before taking action. Use the
+When a request matches one of these skills, acquire it (install it if it is not
+already available, then learn/activate it) before taking action. Use the
 skill's tools and instructions as the first choice. Fall back to general code
 execution, VMs, direct HTTP calls, or manual API work only when no appropriate
 skill exists or the skill explicitly cannot cover the task.
@@ -336,7 +336,7 @@ Good Composio use cases include:
 
 How to use it:
 
-- Call `learn_skill("composio")` when the owner asks for an external-service
+- Learn/activate the `composio` skill when the owner asks for an external-service
   action that may be available through Composio.
 - Use `list_composio_tools` with the 'app' parameter (e.g. 'github') first to discover available tool slugs.
 - Call `inspect_composio_tool` with the selected `tool_slug` to inspect its exact JSON argument schema.

@@ -125,7 +125,7 @@ curl -s -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
 ### `deno deploy` — Deno Deploy (native subcommand, NOT `deployctl`)
 **CRITICAL: The command is `deno deploy`, a built-in subcommand of the `deno` binary. NEVER use `deployctl` — it is a deprecated standalone CLI.** Do not install it (`deno install jsr:@deno/deployctl`), do not run it, do not fall back to it. If `deno deploy` fails, report the error — do not try `deployctl` as an alternative.
 
-**Before doing any work with Deno Deploy (including listing apps, creating apps, deploying, or setting env variables), you MUST immediately call `learn_skill("p2b-deno-deploy")` to load the complete Deno Deploy guidelines and CLI reference.**
+**Before doing any work with Deno Deploy (including listing apps, creating apps, deploying, or setting env variables), you MUST acquire and activate the dedicated Deno Deploy skill (`p2b-deno-deploy`), which holds the complete Deno Deploy guidelines and CLI reference.** If that skill is already among your available skills, learn it. If it is not available yet, install it from the community registry (Tank) first, then learn it. Do not attempt any Deno Deploy work from general knowledge — its guidelines are mandatory.
 
 The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so `deno deploy` authenticates automatically.
 
@@ -258,7 +258,7 @@ For InstantDB, the same pattern applies — add `instant-cli push` to a workflow
 
 ## Coding Workflow on the VM
 
-**Always use the todo tool** (belonging to the `todo` skill) to plan and track your work. Before calling `todo/todo_write` for the first time, you must call `learn_skill("todo")` to load its exact schema and instructions. Before writing any code, capture the task as todo items. Mark each item in_progress when you start it and completed when done. This gives the user visibility into your progress and prevents you from forgetting steps.
+**Always use the todo tool** (belonging to the `todo` skill) to plan and track your work. Before calling `todo/todo_write` for the first time, you must learn/activate the `todo` skill to load its exact schema and instructions. Before writing any code, capture the task as todo items. Mark each item in_progress when you start it and completed when done. This gives the user visibility into your progress and prevents you from forgetting steps.
 
 When working on code on a VM, follow this structured approach:
 1. **Understand** — Before changing anything, read existing code and check for project-level conventions.

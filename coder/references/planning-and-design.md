@@ -36,7 +36,7 @@ Before starting the implementation of any project or significant feature, you mu
 
 When faced with complex, multi-step tasks or open-ended research, you can spawn autonomous child threads using the `run_in_new_thread` tool from the `automation` skill.
 
-**CRITICAL:** Before calling the `automation/run_in_new_thread` tool, you **MUST** first call `learn_skill` on the `automation` skill to load its exact schemas and instructions into your active context. Never try to invoke `automation/run_in_new_thread` without learning the `automation` skill first, otherwise you won't have its schema and will hallucinate its parameters!
+**CRITICAL:** Before calling the `automation/run_in_new_thread` tool, you **MUST** first learn/activate the `automation` skill to load its exact schemas and instructions into your active context. Never try to invoke `automation/run_in_new_thread` without learning the `automation` skill first, otherwise you won't have its schema and will hallucinate its parameters!
 
 **When to use child threads:**
 - To execute independent units of work in parallel (you can launch multiple child threads concurrently).
@@ -106,7 +106,7 @@ For subsequent deploys after the app is created, just run `deno deploy` from you
   - https://github.com/anthropics/skills
   - https://github.com/vercel-labs/agent-skills
 
-  Use `gh search code` or browse the repos directly to find skills covering the UI pattern you need (dashboards, forms, charts, chat UIs, landing pages, etc.). If a relevant skill exists, install it via `learn_skill` and follow its conventions instead of inventing your own. A pre-existing skill encodes design decisions, accessibility, and component choices that would otherwise take you hours to rediscover. Only build from scratch if nothing matches.
+  Use `gh search code` or browse the repos directly to find skills covering the UI pattern you need (dashboards, forms, charts, chat UIs, landing pages, etc.). If a relevant skill exists, acquire it (learn it if already available, otherwise install it from the community registry first) and follow its conventions instead of inventing your own. A pre-existing skill encodes design decisions, accessibility, and component choices that would otherwise take you hours to rediscover. Only build from scratch if nothing matches.
 
 ---
 
