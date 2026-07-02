@@ -152,13 +152,32 @@ has actually burned a real deployment.
 - **Why:** Neither exists in the CLI (v0.0.99). `--non-interactive` is parsed as
   a positional `[root-path]`. `env` has no `set` subcommand and does not accept
   `KEY=VALUE`. There is no `apps.setEnvVariables` tRPC procedure.
+- **Why:** On the old VM CLI (v0.0.99), `--non-interactive` does not exist and is
+  parsed as a positional `[root-path]`; `env` has no `set` subcommand and does
+  not accept `KEY=VALUE`; there is no `apps.setEnvVariables` tRPC procedure.
+  (Modern CLI ≥ 0.0.9901 and CI runners DO have `--non-interactive`.)
 - **Fix:**
-  - Non-interactive = close stdin (`< /dev/null`) + pass every required flag.
-    Do NOT pass `--non-interactive`.
-  - Set env vars with the real subcommands (space-separated args, not
-    `KEY=VALUE`): `deno deploy env add KEY VALUE --app=<slug> --org=<org> < /dev/null`,
-    or bulk-load with `deno deploy env load .env --app=<slug> --org=<org> < /dev/null`.
-    Other subcommands: `list`/`ls`, `update-value`, `update-contexts`,
-    `delete`/`rm`. Verify with `deno deploy env list`.
+  - Prefer the VM-less `setDenoDeployEnvVar` / `getDenoDeployApp` safescript tools
+    (or REST `PATCH/GET https://api.deno.com/v2/apps/<slug>`) — no CLI, no hang.
+  - On the old CLI, "non-interactive" = close stdin (`< /dev/null`) + pass every
+    required flag; do NOT pass `--non-interactive`.
+  - CLI env subcommands take space-separated args (not `KEY=VALUE`): `add <var>
+    <value>`, `list`/`ls`, `update-value`, `delete`/`rm`, `load <file>`. No `set`.
   - `deno deploy create` requires `--source` (`local`) and `--region`
     (`us`|`eu`|`global`) in addition to `--app`/`--org`.
+
+## 13. `deno deploy env` hangs forever on a VM (and `< /dev/null` does NOT fix it)
+
+- **Symptom:** `deno deploy env list`/`env add` on a VM never returns — no
+  output, `check_vm_progress` shows "Still running" indefinitely; you end up
+  `pkill`-ing deno and resetting the VM. Adding `< /dev/null` does not help.
+- **Why:** `env` makes a streaming tRPC call to `console.deno.com` and the CLI
+  has **no client-side request timeout**; on some backend states the stream never
+  terminates, so it blocks forever. This is a network stall, not a stdin prompt,
+  so `< /dev/null` cannot break it. (`create`/`whoami` use other procedures that
+  do return.)
+- **Fix:** Use the VM-less `setDenoDeployEnvVar` / `getDenoDeployApp` safescript
+  tools, or REST `GET/PATCH https://api.deno.com/v2/apps/<slug>` with
+  `Authorization: Bearer $DENO_DEPLOY_TOKEN` (both return instantly). If you must
+  use any `deno deploy` command on a VM, ALWAYS wrap it: `timeout 120 deno deploy
+  … < /dev/null`, so a stall is bounded instead of hanging the VM.

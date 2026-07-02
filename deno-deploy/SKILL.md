@@ -1,12 +1,37 @@
 ---
 name: p2b-deno-deploy
-description: Deno Deploy guidance for prompt2bot agents — CLI usage, environment variables, CI deployment, relay server fallbacks, and logging.
+description: Deno Deploy guidance and VM-less safescript tools for prompt2bot agents — REST API v2 app/env-var/revision operations, CLI usage, CI deployment, and logging.
 ---
 
 # p2b-deno-deploy
 
 Deno Deploy skill for prompt2bot agents. Covers deploying, managing environment
 variables, CI setup, and relay/backend server patterns.
+
+## VM-less tools (prefer these for app + env-var operations)
+
+This skill ships safescript tools that call the Deno Deploy REST API v2
+(`api.deno.com`) directly — **no VM required**, and each has a built-in request
+timeout so it can never hang the way the `deno deploy` CLI can (see "Why the
+`env` CLI hangs" below). Prefer them for discovering apps, reading/setting env
+vars, creating an app, and checking the last deploy's status:
+
+- `listDenoDeployApps` — list apps reachable by the token (discover slugs; never guess).
+- `getDenoDeployApp` — get an app's details, including current `env_vars`.
+- `createDenoDeployApp` — create an app (org derived from the token; no `--org`).
+- `setDenoDeployEnvVar` — add/update one env var (deep-merged by key). Use
+  `isSecret: false` for public build-time vars (e.g. `NEXT_PUBLIC_*`), `true` for
+  credentials.
+- `latestDenoDeployRevision` — latest revision status (`queued`/`building`/`succeeded`/`failed` + `failure_reason`) to check whether a deploy worked.
+
+Each takes `denoDeployToken`. Bind it to the stored secret by passing the value
+`"SECRET:DENO_DEPLOY_TOKEN"` for that parameter (the runtime substitutes the real
+decrypted token). The bot's `DENO_DEPLOY_TOKEN` secret must list `api.deno.com`
+in its allowed hosts; if a call is rejected for host policy, that is a
+bot-settings fix (add `api.deno.com` to the secret's hosts), not a code change.
+
+These do NOT deploy code — a production deploy still runs through CI (see
+"Deployments are CI-only"). Use these for everything around the deploy.
 
 ## Reference files
 
@@ -35,45 +60,52 @@ everywhere — VM shell, scripts, and CI YAML alike. If `deno deploy` fails,
 report the exact command and full stderr — do not try `deployctl` as an
 alternative.
 
-Why it fails in practice: `deployctl` authenticates against the deprecated
-Deploy Classic backend, so a valid new-console `ddo_` token is rejected with
-`APIError: The authorization token is not valid: The bearer token is invalid` —
-even though the same token works with `deno deploy` and the `api.deno.com/v2`
-REST API. Seeing that error means you are on the wrong CLI; switch to
-`deno deploy`, do not try to "fix" the token.
+Why it fails: `deployctl` uses the deprecated Deploy Classic backend, so a valid
+`ddo_` token is rejected as invalid — even though the same token works with
+`deno deploy` and the `api.deno.com/v2` REST API. That error means wrong CLI, not
+a bad token.
 
 The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
 `deno deploy` authenticates automatically.
 
-**Mandatory safety rule to prevent VM hangs:** Always verify that the `DENO_DEPLOY_TOKEN` environment variable is present (non-empty) in your VM shell before running any `deno deploy` commands (e.g., by running `echo $DENO_DEPLOY_TOKEN` or checking environment variables). If the token is missing, do NOT run any `deno deploy` subcommands (including `whoami`, `orgs list`, or `create`), as they will attempt to run interactively and hang the VM indefinitely. Instead, immediately ask the user to provide their Deno Deploy access token in the chat first!
+The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
+`deno deploy` authenticates automatically. Verify it is present
+(`echo $DENO_DEPLOY_TOKEN`) before any CLI call; if it is missing, ask the user
+for their `ddo_` token first rather than running commands that may prompt.
 
-Deploys and app creation run in CI (see "Deployments are CI-only" below), not
-on the VM. The commands below are the building blocks CI uses; `env`/`logs` may
-also be run from the VM for inspection. **`deno deploy` has NO `--non-interactive`
-flag** — passing it makes the CLI treat the word as a positional `[root-path]`
-and fail with `readdir '--non-interactive'`. To run non-interactively you must
-instead (a) supply every REQUIRED flag so nothing needs prompting and (b) close
-stdin with `< /dev/null` so it can never block on input:
+Deploys and app creation run in CI (see "Deployments are CI-only" below). For
+app/env-var inspection and changes, **prefer the VM-less safescript tools
+above** over the CLI. If you do use the CLI on a VM, follow these rules:
+
+**Always wrap every VM `deno deploy` command in `timeout`.** The CLI has NO
+internal request timeout, so a stalled call blocks forever (you must otherwise
+`pkill` it). Bound it: `timeout 120 deno deploy … < /dev/null`.
+
+**There is NO `--non-interactive` flag on the CLI baked into older VM images**
+(it exists only in `deno deploy` ≥ 0.0.9901). On the old CLI, passing it makes
+the word a positional `[root-path]` → `readdir '--non-interactive'`. To run
+non-interactively, supply every REQUIRED flag AND close stdin with `< /dev/null`.
 
 ```bash
-deno deploy --app=<slug> --org=<org> --prod < /dev/null                             # Deploy
-deno deploy create --app=<slug> --org=<org> --source local --region global < /dev/null  # Create app
-deno deploy env add KEY VALUE --app=<slug> --org=<org> < /dev/null                  # Add env var
-deno deploy env list --app=<slug> --org=<org> < /dev/null                           # List env vars
-deno deploy logs --app=<slug> --org=<org> < /dev/null                               # Tail logs
+timeout 300 deno deploy --app=<slug> --org=<org> --prod < /dev/null                        # Deploy
+timeout 180 deno deploy create --app=<slug> --org=<org> --source local --region global < /dev/null  # Create app
+timeout 120 deno deploy logs --app=<slug> --org=<org> < /dev/null                          # Tail logs
 ```
 
 `deno deploy create` REQUIRES `--source` (use `--source local`) and `--region`
-(one of `us`, `eu`, `global`) in addition to `--app`/`--org`; omitting either
-makes the CLI prompt (and hang) or error `Missing required option`.
+(one of `us`, `eu`, `global`) in addition to `--app`/`--org`.
 
-`deno deploy env` uses **subcommands with space-separated arguments**, not
-`KEY=VALUE`: `list`/`ls`, `add <var> <value>`, `update-value`, `delete`/`rm`,
-and `load <file>` (bulk-load a `.env` — prefer for several vars). There is **no
-`env set`** and no tRPC `apps.setEnvVariables`. Set a var with
-`deno deploy env add KEY VALUE --app=<slug> --org=<org> < /dev/null`, verify with
-`deno deploy env list`, and don't push env config to the dashboard when the CLI
-can do it. See `common-mistakes.md` (#12).
+**Why the `env` CLI hangs (use the safescript tools / REST instead):**
+`deno deploy env list`/`env add` make a **streaming tRPC call** to
+`console.deno.com` with **no client-side timeout**. On some backend states that
+stream never terminates, so the command hangs indefinitely — and **`< /dev/null`
+does NOT fix it** (it is a network stall, not a stdin prompt; two runs with
+`< /dev/null` still hung). Do env vars via `setDenoDeployEnvVar` /
+`getDenoDeployApp` (or a plain `PATCH`/`GET https://api.deno.com/v2/apps/<slug>`
+with `Authorization: Bearer $DENO_DEPLOY_TOKEN`), which return instantly. If you
+must use the CLI `env` subcommands (`list`/`ls`, `add <var> <value>` —
+space-separated, NOT `KEY=VALUE`; there is no `env set`), always `timeout`-wrap
+them. See `common-mistakes.md` (#12).
 
 ### Deployed URL format — `<app>.<org>.deno.net` (NOT `.deno.dev`)
 
@@ -158,49 +190,23 @@ command and full stderr to the user and stop.
 Note: `deno deploy` may create a `deno.jsonc` config file in the project
 directory after the first deployment — this is normal.
 
-### Discovering the org and apps (derive from the token — do NOT ask the user)
+### Discovering apps (derive from the token — do NOT ask the user)
 
-**The token already knows which org(s) it can reach, so derive the org slug from
-the token — never ask the user to tell you their org name and never send them to
-the console URL to read it.** Asking the user for the org name is a friction bug:
-the only thing the user must supply is a valid `ddo_` token.
+**The token already knows which org(s)/apps it can reach.** Never ask the user
+for their org name or an app slug, and never send them to the console to read it
+— the only thing they must supply is a valid `ddo_` token.
 
-**Primary method — `whoami` (works from just the token):**
+- **Primary: `listDenoDeployApps`** (safescript tool above) — returns the apps
+  reachable by the token, with no VM and no hang risk. Use it to confirm/choose
+  the app slug.
+- CLI alternative (VM, always timeout-wrapped): `timeout 60 deno deploy whoami
+  --json < /dev/null` returns the token's `orgs[]` (use an org's `slug` for
+  `--org`). Exactly one org → use it silently; multiple → present the real slugs
+  and let the user pick; zero / `authenticated:false` → bad token.
 
-```bash
-deno deploy whoami --json < /dev/null
-```
-
-The JSON response contains an `orgs[]` array; use each org's `slug` as the
-`--org` value. Decision rule:
-
-- **Exactly one org** → use it automatically, silently.
-- **Multiple orgs** → ask the user to choose, but present the actual slugs from
-  `whoami` (do not ask them to type a name from memory).
-- **Zero orgs / `authenticated:false`** → the token is bad or has no org; that is
-  a token problem, not an org-name problem — get a valid `ddo_` token.
-
-**Fallback — tRPC API** (if the CLI is unavailable). The `deno deploy` CLI has
-no `list` subcommand for apps, so to enumerate apps use curl against the tRPC API
-at `console.deno.com`, which authenticates via cookies, not `Authorization:
-Bearer`:
-
-```bash
-# List orgs
-curl -s -H "Cookie: token=$DENO_DEPLOY_TOKEN; deno_auth_ghid=force" \
-  "https://console.deno.com/api/orgs.list?batch=1&input=%7B%220%22%3A%7B%7D%7D"
-
-# List apps in an org
-curl -s -H "Cookie: token=$DENO_DEPLOY_TOKEN; deno_auth_ghid=force" \
-  "https://console.deno.com/api/apps.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22json%22%3A%7B%22org%22%3A%22ORG_SLUG%22%7D%7D%7D%7D"
-```
-
-Replace `ORG_SLUG` with a slug discovered above.
-
-**Mandatory rule: discover before deploy.** Before the **first** deploy attempt
-for a project, or anytime you are not 100% certain of the org slug and app slug,
-discover the org from the token (`whoami`, or `orgs.list`) and then confirm the
-app (`apps.list`). Never guess, and never ask the user for, an org or app slug.
+**Mandatory rule: discover before deploy.** Before the first deploy for a project
+(or whenever unsure of the app slug), confirm the app via `listDenoDeployApps`.
+Never guess, and never ask the user for, an org or app slug.
 
 ### Deno Deploy tokens
 
@@ -219,25 +225,24 @@ Walk the user through the token generation steps:
 
 This is a common friction point — users often end up on the old deprecated dashboard instead of console.deno.com, paste the wrong value, or hit 404s due to a missing organization.
 
-### v2 REST API
+### v2 REST API (backs the safescript tools)
 
-For operations the CLI doesn't support, use the v2 API. The v1 API (`/v1/`) is
-deprecated and will not work with `ddo_` tokens.
+The VM-less tools above call this API; use raw curl only for what they don't
+cover (e.g. delete an app). The v1 API (`/v1/`) is deprecated and rejects `ddo_`
+tokens. Base path is always `/v2/`; auth is `Authorization: Bearer
+$DENO_DEPLOY_TOKEN`; org is derived from the token. "projects"→"apps",
+"deployments"→"revisions".
 
 ```bash
-# Delete an app
-curl -s -X DELETE \
-  -H "Authorization: Bearer $DENO_DEPLOY_TOKEN" \
-  "https://api.deno.com/v2/apps/<app-slug>"
-
-# List all apps
-curl -s \
-  -H "Authorization: Bearer $DENO_DEPLOY_TOKEN" \
-  "https://api.deno.com/v2/apps"
+# Read app (incl. env_vars):  GET  /v2/apps/<slug>
+# Set env var (deep-merge):   PATCH /v2/apps/<slug>  -d '{"env_vars":[{"key":"K","value":"V","secret":false}]}'
+# List apps:                  GET  /v2/apps
+# Delete an app:              DELETE /v2/apps/<slug>
+# Latest deploy status:       GET  /v2/apps/<slug>/revisions?limit=1   (status: queued|building|succeeded|failed)
 ```
 
-The base path is always `/v2/`. Never call `/v1/`. In v2, "projects" are called
-"apps" and "deployments" are called "revisions".
+Env var body is an ARRAY of `{key,value,secret}` objects (not `{K:V}` and not
+`["K=V"]`). Prefer the `setDenoDeployEnvVar` tool, which encodes this correctly.
 
 ### Deployments are CI-only, and CI creates the app (single canonical path)
 
@@ -291,20 +296,15 @@ jobs:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
 ```
 
-Non-negotiable details for CI (they prevent the two failure modes we keep
-hitting — hangs and "app not found"):
+Non-negotiable details for CI (they prevent hangs and "app not found"):
 
-- **Never invent a `--non-interactive` flag** — it does not exist and is
-  misparsed as a positional path. Instead redirect `< /dev/null` AND supply
-  every required flag (for `create`: `--source local --region global --app
-  --org`) so the CLI can't prompt and fails fast rather than hanging until
-  `timeout-minutes` kills the Action.
+- CI runners use a modern `deno`, so pass `--non-interactive` (fast-fail) plus
+  `< /dev/null` and every required flag (`create`: `--source local --region
+  global --app --org`). Give the job `timeout-minutes: 10`.
 - **Always pass both `--app` and `--org`.** Omitting `--org` is a common cause
-  of the NOT_FOUND error even when the app exists.
-- **Keep `timeout-minutes: 10`** so a stuck run cannot loop forever.
-- Deno's CLI emits stable exit codes: `0` OK, `3` AUTH (bad/missing token),
-  `4` NOT_FOUND (app/org wrong), `5` CONFLICT (already exists). Use these to
-  reason about failures instead of guessing.
+  of NOT_FOUND even when the app exists.
+- Stable exit codes: `0` OK, `3` AUTH, `4` NOT_FOUND, `5` CONFLICT (already
+  exists) — reason about failures from these instead of guessing.
 
 #### Static sites and frameworks (Next.js, Vite, etc.) — configure at CREATE time, never as a positional
 
