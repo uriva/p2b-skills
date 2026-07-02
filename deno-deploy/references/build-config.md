@@ -18,14 +18,21 @@ framework for a new dynamic project.
      what triggers NOT_FOUND; creating first is what makes deploys
      deterministic.
   2. **Every `deno deploy` invocation — in CI or the occasional VM-side
-     `env`/`logs` inspection — MUST close stdin with `< /dev/null` and supply
-     every required flag** so it fails fast instead of looping on a prompt.
-     There is NO `--non-interactive` flag (it gets misparsed as a positional
-     path); non-interactive behaviour comes from closed stdin + complete flags.
-     On a VM, also wrap with a hard timeout, e.g.
-     `timeout 120 deno deploy env list --app=<slug> --org=<org> < /dev/null`.
-     If it hits the timeout, treat it as a real failure to diagnose — do not
-     blindly retry.
+     `env`/`logs` inspection — MUST close stdin with `< /dev/null`, supply
+     every required flag, and be wrapped in a hard `timeout`** so it fails fast
+     instead of looping/hanging. The modern CLI (>= 0.0.99, what CI and current
+     VMs run) DOES accept `--non-interactive` to force fast-fail on missing
+     input — pass it. (Older CLIs lacked it and misparsed it as a positional;
+     that is no longer the case, so do not omit it on modern CLIs.) Example:
+     `timeout 120 deno deploy env list --app=<slug> --org=<org> --non-interactive < /dev/null`.
+     If it hits the timeout on an *inspection* command, treat it as a real
+     failure to diagnose — do not blindly retry.
+  4. **`deno deploy --prod` is the exception: it hangs even on success.** The
+     CLI leaks a handle after a successful deploy and never exits (see the CI
+     Deploy step in the main skill). So for `--prod`, a `timeout` expiry AFTER
+     the "Successfully uploaded/deployed" marker is expected and means success —
+     detect the marker, do not treat the hang as a failure. This differs from
+     inspection commands (`env`/`logs`), where a timeout IS a failure.
   3. **Never poll a `deno deploy` command with `check_vm_progress` in a tight
      loop.** If it hasn't returned quickly, it is almost certainly looping; stop
      it and investigate rather than spawning more polls.

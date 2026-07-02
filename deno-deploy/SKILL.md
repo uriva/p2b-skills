@@ -35,12 +35,10 @@ These do NOT deploy code — a production deploy still runs through CI (see
 
 ## Reference files
 
-- `common-mistakes.md`: A scannable checklist of real, observed deploy failures
-  (wrong CLI, wrong URL scheme, VM/CI hangs, slug guessing, ephemeral deploys)
-  with symptom → cause → fix. **Load and skim it before any deploy**, and
-  re-check it whenever a deploy misbehaves — most deploy incidents are one of
-  these. Use whichever mechanism your runtime exposes for reading a skill's
-  reference file.
+- `common-mistakes.md`: Scannable checklist of real deploy failures (wrong CLI,
+  wrong URL scheme, VM/CI hangs, slug guessing, ephemeral deploys) with symptom →
+  cause → fix. **Load and skim it before any deploy** and re-check whenever a
+  deploy misbehaves — most incidents are one of these.
 - `build-config.md`: Build/entrypoint configuration for Deno Deploy, excluding
   heavy frontend deps from the root `deno.json`, lockfile sync, VM CLI-loop
   prevention, and the Next.js default-framework policy. **Read it when setting up
@@ -246,23 +244,14 @@ Env var body is an ARRAY of `{key,value,secret}` objects (not `{K:V}` and not
 
 ### Deployments are CI-only, and CI creates the app (single canonical path)
 
-There is exactly ONE way to deploy: a GitHub Actions workflow that runs on
-push to `main`. Do NOT deploy from the VM, and do NOT create the app from the
-VM. Both the app creation and every deploy happen inside CI. This is the whole
-deploy model — do not mix it with any VM-side `deno deploy` step.
-
-Why CI-only: the VM is ephemeral (destroyed after ~1h idle, provisioning
-churn, or manual delete). Anything deployed or created from the VM vanishes
-with it, and the user's live site goes down. CI runs on GitHub's infra, so it
-persists regardless of the VM.
-
-Why CI also creates the app: a fresh project has no app yet. If the workflow
-jumps straight to `deno deploy --app=<slug> --prod`, Deno returns
-**"The requested app was not found, or you do not have access to view it"**
-(exit code 4, NOT_FOUND). That error means *the app does not exist yet* (or the
-org slug is wrong) — it is NOT a bad token. Do not go debugging
-`DENO_DEPLOY_TOKEN`; create the app first. The workflow below does this
-idempotently so the very first push and all later pushes both succeed.
+There is exactly ONE way to deploy: a GitHub Actions workflow on push to
+`main`. Do NOT deploy or create the app from the VM — it is ephemeral
+(destroyed after ~1h idle/churn/delete), so anything created there vanishes and
+the site goes down; CI persists on GitHub's infra. CI also creates the app
+(idempotently) because a fresh project has no app yet: deploying to a
+non-existent app returns **"The requested app was not found…"** (exit 4,
+NOT_FOUND) — a wrong app/org slug or missing app, NOT a bad token, so don't
+debug `DENO_DEPLOY_TOKEN`.
 
 **The canonical workflow** (one file, handles first-run creation and all
 subsequent deploys):
@@ -281,45 +270,58 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: 2.x
-      # Create the app if it does not exist yet. Passing every required flag +
-      # closing stdin (< /dev/null) means it can never prompt/hang. CONFLICT
-      # (exit 5) means the app already exists — fine, so we swallow non-zero.
+      # Create the app if missing. Every required flag + closed stdin means it
+      # can't prompt/hang; CONFLICT (exit 5) = already exists, so `|| true`.
       - name: Ensure app exists
         run: |
           deno deploy create --app=<slug> --org=<org> \
             --source local --region global --json < /dev/null || true
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+      # `deno deploy --prod` leaks a handle and never exits after success (it
+      # hangs till timeout-minutes though the deploy landed). Wrap in `timeout`
+      # and key success off the marker, not the exit code. (common-mistakes #14)
       - name: Deploy
-        run: deno deploy --app=<slug> --org=<org> --prod < /dev/null
+        run: |
+          set -uo pipefail
+          log="$(mktemp)"
+          timeout 180 deno deploy --app=<slug> --org=<org> --prod \
+            --non-interactive < /dev/null 2>&1 | tee "$log"
+          code="${PIPESTATUS[0]}"
+          if grep -qiE "Successfully (uploaded|deployed)" "$log"; then exit 0; fi
+          echo "::error::deno deploy did not confirm upload (exit $code)." >&2
+          exit "${code:-1}"
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
 ```
 
 Non-negotiable details for CI (they prevent hangs and "app not found"):
 
-- CI runners use a modern `deno`, so pass `--non-interactive` (fast-fail) plus
-  `< /dev/null` and every required flag (`create`: `--source local --region
-  global --app --org`). Give the job `timeout-minutes: 10`.
-- **Always pass both `--app` and `--org`.** Omitting `--org` is a common cause
-  of NOT_FOUND even when the app exists.
-- Stable exit codes: `0` OK, `3` AUTH, `4` NOT_FOUND, `5` CONFLICT (already
-  exists) — reason about failures from these instead of guessing.
+- **`deno deploy --prod` does not exit after success — always wrap it in
+  `timeout` and key success off the "Successfully uploaded/deployed" marker, not
+  the exit code** (confirmed CLI bug; `--no-wait` does not fix it). Use the
+  Deploy step above verbatim; never a bare `deno deploy ... --prod`. Detail +
+  repro in `common-mistakes.md` #14.
+- CI runs a modern `deno`, so pass `--non-interactive` (fast-fail) + `< /dev/null`
+  + every required flag (`create`: `--source local --region global --app --org`).
+  Give the job `timeout-minutes: 10`.
+- **Always pass both `--app` and `--org`** — omitting `--org` causes NOT_FOUND
+  even when the app exists.
+- Exit codes: `0` OK, `3` AUTH, `4` NOT_FOUND, `5` CONFLICT (already exists) —
+  reason from these instead of guessing.
 
 #### Static sites and frameworks (Next.js, Vite, etc.) — configure at CREATE time, never as a positional
 
-The single biggest deploy failure we hit is passing the build-output directory
-as a **positional argument** to `deno deploy`. There is NO positional for the
-output dir. Commands like `deno deploy out ...` or `deno deploy create out ...`
-are WRONG: `out` gets misparsed as the `[root-path]`, the app is created/deployed
-with the wrong config, and the revision fails with a generic
-`The revision failed` / `app not found` (exit 4) — sending the agent into an
-endless delete-app → empty-commit → retry loop.
+The single biggest deploy failure we hit is passing the build-output dir as a
+**positional** to `deno deploy`. There is NO positional for the output dir:
+`deno deploy out ...` / `deno deploy create out ...` misparse `out` as the
+`[root-path]`, the app gets the wrong config, and the revision fails
+(`The revision failed` / `app not found`, exit 4) — triggering an endless
+delete-app → empty-commit → retry loop.
 
-How a static/framework build actually deploys: the **serving config lives on the
-app** and is set when the app is created. So put the framework/static flags on
-the **`create` (Ensure app exists)** step, and keep the **`deploy`** step a plain
-`deno deploy --app --org --prod` with no positional.
+The **serving config lives on the app** (set at create time). So put the
+framework/static flags on the **`create` (Ensure app exists)** step, and keep
+the **`deploy`** step positional-free (the `timeout`-wrapped step above).
 
 - **Static export** (Next.js `output: "export"` → `out/`, Vite → `dist/`, plain
   static → the built dir):
@@ -334,8 +336,9 @@ the **`create` (Ensure app exists)** step, and keep the **`deploy`** step a plai
       DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
   ```
   (use `--static-dir dist` for Vite, `--single-page-app` for a client-routed
-  SPA). The `deploy` step is unchanged:
-  `deno deploy --app=<slug> --org=<org> --prod < /dev/null`.
+  SPA). The `deploy` step is unchanged — still the `timeout`-wrapped Deploy step
+  from the canonical workflow above (never a bare `deno deploy --prod`, which
+  hangs after success).
 
 - **Framework with a build step** (let Deno detect/run the build):
   add `--framework-preset <preset>` (and optionally `--build-command`) to the
@@ -371,12 +374,10 @@ alongside the env-var read:
 const P2B_API_TOKEN = Deno.env.get("P2B_API_TOKEN") || "p2b_static_fallback";
 ```
 
-This decouples the runtime from Deno Deploy env-var configuration errors. If
-the env var is missing or invalid, the server still works. If the Deno
-deployment token has expired and you cannot use the CLI to repair env vars, the
-fallback keeps the integration alive until the token can be refreshed. Always
-prefer Deno Deploy env vars first and treat the hardcoded fallback as a safety
-net for tokens you manage yourself.
+This decouples the runtime from env-var config errors: if the env var is
+missing/invalid (or the deploy token expired so you can't repair env vars), the
+server still works until the token is refreshed. Prefer env vars first; treat
+the fallback as a safety net for tokens you manage yourself.
 
 **Default logging for debugging:** Add `console.log` lines for every incoming
 request and downstream API response in all deployed relay/backend templates:
@@ -387,14 +388,12 @@ console.log("incoming", method, url);
 console.log("downstream response", status, await response.text().slice(0, 500));
 ```
 
-This makes live debugging immediate — you can inspect `deno deploy logs` to see
-whether webhooks arrived, what the downstream API returned, and where failures
-occurred, without needing separate logging infrastructure.
+This makes live debugging immediate via `deno deploy logs` (whether webhooks
+arrived, what the downstream returned, where it failed) with no extra infra.
 
 ### Build configuration & framework defaults
 
-Detailed build/entrypoint configuration, avoiding Deploy-compiler crashes/hangs
-on heavy frontend deps, lockfile sync, VM CLI-loop prevention, and the Next.js
+Build/entrypoint config, avoiding Deploy-compiler crashes/hangs on heavy
+frontend deps, lockfile sync, VM CLI-loop prevention, and the Next.js
 default-framework policy live in `build-config.md`. Read it when setting up a
-project's build/entrypoint for Deno Deploy or choosing the framework for a new
-dynamic project.
+project's build/entrypoint or choosing a framework for a new dynamic project.

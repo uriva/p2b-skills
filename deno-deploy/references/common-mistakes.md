@@ -143,24 +143,24 @@ has actually burned a real deployment.
   with **no positional**. Confirm flags with `deno deploy create --help`. See
   the "Static sites and frameworks" section in the main skill.
 
-## 12. Inventing `--non-interactive` or `deno deploy env set`
+## 12. `--non-interactive` on the OLD CLI, or inventing `deno deploy env set`
 
-- **Symptom:** `readdir '--non-interactive'` (os error 2) from any
-  `deno deploy` command, or `Unknown command "set". Did you mean "list"?` from
+- **Symptom:** `readdir '--non-interactive'` (os error 2) from a `deno deploy`
+  command on an old VM, or `Unknown command "set". Did you mean "list"?` from
   `deno deploy env set KEY=VALUE`. Also `No procedure found on path
   "apps.setEnvVariables"` when trying to set env vars via a tRPC call.
-- **Why:** Neither exists in the CLI (v0.0.99). `--non-interactive` is parsed as
-  a positional `[root-path]`. `env` has no `set` subcommand and does not accept
-  `KEY=VALUE`. There is no `apps.setEnvVariables` tRPC procedure.
-- **Why:** On the old VM CLI (v0.0.99), `--non-interactive` does not exist and is
-  parsed as a positional `[root-path]`; `env` has no `set` subcommand and does
-  not accept `KEY=VALUE`; there is no `apps.setEnvVariables` tRPC procedure.
-  (Modern CLI ≥ 0.0.9901 and CI runners DO have `--non-interactive`.)
+- **Why:** Version-dependent. On the **old CLI (v0.0.99)** `--non-interactive`
+  does not exist and is misparsed as a positional `[root-path]`. On the
+  **modern CLI (≥ 0.0.9901, what CI and current VMs run)** `--non-interactive`
+  is valid and you SHOULD pass it. Regardless of version, `env` has no `set`
+  subcommand and does not accept `KEY=VALUE`, and there is no
+  `apps.setEnvVariables` tRPC procedure.
 - **Fix:**
   - Prefer the VM-less `setDenoDeployEnvVar` / `getDenoDeployApp` safescript tools
     (or REST `PATCH/GET https://api.deno.com/v2/apps/<slug>`) — no CLI, no hang.
-  - On the old CLI, "non-interactive" = close stdin (`< /dev/null`) + pass every
-    required flag; do NOT pass `--non-interactive`.
+  - Check the CLI version (`deno deploy --help` / the printed option list is
+    authoritative). Modern CLI: pass `--non-interactive`. Old CLI:
+    "non-interactive" = close stdin (`< /dev/null`) + every required flag.
   - CLI env subcommands take space-separated args (not `KEY=VALUE`): `add <var>
     <value>`, `list`/`ls`, `update-value`, `delete`/`rm`, `load <file>`. No `set`.
   - `deno deploy create` requires `--source` (`local`) and `--region`
@@ -181,3 +181,24 @@ has actually burned a real deployment.
   `Authorization: Bearer $DENO_DEPLOY_TOKEN` (both return instantly). If you must
   use any `deno deploy` command on a VM, ALWAYS wrap it: `timeout 120 deno deploy
   … < /dev/null`, so a stall is bounded instead of hanging the VM.
+
+## 14. CI deploy goes red though the site is live (`deno deploy --prod` never exits)
+
+- **Symptom:** The CI Deploy step prints `✔ Successfully uploaded` /
+  `✔ Successfully deployed your application!` with the live URL, the site is
+  reachable (HTTP 200) — but the step keeps printing the `0/N files uploaded`
+  spinner for minutes afterward until the job hits `timeout-minutes` and GitHub
+  reports `The operation was canceled`. The build is red despite a successful
+  deploy.
+- **Why:** A confirmed bug in the deploy CLI (reproduced locally on deno 2.9.1
+  with `@deno/deploy@0.0.9901` and in CI). After a successful deploy the CLI's
+  success path never calls `Deno.exit(0)` and leaks open handles (an
+  `EventSource`/tRPC subscription + a progress-bar timer), so the process stays
+  alive forever. The failure path DOES `Deno.exit(1)`; only success hangs.
+  **`--no-wait` does NOT fix it** — the upload path leaks too (verified).
+- **Fix:** Do NOT rely on the CLI exiting. Wrap the deploy in `timeout` and key
+  success off the "Successfully uploaded/deployed" marker rather than the exit
+  code — a post-success `timeout` expiry (exit 124) means success, not failure.
+  Use the `timeout`-wrapped Deploy step from the canonical workflow in the main
+  skill (`SKILL.md` → "The canonical workflow"). Never emit a bare
+  `run: deno deploy --app --org --prod` as the CI Deploy step.
