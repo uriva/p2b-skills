@@ -84,8 +84,9 @@ it is live.
 
 **App creation happens in CI, not on the VM** (see "Deployments are CI-only"
 below). **Never use the dashboard's "+ New app" or GitHub-integration flow.**
-The only things the user does in the Deno dashboard are: create their account,
-generate a `ddo_` token, and (optionally) tell you their org slug. Everything
+The only thing the user does in the Deno dashboard is create their account and
+generate a `ddo_` token. **Do not ask them for their org slug — derive it from
+the token** (see "Discovering the org and apps"). Everything
 else — creating the app, setting env vars, deploying, viewing logs — is
 automated: app creation and deploys via the CI workflow, env vars and logs via
 `deno deploy env`/`deno deploy logs` (which may run from the VM for
@@ -141,11 +142,32 @@ command and full stderr to the user and stop.
 Note: `deno deploy` may create a `deno.jsonc` config file in the project
 directory after the first deployment — this is normal.
 
-### Listing apps in an org
+### Discovering the org and apps (derive from the token — do NOT ask the user)
 
-The `deno deploy` CLI has no `list` subcommand. To discover which apps exist,
-use curl against the tRPC API at `console.deno.com`. The tRPC API authenticates
-via cookies, not `Authorization: Bearer`:
+**The token already knows which org(s) it can reach, so derive the org slug from
+the token — never ask the user to tell you their org name and never send them to
+the console URL to read it.** Asking the user for the org name is a friction bug:
+the only thing the user must supply is a valid `ddo_` token.
+
+**Primary method — `whoami` (works from just the token):**
+
+```bash
+deno deploy whoami --json --non-interactive < /dev/null
+```
+
+The JSON response contains an `orgs[]` array; use each org's `slug` as the
+`--org` value. Decision rule:
+
+- **Exactly one org** → use it automatically, silently.
+- **Multiple orgs** → ask the user to choose, but present the actual slugs from
+  `whoami` (do not ask them to type a name from memory).
+- **Zero orgs / `authenticated:false`** → the token is bad or has no org; that is
+  a token problem, not an org-name problem — get a valid `ddo_` token.
+
+**Fallback — tRPC API** (if the CLI is unavailable). The `deno deploy` CLI has
+no `list` subcommand for apps, so to enumerate apps use curl against the tRPC API
+at `console.deno.com`, which authenticates via cookies, not `Authorization:
+Bearer`:
 
 ```bash
 # List orgs
@@ -154,15 +176,15 @@ curl -s -H "Cookie: token=$DENO_DEPLOY_TOKEN; deno_auth_ghid=force" \
 
 # List apps in an org
 curl -s -H "Cookie: token=$DENO_DEPLOY_TOKEN; deno_auth_ghid=force" \
-  "https://console.deno.com/api/apps.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22org%22%3A%22ORG_SLUG%22%7D%7D%7D"
+  "https://console.deno.com/api/apps.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22json%22%3A%7B%22org%22%3A%22ORG_SLUG%22%7D%7D%7D%7D"
 ```
 
-Replace `ORG_SLUG` with the org slug from the `orgs.list` response.
+Replace `ORG_SLUG` with a slug discovered above.
 
-**Mandatory rule: list before deploy.** Before the **first** deploy attempt
-for a project, or anytime you are not 100% certain of the org slug and app
-slug, you must run `orgs.list` and then `apps.list`. Do not guess app or org
-slugs.
+**Mandatory rule: discover before deploy.** Before the **first** deploy attempt
+for a project, or anytime you are not 100% certain of the org slug and app slug,
+discover the org from the token (`whoami`, or `orgs.list`) and then confirm the
+app (`apps.list`). Never guess, and never ask the user for, an org or app slug.
 
 ### Deno Deploy tokens
 
