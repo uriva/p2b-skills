@@ -42,12 +42,17 @@ The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
 
 **Mandatory safety rule to prevent VM hangs:** Always verify that the `DENO_DEPLOY_TOKEN` environment variable is present (non-empty) in your VM shell before running any `deno deploy` commands (e.g., by running `echo $DENO_DEPLOY_TOKEN` or checking environment variables). If the token is missing, do NOT run any `deno deploy` subcommands (including `whoami`, `orgs list`, or `create`), as they will attempt to run interactively and hang the VM indefinitely. Instead, immediately ask the user to provide their Deno Deploy access token in the chat first!
 
+Deploys and app creation run in CI (see "Deployments are CI-only" below), not
+on the VM. The commands below are the building blocks CI uses; `env`/`logs` may
+also be run from the VM for inspection. Always pass `--non-interactive` and
+redirect `< /dev/null` so nothing ever prompts and hangs:
+
 ```bash
-deno deploy --app=<slug> --prod           # Deploy current directory
-deno deploy create <slug>                 # Create an app
-deno deploy env set KEY=VALUE ...         # Set environment variables
-deno deploy env list                      # List environment variables
-deno deploy logs --app=<slug>             # Tail logs
+deno deploy --app=<slug> --org=<org> --prod --non-interactive < /dev/null   # Deploy
+deno deploy create --app=<slug> --org=<org> --non-interactive < /dev/null   # Create app
+deno deploy env set KEY=VALUE --app=<slug> --org=<org>                       # Set env vars
+deno deploy env list --app=<slug> --org=<org>                               # List env vars
+deno deploy logs --app=<slug> --org=<org>                                   # Tail logs
 ```
 
 Use `deno deploy env set` for Deno Deploy environment variables. Do not ask the
@@ -77,30 +82,18 @@ below). Always verify the deployed site actually loads (e.g.
 `curl -sI https://<app>.<org>.deno.net` returns `200`) before telling the user
 it is live.
 
-**Create every app from the VM via CLI. Never use the dashboard's "+ New app"
-or GitHub-integration flow.** The only things the user does in the Deno
-dashboard are: create their account, generate a `ddo_` token, and (optionally)
-tell you their org slug. Everything else — creating apps, setting env vars,
-deploying, viewing logs — is done by you from the VM with the `deno deploy`
-CLI.
+**App creation happens in CI, not on the VM** (see "Deployments are CI-only"
+below). **Never use the dashboard's "+ New app" or GitHub-integration flow.**
+The only things the user does in the Deno dashboard are: create their account,
+generate a `ddo_` token, and (optionally) tell you their org slug. Everything
+else — creating the app, setting env vars, deploying, viewing logs — is
+automated: app creation and deploys via the CI workflow, env vars and logs via
+`deno deploy env`/`deno deploy logs` (which may run from the VM for
+inspection, but MUST use `--non-interactive < /dev/null`).
 
-Use `--source local`, never `--source github`. With `--source github`, the
-dashboard owns the build pipeline and watches specific commits; your VM-side
-`deno deploy --app=...` calls will either return "app not found" or upload code
-that the dashboard build ignores. The two paths do not mix.
-
-Standard non-interactive create command:
-
-```bash
-deno deploy create \
-  --org <org> --app <slug> \
-  --source local \
-  --runtime-mode dynamic --entrypoint main.ts \
-  --build-timeout 5 --build-memory-limit 1024 --region us
-```
-
-For Next.js or other frameworks, swap the runtime/entrypoint flags for
-`--framework-preset <preset>`.
+Never use `--source github` (the dashboard would own the build pipeline and
+watch specific commits, conflicting with CLI deploys). The CI workflow uploads
+the checked-out code directly. The two paths do not mix.
 
 **Recovery — user already created an app via the dashboard GitHub flow:**
 Signs: the user is looking at an Entrypoint / Edit App Config screen, a Retry
@@ -120,7 +113,8 @@ deno deploy database list --org <org>              # any database linked?
   ```bash
   curl -X DELETE -H "Authorization: Bearer $DENO_DEPLOY_TOKEN" \
     https://api.deno.com/v2/apps/<slug>
-  # then deno deploy create --source local ... as above
+  # then let the CI workflow recreate + deploy it (see "Deployments are
+  # CI-only" — the "Ensure app exists" step recreates it on the next push).
   ```
 
 - **If the app has state** (env vars set, database linked, prior successful
@@ -207,24 +201,28 @@ curl -s \
 The base path is always `/v2/`. Never call `/v1/`. In v2, "projects" are called
 "apps" and "deployments" are called "revisions".
 
-### CI-only for deployments
+### Deployments are CI-only, and CI creates the app (single canonical path)
 
-**Never run `deno deploy` manually on the VM.** The VM is ephemeral — it can
-be deleted at any time, which means any manually triggered deployment
-disappears with it. Deployments must be done via **CI** (GitHub Actions), not
-via direct CLI on the VM.
+There is exactly ONE way to deploy: a GitHub Actions workflow that runs on
+push to `main`. Do NOT deploy from the VM, and do NOT create the app from the
+VM. Both the app creation and every deploy happen inside CI. This is the whole
+deploy model — do not mix it with any VM-side `deno deploy` step.
 
-**Correct pattern:**
+Why CI-only: the VM is ephemeral (destroyed after ~1h idle, provisioning
+churn, or manual delete). Anything deployed or created from the VM vanishes
+with it, and the user's live site goes down. CI runs on GitHub's infra, so it
+persists regardless of the VM.
 
-1. On the VM, write and test code.
-2. Push changes to GitHub (via Contents API or `gh`).
-3. Set up a GitHub Actions workflow in the repo that runs
-   `deno deploy --app=<slug> --prod` on every push to `main`. The workflow
-   runs on GitHub's infrastructure, not the VM, so it persists regardless of
-   what happens to the VM.
-4. Merging or pushing to `main` triggers the workflow, which deploys.
+Why CI also creates the app: a fresh project has no app yet. If the workflow
+jumps straight to `deno deploy --app=<slug> --prod`, Deno returns
+**"The requested app was not found, or you do not have access to view it"**
+(exit code 4, NOT_FOUND). That error means *the app does not exist yet* (or the
+org slug is wrong) — it is NOT a bad token. Do not go debugging
+`DENO_DEPLOY_TOKEN`; create the app first. The workflow below does this
+idempotently so the very first push and all later pushes both succeed.
 
-**If the repo doesn't have a CI workflow yet**, create one:
+**The canonical workflow** (one file, handles first-run creation and all
+subsequent deploys):
 
 ```yaml
 # .github/workflows/deploy.yml
@@ -234,31 +232,52 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10 # a looping `deno deploy` must not run forever
+    timeout-minutes: 10 # deploy must never run forever
     steps:
       - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2
         with:
           deno-version: 2.x
-      - run: deno deploy --app=<slug> --prod
+      # Create the app if it does not exist yet. --non-interactive fails fast
+      # instead of prompting (never hangs). CONFLICT (exit 5) means the app
+      # already exists — that is fine, so we swallow a non-zero exit here.
+      - name: Ensure app exists
+        run: |
+          deno deploy create --app=<slug> --org=<org> \
+            --non-interactive --json < /dev/null || true
+        env:
+          DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+      - name: Deploy
+        run: deno deploy --app=<slug> --org=<org> --prod --non-interactive < /dev/null
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
 ```
 
+Non-negotiable details for CI (they prevent the two failure modes we keep
+hitting — hangs and "app not found"):
+
+- **Always pass `--non-interactive` (alias `-y`) and redirect `< /dev/null`**
+  on every `deno deploy` subcommand. Without it the CLI may prompt and the
+  Action hangs until `timeout-minutes` kills it.
+- **Always pass both `--app` and `--org`.** Omitting `--org` is a common cause
+  of the NOT_FOUND error even when the app exists.
+- **Keep `timeout-minutes: 10`** so a stuck run cannot loop forever.
+- Deno's CLI emits stable exit codes: `0` OK, `3` AUTH (bad/missing token),
+  `4` NOT_FOUND (app/org wrong), `5` CONFLICT (already exists). Use these to
+  reason about failures instead of guessing.
+
+For Next.js or other frameworks, add the framework flags to the `create` step
+(e.g. `--framework-preset nextjs`); the `deploy` step stays the same.
+
+For InstantDB, add an `instant-cli push` step to the SAME workflow (before or
+after deploy), and set `INSTANTDB_APP_ID` + `INSTANTDB_ADMIN_TOKEN` as repo
+secrets.
+
 **Do not treat a push as a way to "try" a deploy fix.** Each push to `main`
-triggers this workflow, so pushing repeated speculative fixes creates a pile-up
-of deploy runs (and, if the command loops, several long-running Actions at
-once). Get the deploy working with a single, verified configuration before
-wiring it into CI — validate the exact `deno deploy` invocation and the app/org
-slugs first, then push once.
-
-For InstantDB, the same pattern applies — add `instant-cli push` to a workflow
-step, and set `INSTANTDB_APP_ID` + `INSTANTDB_ADMIN_TOKEN` as repo secrets.
-
-**Common mistake to avoid:** Running `deno deploy --prod` directly on the VM
-to "test the deployment". It works in the moment, but the next time the VM is
-recreated (or destroyed), the deployment is gone. Always push to GitHub and let
-CI handle it.
+triggers this workflow, so pushing repeated speculative fixes piles up deploy
+runs. Validate the workflow YAML and the exact app/org slugs once (discover
+slugs via the tRPC `orgs.list`/`apps.list` calls above — never guess), then
+push a single time and watch that one run.
 
 ### Relay/backend servers — fallbacks and logging
 
@@ -305,18 +324,18 @@ occurred, without needing separate logging infrastructure.
   This is a leading cause of hung VMs and, when the same command is placed in a
   workflow, hung GitHub Actions that run for many minutes doing nothing.
 * **Hard rules:**
-  1. **Create the app non-interactively FIRST**, before any other `deno deploy`
-     subcommand (including `env list` and `logs`). Close stdin with
-     `< /dev/null`:
-     ```bash
-     deno deploy create --app=<app-slug> --org=<org-slug> --source=local --region=global < /dev/null
-     ```
-     Only after the app exists will `deno deploy --app=<app-slug> --prod` and
-     the `env`/`logs` subcommands run deterministically.
-  2. **Always run `deno deploy` commands with a hard timeout and closed stdin**
-     on a VM so a loop cannot burn the whole session, e.g.
-     `timeout 120 deno deploy ... < /dev/null`. If it hits the timeout, treat it
-     as a real failure to diagnose — do not blindly retry.
+  1. **The app is created FIRST, in CI, before any deploy** — never from the VM
+     (see "Deployments are CI-only"). The canonical workflow's "Ensure app
+     exists" step handles this idempotently. Deploying to a non-existent app is
+     what triggers NOT_FOUND; creating first is what makes deploys
+     deterministic.
+  2. **Every `deno deploy` invocation — in CI or the occasional VM-side
+     `env`/`logs` inspection — MUST pass `--non-interactive` and close stdin
+     with `< /dev/null`** so it fails fast instead of looping on a prompt. On a
+     VM, also wrap with a hard timeout, e.g.
+     `timeout 120 deno deploy env list --app=<slug> --org=<org> --non-interactive < /dev/null`.
+     If it hits the timeout, treat it as a real failure to diagnose — do not
+     blindly retry.
   3. **Never poll a `deno deploy` command with `check_vm_progress` in a tight
      loop.** If it hasn't returned quickly, it is almost certainly looping; stop
      it and investigate rather than spawning more polls.

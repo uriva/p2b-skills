@@ -101,3 +101,20 @@ has actually burned a real deployment.
   lifecycle does not persist.
 - **Fix:** Deploy through CI (GitHub Actions) so the pipeline lives in the repo.
   Use the VM only to author/validate; let CI own production deploys.
+
+## 10. CI deploys to an app that was never created ("app not found")
+
+- **Symptom:** The CI deploy step fails with
+  `The requested app was not found, or you do not have access to view it`
+  (exit code 4, NOT_FOUND) on a brand-new project. The agent then wastes turns
+  suspecting `DENO_DEPLOY_TOKEN` is invalid or lacks permissions.
+- **Why:** A fresh project has no app yet. `deno deploy --app=<slug> --prod`
+  does NOT auto-create the app; it deploys to an existing one. With no app (or a
+  wrong `--org`), the API reports not-found. This is not a token problem — the
+  same token works for `whoami`, `orgs list`, and app creation.
+- **Fix:** Make CI create the app idempotently before deploying. Add an
+  "Ensure app exists" step that runs
+  `deno deploy create --app=<slug> --org=<org> --non-interactive --json < /dev/null || true`
+  (CONFLICT / exit 5 means it already exists — ignore it), then the deploy step.
+  Always pass BOTH `--app` and `--org`; omitting `--org` also triggers
+  NOT_FOUND. See the canonical workflow in the main skill.
