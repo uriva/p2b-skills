@@ -56,14 +56,20 @@ Do not ask for an InstantDB App ID on turn 1 — start with a temp app.
 ### Deno Deploy — this is the ONLY credential the user generates manually.
 
 There is no platform OAuth flow for Deno Deploy tokens. Ask the user to generate
-a Deno Deploy Personal Access Token, and when you do:
+a Deno Deploy **organization** token — its value starts with `ddo_`. A personal
+token (value starts with `ddp_`) is rejected by the Deno Deploy v2 REST API, so
+never request one. Steps to give the user:
 
-1. Have them sign in to the new console at `https://console.deno.com` and ensure
-   they have created an organization (accessing settings without one returns
-   `404 ORGANIZATION_NOT_FOUND`).
-2. Have them navigate via the UI menu `Account Settings -> Access Tokens`.
-3. **NEVER** output the direct link `console.deno.com/account/tokens` or any
-   deprecated Deno URL (e.g. `dash.deno.com`).
+1. Sign in at `https://console.deno.com` and create/select an organization first
+   (token pages return `404 ORGANIZATION_NOT_FOUND` without one).
+2. Open that **organization's** page → **Settings** → **Organization Tokens**,
+   and generate the token there. The correct token page lives under the
+   organization, never under a personal/account area.
+3. Do not output any direct token URL (404s without an org context) or any
+   deprecated Deno URL (e.g. `dash.deno.com`). When the user pastes a token,
+   confirm it begins with `ddo_`; if it begins with `ddp_`, tell them it is a
+   personal token and ask for an organization token via
+   Settings → Organization Tokens instead.
 
 Do not ask the user for their Deno Deploy **organization** name — derive it from
 the token (the `p2b-deno-deploy` skill covers this). The only thing the user
