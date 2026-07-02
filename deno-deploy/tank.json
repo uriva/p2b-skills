@@ -9,7 +9,7 @@
   },
   "permissions": {
     "network": {
-      "outbound": ["api.deno.com"]
+      "outbound": []
     },
     "filesystem": {
       "read": [],
