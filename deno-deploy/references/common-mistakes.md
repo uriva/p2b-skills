@@ -160,9 +160,10 @@ has actually burned a real deployment.
   it (non-interactive `create`/`deploy` needs no extra authorization flag —
   `--apply` is only for the unrelated `setup-cloud` AWS/GCP subcommands, NOT for
   `create`/`--prod`; passing it to `create` errors with `readdir '--apply'`).
-  VMs run the base-image shim (≥ 0.0.9902); CI's stock deno pins the built-in to
-  0.0.9901, so pin explicitly there (`deno run -A --minimum-dependency-age=0
-  jsr:@deno/deploy@0.0.9902`, see #14). Regardless of version, `env` has no `set`
+  VMs run the base-image shim (≥ 0.0.9903); CI's stock deno resolves the
+  built-in to the hanging 0.0.9901, so pin the fixed CLI explicitly there
+  (`deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9903`, see #14).
+  Regardless of version, `env` has no `set`
   subcommand and does not accept `KEY=VALUE`, and there is no
   `apps.setEnvVariables` tRPC procedure.
 - **Fix:**
@@ -208,19 +209,23 @@ has actually burned a real deployment.
   upload path leaks too (verified). The trap: the `deno` binary PINS its built-in
   `deno deploy` to a specific CLI version (deno 2.9.1 → 0.0.9901), so a stock
   `denoland/setup-deno` in CI silently gets the hanging CLI.
-- **Fix:** Use `@deno/deploy@0.0.9902`, which calls `Deno.exit(0)` after a
-  successful deploy (verified in the JSR source and by running it). Because the
-  built-in `deno deploy` is still pinned to 9901, invoke the fixed CLI
-  EXPLICITLY: `deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9902
-  --app --org --prod --non-interactive`. The `--minimum-dependency-age=0` is
-  required because 9902 may be newer than the CI deno binary's build date and
-  deno otherwise refuses it (`newer than the specified minimum dependency date`).
-  Then key success off the normal exit code (no marker grep needed); keep
-  `timeout` + `timeout-minutes` only as insurance. Never emit a bare
-  `run: deno deploy … --prod` as the CI Deploy step — that runs the pinned 9901
-  and hangs. On VMs the base image already shims `deno deploy` to 9902, so a bare
+- **Fix:** Use `@deno/deploy@0.0.9903`, which calls `Deno.exit(0)` after a
+  successful deploy (verified in the JSR source and by running it). A plain
+  `deno deploy` resolves the newest version that has cleared deno's supply-chain
+  cooldown (`--minimum-dependency-age`), and for now that is the hanging 0.0.9901
+  (9902/9903 are too recent to have aged in). So invoke the fixed CLI EXPLICITLY:
+  `deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9903 --app --org
+  --prod --non-interactive`. The `--minimum-dependency-age=0` is required to
+  bypass the cooldown so deno will resolve the freshly-published 9903 at all
+  (otherwise `newer than the specified minimum dependency date`). Then key
+  success off the normal exit code (no marker grep needed); keep `timeout` +
+  `timeout-minutes` only as insurance. Never emit a bare `run: deno deploy …
+  --prod` as the CI Deploy step — that runs the cooldown-resolved 0.0.9901 and
+  hangs. On VMs the base image already shims `deno deploy` to 9903, so a bare
   `deno deploy` there is fine; the explicit `deno run` pin is specifically for
-  CI's stock deno. See `SKILL.md` → "The canonical workflow".
+  CI's stock deno. NOTE: once 9903+ ages past the cooldown, a plain `deno deploy`
+  will resolve a fixed CLI on its own and this explicit pin can be simplified.
+  See `SKILL.md` → "The canonical workflow".
 
 ## 15. `invalidToken` from `curl` to a NON-v2 REST path (token is fine)
 

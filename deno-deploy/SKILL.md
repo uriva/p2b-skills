@@ -86,7 +86,7 @@ Deploys and app creation run in CI (see "Deployments are CI-only" below). For
 app/env-var inspection and changes, **prefer the VM-less safescript tools
 above** over the CLI. If you do use the CLI on a VM, follow these rules:
 
-The VM base image shims `deno deploy` to ≥ 0.0.9902, which exits cleanly after a
+The VM base image shims `deno deploy` to ≥ 0.0.9903, which exits cleanly after a
 successful deploy and adds `logs --once` (drain current logs then exit). Still
 wrap every VM `deno deploy` in `timeout … < /dev/null` as insurance. Pass
 `--non-interactive` (fast-fail on missing input) and supply every REQUIRED flag;
@@ -271,24 +271,24 @@ jobs:
           deno-version: 2.x
       # The `deno` binary pins its built-in `deno deploy` to an OLD Deploy CLI
       # (2.9.x -> 0.0.9901) that HANGS after a successful `--prod` deploy. Pin the
-      # fixed CLI (>= 0.0.9902: clean exit on success) explicitly via `deno run`
+      # fixed CLI (>= 0.0.9903: clean exit on success) explicitly via `deno run`
       # so CI does not inherit the stale built-in. `--minimum-dependency-age=0`
       # lets deno resolve a JSR package newer than its own build date. (#14)
       # Create the app if missing. Every required flag + closed stdin means it
       # can't prompt/hang; CONFLICT (exit 5) = already exists, so `|| true`.
       - name: Ensure app exists
         run: |
-          deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9902 create --app=<slug> --org=<org> \
+          deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9903 create --app=<slug> --org=<org> \
             --source local --region global --json --non-interactive < /dev/null || true
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
-      # 0.0.9902 exits 0 after a successful deploy, so key success off the exit
+      # 0.0.9903 exits 0 after a successful deploy, so key success off the exit
       # code. `timeout` stays as insurance only. Never use the built-in
       # `deno deploy` here (it is 0.0.9901 and hangs after success).
       - name: Deploy
         run: |
           set -euo pipefail
-          timeout 300 deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9902 --app=<slug> --org=<org> \
+          timeout 300 deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9903 --app=<slug> --org=<org> \
             --prod --non-interactive < /dev/null
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
@@ -299,7 +299,7 @@ Non-negotiable details for CI (they prevent hangs and "app not found"):
 - **Never call the built-in `deno deploy` in CI.** `denoland/setup-deno` gives a
   stock `deno` whose built-in Deploy CLI is 0.0.9901, which HANGS after a
   successful `--prod` deploy (runs until `timeout-minutes`). Invoke the fixed CLI
-  explicitly: `deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9902
+  explicitly: `deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9903
   …` (the flag lets deno resolve a package newer than its build date). It
   `Deno.exit(0)`s after success, so key success off the exit code (no marker
   grep). See `common-mistakes.md` #14.
@@ -330,7 +330,7 @@ the **`deploy`** step positional-free (the `timeout`-wrapped step above).
   ```yaml
   - name: Ensure app exists
     run: |
-      deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9902 create --app=<slug> --org=<org> \
+      deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@0.0.9903 create --app=<slug> --org=<org> \
         --source local --runtime-mode static --static-dir out \
         --region global --json --non-interactive < /dev/null || true
     env:
@@ -338,7 +338,7 @@ the **`deploy`** step positional-free (the `timeout`-wrapped step above).
   ```
   (use `--static-dir dist` for Vite, `--single-page-app` for a client-routed
   SPA). The `deploy` step is unchanged — still the pinned `deno run -A
-  jsr:@deno/deploy@0.0.9902 … --prod` step above (never the built-in
+  jsr:@deno/deploy@0.0.9903 … --prod` step above (never the built-in
   `deno deploy`, which is 0.0.9901 and hangs after success).
 
 - **Framework with a build step** (let Deno detect/run the build):

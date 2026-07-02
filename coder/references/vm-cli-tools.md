@@ -53,7 +53,7 @@ curl -s -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
 
 **Before doing any work with Deno Deploy (including listing apps, creating apps, deploying, or setting env variables), you MUST acquire and activate the dedicated Deno Deploy skill (`p2b-deno-deploy`), which holds the complete Deno Deploy guidelines and CLI reference.** If that skill is already among your available skills, learn it. If it is not available yet, install it from the community registry (Tank) first, then learn it. Do not attempt any Deno Deploy work from general knowledge — its guidelines are mandatory.
 
-The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so `deno deploy` authenticates automatically. The VM's `deno deploy` is the base-image shim (≥ 0.0.9902): it exits 0 after a successful deploy and supports `logs --once` (drain then exit). Pass `--non-interactive` for scripted create/deploy.
+The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so `deno deploy` authenticates automatically. The VM's `deno deploy` is the base-image shim (≥ 0.0.9903): it exits 0 after a successful deploy and supports `logs --once` (drain then exit). Pass `--non-interactive` for scripted create/deploy.
 
 ```bash
 deno deploy --app=<slug> --prod --non-interactive           # Deploy current directory (exits 0 on success)
@@ -97,7 +97,7 @@ When a custom tool fails or an integration doesn't seem to work, you must inspec
 - **Ensure custom tool schemas are Gemini-safe (CRITICAL):** When writing JSON schemas or parameters for custom/remote tools, be extremely careful: **Gemini does NOT support `anyOf`, `oneOf`, or nested `const` in function declarations.** Always define flat, simple, strongly-typed parameters (like strings, booleans, arrays, or numbers) with flat `enum` types instead of complex union types (like `z.union`) to prevent terminal Google API schema-validation crashes (`INVALID_ARGUMENT` / `Unknown name "const" / Cannot find field`).
 - **Verify channel capabilities and tokens before testing (WhatsApp):** Before doing any work with WhatsApp integrations, you MUST learn the `p2b-whatsapp` skill to understand official/unofficial integration paths, token configuration, and template/capability constraints. Programmatically verify that the target bot actually has its WhatsApp for Business Token (`whatsappForBusinessToken`) or other necessary tokens configured in InstantDB before claiming that a message flow is working.
 - **Never use standard live-stream tail commands:** Running raw `deno deploy logs --app=<slug>` opens an infinite live connection. This will hang in a non-interactive VM, resulting in timeouts or connection-read errors (e.g., `TypeError: error reading a body from connection`).
-- **Use `--once` (or a `--start`/`--end` window) for bounded logs:** The VM CLI (≥ 0.0.9902) supports `--once`, which drains the currently-available logs and then exits — the right default for a non-interactive VM. Add `--start`/`--end` to widen or bound the window. Both terminate on their own:
+- **Use `--once` (or a `--start`/`--end` window) for bounded logs:** The VM CLI (≥ 0.0.9903) supports `--once`, which drains the currently-available logs and then exits — the right default for a non-interactive VM. Add `--start`/`--end` to widen or bound the window. Both terminate on their own:
   ```bash
   # Drain the last hour of logs and exit:
   deno deploy logs --app=<slug> --once
