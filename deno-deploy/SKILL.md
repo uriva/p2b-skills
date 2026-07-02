@@ -8,6 +8,15 @@ description: Deno Deploy guidance for prompt2bot agents — CLI usage, environme
 Deno Deploy skill for prompt2bot agents. Covers deploying, managing environment
 variables, CI setup, and relay/backend server patterns.
 
+## Reference files
+
+- `common-mistakes.md`: A scannable checklist of real, observed deploy failures
+  (wrong CLI, wrong URL scheme, VM/CI hangs, slug guessing, ephemeral deploys)
+  with symptom → cause → fix. **Load and skim it before any deploy**, and
+  re-check it whenever a deploy misbehaves — most deploy incidents are one of
+  these. Use whichever mechanism your runtime exposes for reading a skill's
+  reference file.
+
 ## Instructions
 
 ### CLI: `deno deploy` (NOT `deployctl`)
@@ -15,8 +24,18 @@ variables, CI setup, and relay/backend server patterns.
 **The command is `deno deploy`, a built-in subcommand of the `deno` binary.
 NEVER use `deployctl`** — it is deprecated and will not work. Do not
 install it (`deno install jsr:@deno/deployctl`), do not run it, do not fall
-back to it. If `deno deploy` fails, report the error — do not try `deployctl`
-as an alternative.
+back to it, and **do not put it in a GitHub Actions workflow** (no
+`deno run -A jsr:@deno/deployctl deploy ...` step). This prohibition applies
+everywhere — VM shell, scripts, and CI YAML alike. If `deno deploy` fails,
+report the exact command and full stderr — do not try `deployctl` as an
+alternative.
+
+Why it fails in practice: `deployctl` authenticates against the deprecated
+Deploy Classic backend, so a valid new-console `ddo_` token is rejected with
+`APIError: The authorization token is not valid: The bearer token is invalid` —
+even though the same token works with `deno deploy` and the `api.deno.com/v2`
+REST API. Seeing that error means you are on the wrong CLI; switch to
+`deno deploy`, do not try to "fix" the token.
 
 The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
 `deno deploy` authenticates automatically.
@@ -35,6 +54,28 @@ Use `deno deploy env set` for Deno Deploy environment variables. Do not ask the
 user to set env vars in the dashboard when the CLI can do it; set them yourself
 with `deno deploy env set KEY=VALUE ...`, then verify with `deno deploy env
 list`.
+
+### Deployed URL format — `<app>.<org>.deno.net` (NOT `.deno.dev`)
+
+The live URL of a deployed app is:
+
+```
+https://<app-slug>.<org-slug>.deno.net
+```
+
+For example, app `uri-tasks-dashboard` in org `prompt2bot-test` is served at
+`https://uri-tasks-dashboard.prompt2bot-test.deno.net`.
+
+**Never construct or report a `*.deno.dev` URL** — that is the legacy Deno
+Deploy Classic scheme and will 404 on the current platform. The org slug is a
+required part of the hostname; a URL without it is wrong.
+
+Do not guess the URL. Confirm it from the deploy output or the app's config,
+which report the real production domain. If you need to derive it, you must know
+both the app slug and the org slug (discover the org via `orgs.list`, see
+below). Always verify the deployed site actually loads (e.g.
+`curl -sI https://<app>.<org>.deno.net` returns `200`) before telling the user
+it is live.
 
 **Create every app from the VM via CLI. Never use the dashboard's "+ New app"
 or GitHub-integration flow.** The only things the user does in the Deno
@@ -193,15 +234,23 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # a looping `deno deploy` must not run forever
     steps:
       - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v1
+      - uses: denoland/setup-deno@v2
         with:
           deno-version: 2.x
       - run: deno deploy --app=<slug> --prod
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
 ```
+
+**Do not treat a push as a way to "try" a deploy fix.** Each push to `main`
+triggers this workflow, so pushing repeated speculative fixes creates a pile-up
+of deploy runs (and, if the command loops, several long-running Actions at
+once). Get the deploy working with a single, verified configuration before
+wiring it into CI — validate the exact `deno deploy` invocation and the app/org
+slugs first, then push once.
 
 For InstantDB, the same pattern applies — add `instant-cli push` to a workflow
 step, and set `INSTANTDB_APP_ID` + `INSTANTDB_ADMIN_TOKEN` as repo secrets.
@@ -249,12 +298,30 @@ occurred, without needing separate logging infrastructure.
 ### New Learnings & Best Practices for Deno Deploy & Next.js Defaults
 
 #### 1. Preventing CLI Loops in Headless Sandboxes (VMs)
-* **The Issue:** Running `deno deploy` without prior project creation on a headless, non-TTY sandbox VM can cause the Deno Deploy CLI to enter an infinite CPU-bound loop (consuming 99% CPU) while polling for interactive user inputs.
-* **The Solution:** Always provision the application explicitly first using the non-interactive `create` command with closed `stdin` (`< /dev/null`):
-  ```bash
-  deno deploy create --app=<app-slug> --org=<org-slug> --source=local --region=global < /dev/null
-  ```
-  Once the app is created in Deno Deploy, the deploy command `deno deploy --app=<app-slug> --prod` will run deterministically in the background without any loops.
+* **The Issue:** On a headless, non-TTY sandbox VM, **any** `deno deploy`
+  subcommand — `--prod`, `env list`, `logs`, `whoami`, etc. — can enter an
+  infinite CPU-bound loop (99% CPU) when it needs input it cannot get
+  interactively (e.g. the app/org isn't resolved yet, or auth needs a prompt).
+  This is a leading cause of hung VMs and, when the same command is placed in a
+  workflow, hung GitHub Actions that run for many minutes doing nothing.
+* **Hard rules:**
+  1. **Create the app non-interactively FIRST**, before any other `deno deploy`
+     subcommand (including `env list` and `logs`). Close stdin with
+     `< /dev/null`:
+     ```bash
+     deno deploy create --app=<app-slug> --org=<org-slug> --source=local --region=global < /dev/null
+     ```
+     Only after the app exists will `deno deploy --app=<app-slug> --prod` and
+     the `env`/`logs` subcommands run deterministically.
+  2. **Always run `deno deploy` commands with a hard timeout and closed stdin**
+     on a VM so a loop cannot burn the whole session, e.g.
+     `timeout 120 deno deploy ... < /dev/null`. If it hits the timeout, treat it
+     as a real failure to diagnose — do not blindly retry.
+  3. **Never poll a `deno deploy` command with `check_vm_progress` in a tight
+     loop.** If it hasn't returned quickly, it is almost certainly looping; stop
+     it and investigate rather than spawning more polls.
+* **In CI**, give the deploy job a `timeout-minutes` so a looping deploy cannot
+  run for 10+ minutes (see the workflow example above).
 
 #### 2. Exclude Heavy Frontend Development Dependencies from Root `deno.json`
 * **The Issue:** Deno Deploy's compiler analyzes all imports defined in the root `deno.json` file. Having heavy, Node-based web development tools (like Vite, PostCSS, Autoprefixer, Tailwind, or complex React components) in your root imports will crash or hang Deno Deploy's compiler during the build phase.
