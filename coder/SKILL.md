@@ -33,6 +33,10 @@ This skill contains detailed reference files for specific tasks. You MUST load t
 - `web-app-playbook.md`: **Read this FIRST for any web-app/site/dashboard/hosted-service build or deploy request.** Credential-acquisition policy (GitHub OAuth, InstantDB temp-then-OAuth, Deno Deploy token) and first-turn sequencing.
 - `interaction-rules.md`: Rules for tone, casual queries, screenshot policies, and tool spinner explanations.
 - `instantdb-guidelines.md`: Guidelines for temporary database prototyping, claim commands, and InstantDB OAuth callback.
-- `planning-and-design.md`: Mandatory design and planning workflow, expert model consultation, and thread delegation.
+- `planning-and-design.md`: Mandatory design/planning workflow, expert-model consultation, thread delegation, and the two-legged GitHub-CI source-of-truth pattern. Read before designing or implementing any project.
+- `tech-stack.md`: Default tech choices (GitHub/Deno Deploy/InstantDB/Next.js), Next.js-on-Deno-Deploy, and repo/project structure. Read when choosing the stack or laying out a repo.
+- `bot-architecture.md`: Building the bots themselves — behavior-in-prompts, the prompt2bot API (`setPrompt`/`setCustomTools`/`createRemoteTask`/`injectContext`), `remote_config`, and the state-machine anti-pattern. Read when building or configuring a bot.
+- `scheduling-and-media.md`: Push-based scheduling (webhooks/wakeup-timers/QStash vs cron), multimodal image/video handling, and the spreadsheet-as-datastore anti-pattern. Read when adding scheduling, reminders, or media/document processing.
 - `testing-guidelines.md`: Mandatory E2E and localized unit testing rules.
-- `vm-and-secrets.md`: VM vs Safescript decision matrix and secret handling.
+- `vm-and-secrets.md`: VM vs Safescript decision matrix, how secrets are injected/stored, CI-only deployment rule, and VM anti-patterns. Read before storing secrets or doing VM work.
+- `vm-cli-tools.md`: Command reference for the pre-installed CLIs (`gh`, `deno deploy`, `instant-cli`) and Deno Deploy log/debugging operations. Read when running CLI commands or debugging a deployment.
