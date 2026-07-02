@@ -8,13 +8,24 @@ description: Deno Deploy guidance and VM-less safescript tools for prompt2bot ag
 Deno Deploy skill for prompt2bot agents. Covers deploying, managing environment
 variables, CI setup, and relay/backend server patterns.
 
+## The token: use a `ddo_` org token (works with BOTH the CLI and REST v2)
+
+Use a `ddo_` organization access token from `https://console.deno.com` — the
+universal token, verified to work with **both** the `deno deploy` CLI and the
+REST v2 API, so one token covers everything here. (A `ddp_` personal token works
+with the CLI but is rejected by REST v2; prefer `ddo_`.) If you get
+`invalidToken: The bearer token is invalid`, it's almost always a **wrong URL
+path, not a bad token** — use `https://api.deno.com/v2/...`, never
+`api.deno.com/organizations` or `/v1/`. Confirm the token is truly bad
+(malformed/missing/expired) before asking the user to regenerate it.
+
 ## VM-less tools (prefer these for app + env-var operations)
 
-This skill ships safescript tools that call the Deno Deploy REST API v2
-(`api.deno.com`) directly — **no VM required**, and each has a built-in request
-timeout so it can never hang the way the `deno deploy` CLI can (see "Why the
-`env` CLI hangs" below). Prefer them for discovering apps, reading/setting env
-vars, creating an app, and checking the last deploy's status:
+This skill ships safescript tools that call the REST API v2 (`api.deno.com`)
+directly — **no VM required**, each with a built-in request timeout so it can
+never hang like the `deno deploy` CLI (see "Why the `env` CLI hangs"). Prefer
+them for discovering apps, reading/setting env vars, creating an app, and
+checking the last deploy's status:
 
 - `listDenoDeployApps` — list apps reachable by the token (discover slugs; never guess).
 - `getDenoDeployApp` — get an app's details, including current `env_vars`.
@@ -24,11 +35,10 @@ vars, creating an app, and checking the last deploy's status:
   credentials.
 - `latestDenoDeployRevision` — latest revision status (`queued`/`building`/`succeeded`/`failed` + `failure_reason`) to check whether a deploy worked.
 
-Each takes `denoDeployToken`. Bind it to the stored secret by passing the value
-`"SECRET:DENO_DEPLOY_TOKEN"` for that parameter (the runtime substitutes the real
-decrypted token). The bot's `DENO_DEPLOY_TOKEN` secret must list `api.deno.com`
-in its allowed hosts; if a call is rejected for host policy, that is a
-bot-settings fix (add `api.deno.com` to the secret's hosts), not a code change.
+Each takes `denoDeployToken`; bind it to the stored secret by passing
+`"SECRET:DENO_DEPLOY_TOKEN"` (the runtime substitutes the decrypted token). The
+secret must list `api.deno.com` in its allowed hosts; a host-policy rejection is
+a bot-settings fix (add `api.deno.com`), not a code change.
 
 These do NOT deploy code — a production deploy still runs through CI (see
 "Deployments are CI-only"). Use these for everything around the deploy.
@@ -58,18 +68,13 @@ everywhere — VM shell, scripts, and CI YAML alike. If `deno deploy` fails,
 report the exact command and full stderr — do not try `deployctl` as an
 alternative.
 
-Why it fails: `deployctl` uses the deprecated Deploy Classic backend, so a valid
-`ddo_` token is rejected as invalid — even though the same token works with
-`deno deploy` and the `api.deno.com/v2` REST API. That error means wrong CLI, not
-a bad token.
+Why it fails: `deployctl` uses the deprecated Deploy Classic backend and is
+rejected regardless of token. Use `deno deploy` (the built-in subcommand)
+instead — a `ddo_` token authenticates it automatically.
 
-The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
-`deno deploy` authenticates automatically.
-
-The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
-`deno deploy` authenticates automatically. Verify it is present
-(`echo $DENO_DEPLOY_TOKEN`) before any CLI call; if it is missing, ask the user
-for their `ddo_` token first rather than running commands that may prompt.
+The VM has `DENO_DEPLOY_TOKEN` in the environment, so `deno deploy`
+authenticates automatically; verify it is present (`echo $DENO_DEPLOY_TOKEN`)
+before any CLI call.
 
 Deploys and app creation run in CI (see "Deployments are CI-only" below). For
 app/env-var inspection and changes, **prefer the VM-less safescript tools
@@ -208,28 +213,24 @@ Never guess, and never ask the user for, an org or app slug.
 
 ### Deno Deploy tokens
 
-Valid tokens start with `ddo_` (e.g. `ddo_abc123...`). If a user gives you a
-token that doesn't start with `ddo_`, it's wrong — likely from the old Deno
-dashboard, which is deprecated. The correct place to
-create a token is the **new** Deno Deploy console at
-**https://console.deno.com**.
+Get a `ddo_` token from the **new** console at **https://console.deno.com**
+(the old Deno dashboard is deprecated and its tokens won't work).
 
-**Critical organization requirement:** Deno Deploy console organizes all apps and resources under organizations. If a user has not created an organization on the new console yet, visiting settings or token pages directly will result in a `404 ORGANIZATION_NOT_FOUND` error. Therefore, you **MUST** instruct the user to first sign up/sign in to `https://console.deno.com` and ensure they have created a new organization before generating a token.
-
-Walk the user through the token generation steps:
-1. Log in to the main console page at **https://console.deno.com** and ensure an organization is created first.
-2. In the dashboard, navigate to your Account Settings -> Access Tokens (doing this via the UI is safe and avoids any direct 404 errors).
-3. Create a new token, copy it (it will start with `ddo_`), and paste it here.
-
-This is a common friction point — users often end up on the old deprecated dashboard instead of console.deno.com, paste the wrong value, or hit 404s due to a missing organization.
+**Org must exist first:** the console organizes everything under organizations,
+and hitting settings/token pages before creating one gives
+`404 ORGANIZATION_NOT_FOUND`. So instruct the user to (1) sign in at
+https://console.deno.com and create an organization, (2) go to Account Settings →
+Access Tokens via the UI (avoids 404s), (3) create a token (`ddo_...`) and paste
+it. Users often paste an old-dashboard value or hit 404s from a missing org —
+watch for that.
 
 ### v2 REST API (backs the safescript tools)
 
-The VM-less tools above call this API; use raw curl only for what they don't
-cover (e.g. delete an app). The v1 API (`/v1/`) is deprecated and rejects `ddo_`
-tokens. Base path is always `/v2/`; auth is `Authorization: Bearer
-$DENO_DEPLOY_TOKEN`; org is derived from the token. "projects"→"apps",
-"deployments"→"revisions".
+The VM-less tools call this API; use raw curl only for what they don't cover
+(e.g. delete an app). Base path is always `/v2/` (the pre-v2/`/v1/` API rejects
+`ddo_` tokens with `invalidToken` — see common-mistakes #15); auth is
+`Authorization: Bearer $DENO_DEPLOY_TOKEN`; org is derived from the token.
+"projects"→"apps", "deployments"→"revisions".
 
 ```bash
 # Read app (incl. env_vars):  GET  /v2/apps/<slug>

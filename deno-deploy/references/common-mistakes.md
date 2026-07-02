@@ -202,3 +202,21 @@ has actually burned a real deployment.
   Use the `timeout`-wrapped Deploy step from the canonical workflow in the main
   skill (`SKILL.md` → "The canonical workflow"). Never emit a bare
   `run: deno deploy --app --org --prod` as the CI Deploy step.
+
+## 15. `invalidToken` from `curl` to a NON-v2 REST path (token is fine)
+
+- **Symptom:** `curl` to `api.deno.com` returns
+  `{"code":"invalidToken","message":"The authorization token is not valid: The
+  bearer token is invalid."}` — even with a correct `ddo_` token that works with
+  the CLI. Leads the agent to (wrongly) tell the user to regenerate the token.
+- **Why:** The call hit the **deprecated pre-v2 API** (e.g.
+  `https://api.deno.com/organizations`, or `/v1/...`), which does not accept
+  new-console `ddo_` tokens. Note the error `code` is camelCase `invalidToken`
+  here, vs. the v2 API's `INVALID_TOKEN` (HTTP 401) for a genuinely bad token —
+  the casing tells you which API you reached.
+- **Fix:** Always use the **`/v2/` path**: `https://api.deno.com/v2/apps`,
+  `/v2/apps/<slug>`, etc., with `Authorization: Bearer $DENO_DEPLOY_TOKEN`. A
+  `ddo_` token works with both the CLI and REST v2, so `invalidToken` on a raw
+  curl means wrong path, not a bad token. Prefer the VM-less safescript tools,
+  which target `/v2/` correctly. Do not tell the user to regenerate a `ddo_`
+  token on the basis of a non-v2 curl failure.
