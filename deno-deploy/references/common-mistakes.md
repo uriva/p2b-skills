@@ -37,11 +37,13 @@ has actually burned a real deployment.
   `kill -9`. In CI it shows as a job stuck "in progress" for many minutes.
 - **Why:** On a headless, non-TTY VM the CLI blocks waiting for interactive
   input it can never receive (unresolved app/org, or an auth prompt).
-- **Fix:** Create the app non-interactively FIRST, with stdin closed:
-  `deno deploy create --app=<slug> --org=<org> --source=local --region=global < /dev/null`.
+- **Fix:** Create the app non-interactively FIRST, with stdin closed and every
+  required flag supplied (`--source`, `--region`):
+  `deno deploy create --app=<slug> --org=<org> --source local --region global < /dev/null`.
   Only then run `deno deploy --app=<slug> --prod`, `env`, or `logs`. Always wrap
   VM deploy commands with a timeout and closed stdin, e.g.
-  `timeout 120 deno deploy ... < /dev/null`.
+  `timeout 120 deno deploy ... < /dev/null`. (There is no `--non-interactive`
+  flag — closed stdin + complete flags is what prevents the prompt.)
 
 ## 4. Polling a possibly-hung deploy in a tight loop
 
@@ -114,10 +116,11 @@ has actually burned a real deployment.
   same token works for `whoami`, `orgs list`, and app creation.
 - **Fix:** Make CI create the app idempotently before deploying. Add an
   "Ensure app exists" step that runs
-  `deno deploy create --app=<slug> --org=<org> --non-interactive --json < /dev/null || true`
+  `deno deploy create --app=<slug> --org=<org> --source local --region global --json < /dev/null || true`
   (CONFLICT / exit 5 means it already exists — ignore it), then the deploy step.
-  Always pass BOTH `--app` and `--org`; omitting `--org` also triggers
-  NOT_FOUND. See the canonical workflow in the main skill.
+  Always pass BOTH `--app` and `--org` plus the required `--source`/`--region`;
+  omitting `--org` also triggers NOT_FOUND. See the canonical workflow in the
+  main skill.
 
 ## 11. Passing the build-output dir as a positional (`deno deploy out ...`)
 
@@ -133,9 +136,29 @@ has actually burned a real deployment.
   shape is wrong.
 - **Fix:** The static/framework serving config is set on the app at **create**
   time, not passed to `deploy`. On the "Ensure app exists" step use
-  `deno deploy create --app=<slug> --org=<org> --source local --runtime-mode static --static-dir <out|dist> --region global --non-interactive --json < /dev/null || true`
+  `deno deploy create --app=<slug> --org=<org> --source local --runtime-mode static --static-dir <out|dist> --region global --json < /dev/null || true`
   (or `--framework-preset <preset>` for a build-step framework). Keep the deploy
   step a plain
-  `deno deploy --app=<slug> --org=<org> --prod --non-interactive < /dev/null`
+  `deno deploy --app=<slug> --org=<org> --prod < /dev/null`
   with **no positional**. Confirm flags with `deno deploy create --help`. See
   the "Static sites and frameworks" section in the main skill.
+
+## 12. Inventing `--non-interactive` or `deno deploy env set`
+
+- **Symptom:** `readdir '--non-interactive'` (os error 2) from any
+  `deno deploy` command, or `Unknown command "set". Did you mean "list"?` from
+  `deno deploy env set KEY=VALUE`. Also `No procedure found on path
+  "apps.setEnvVariables"` when trying to set env vars via a tRPC call.
+- **Why:** Neither exists in the CLI (v0.0.99). `--non-interactive` is parsed as
+  a positional `[root-path]`. `env` has no `set` subcommand and does not accept
+  `KEY=VALUE`. There is no `apps.setEnvVariables` tRPC procedure.
+- **Fix:**
+  - Non-interactive = close stdin (`< /dev/null`) + pass every required flag.
+    Do NOT pass `--non-interactive`.
+  - Set env vars with the real subcommands (space-separated args, not
+    `KEY=VALUE`): `deno deploy env add KEY VALUE --app=<slug> --org=<org> < /dev/null`,
+    or bulk-load with `deno deploy env load .env --app=<slug> --org=<org> < /dev/null`.
+    Other subcommands: `list`/`ls`, `update-value`, `update-contexts`,
+    `delete`/`rm`. Verify with `deno deploy env list`.
+  - `deno deploy create` requires `--source` (`local`) and `--region`
+    (`us`|`eu`|`global`) in addition to `--app`/`--org`.

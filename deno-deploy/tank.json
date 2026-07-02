@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-deno-deploy",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/deno-deploy",
   "description": "Deno Deploy guidance for prompt2bot agents — CLI usage, environment variables, CI deployment, relay server fallbacks, and logging.",
   "visibility": "public",

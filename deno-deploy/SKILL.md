@@ -49,21 +49,31 @@ The VM is pre-configured with `DENO_DEPLOY_TOKEN` in the environment, so
 
 Deploys and app creation run in CI (see "Deployments are CI-only" below), not
 on the VM. The commands below are the building blocks CI uses; `env`/`logs` may
-also be run from the VM for inspection. Always pass `--non-interactive` and
-redirect `< /dev/null` so nothing ever prompts and hangs:
+also be run from the VM for inspection. **`deno deploy` has NO `--non-interactive`
+flag** — passing it makes the CLI treat the word as a positional `[root-path]`
+and fail with `readdir '--non-interactive'`. To run non-interactively you must
+instead (a) supply every REQUIRED flag so nothing needs prompting and (b) close
+stdin with `< /dev/null` so it can never block on input:
 
 ```bash
-deno deploy --app=<slug> --org=<org> --prod --non-interactive < /dev/null   # Deploy
-deno deploy create --app=<slug> --org=<org> --non-interactive < /dev/null   # Create app
-deno deploy env set KEY=VALUE --app=<slug> --org=<org>                       # Set env vars
-deno deploy env list --app=<slug> --org=<org>                               # List env vars
-deno deploy logs --app=<slug> --org=<org>                                   # Tail logs
+deno deploy --app=<slug> --org=<org> --prod < /dev/null                             # Deploy
+deno deploy create --app=<slug> --org=<org> --source local --region global < /dev/null  # Create app
+deno deploy env add KEY VALUE --app=<slug> --org=<org> < /dev/null                  # Add env var
+deno deploy env list --app=<slug> --org=<org> < /dev/null                           # List env vars
+deno deploy logs --app=<slug> --org=<org> < /dev/null                               # Tail logs
 ```
 
-Use `deno deploy env set` for Deno Deploy environment variables. Do not ask the
-user to set env vars in the dashboard when the CLI can do it; set them yourself
-with `deno deploy env set KEY=VALUE ...`, then verify with `deno deploy env
-list`.
+`deno deploy create` REQUIRES `--source` (use `--source local`) and `--region`
+(one of `us`, `eu`, `global`) in addition to `--app`/`--org`; omitting either
+makes the CLI prompt (and hang) or error `Missing required option`.
+
+`deno deploy env` uses **subcommands with space-separated arguments**, not
+`KEY=VALUE`: `list`/`ls`, `add <var> <value>`, `update-value`, `delete`/`rm`,
+and `load <file>` (bulk-load a `.env` — prefer for several vars). There is **no
+`env set`** and no tRPC `apps.setEnvVariables`. Set a var with
+`deno deploy env add KEY VALUE --app=<slug> --org=<org> < /dev/null`, verify with
+`deno deploy env list`, and don't push env config to the dashboard when the CLI
+can do it. See `common-mistakes.md` (#12).
 
 ### Deployed URL format — `<app>.<org>.deno.net` (NOT `.deno.dev`)
 
@@ -95,7 +105,8 @@ the token** (see "Discovering the org and apps"). Everything
 else — creating the app, setting env vars, deploying, viewing logs — is
 automated: app creation and deploys via the CI workflow, env vars and logs via
 `deno deploy env`/`deno deploy logs` (which may run from the VM for
-inspection, but MUST use `--non-interactive < /dev/null`).
+inspection, but MUST close stdin with `< /dev/null` and pass every required
+flag so nothing prompts).
 
 Never use `--source github` (the dashboard would own the build pipeline and
 watch specific commits, conflicting with CLI deploys). The CI workflow uploads
@@ -157,7 +168,7 @@ the only thing the user must supply is a valid `ddo_` token.
 **Primary method — `whoami` (works from just the token):**
 
 ```bash
-deno deploy whoami --json --non-interactive < /dev/null
+deno deploy whoami --json < /dev/null
 ```
 
 The JSON response contains an `orgs[]` array; use each org's `slug` as the
@@ -265,17 +276,17 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: 2.x
-      # Create the app if it does not exist yet. --non-interactive fails fast
-      # instead of prompting (never hangs). CONFLICT (exit 5) means the app
-      # already exists — that is fine, so we swallow a non-zero exit here.
+      # Create the app if it does not exist yet. Passing every required flag +
+      # closing stdin (< /dev/null) means it can never prompt/hang. CONFLICT
+      # (exit 5) means the app already exists — fine, so we swallow non-zero.
       - name: Ensure app exists
         run: |
           deno deploy create --app=<slug> --org=<org> \
-            --non-interactive --json < /dev/null || true
+            --source local --region global --json < /dev/null || true
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
       - name: Deploy
-        run: deno deploy --app=<slug> --org=<org> --prod --non-interactive < /dev/null
+        run: deno deploy --app=<slug> --org=<org> --prod < /dev/null
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
 ```
@@ -283,9 +294,11 @@ jobs:
 Non-negotiable details for CI (they prevent the two failure modes we keep
 hitting — hangs and "app not found"):
 
-- **Always pass `--non-interactive` (alias `-y`) and redirect `< /dev/null`**
-  on every `deno deploy` subcommand. Without it the CLI may prompt and the
-  Action hangs until `timeout-minutes` kills it.
+- **Never invent a `--non-interactive` flag** — it does not exist and is
+  misparsed as a positional path. Instead redirect `< /dev/null` AND supply
+  every required flag (for `create`: `--source local --region global --app
+  --org`) so the CLI can't prompt and fails fast rather than hanging until
+  `timeout-minutes` kills the Action.
 - **Always pass both `--app` and `--org`.** Omitting `--org` is a common cause
   of the NOT_FOUND error even when the app exists.
 - **Keep `timeout-minutes: 10`** so a stuck run cannot loop forever.
@@ -316,21 +329,21 @@ the **`create` (Ensure app exists)** step, and keep the **`deploy`** step a plai
     run: |
       deno deploy create --app=<slug> --org=<org> \
         --source local --runtime-mode static --static-dir out \
-        --region global --non-interactive --json < /dev/null || true
+        --region global --json < /dev/null || true
     env:
       DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
   ```
   (use `--static-dir dist` for Vite, `--single-page-app` for a client-routed
   SPA). The `deploy` step is unchanged:
-  `deno deploy --app=<slug> --org=<org> --prod --non-interactive < /dev/null`.
+  `deno deploy --app=<slug> --org=<org> --prod < /dev/null`.
 
 - **Framework with a build step** (let Deno detect/run the build):
   add `--framework-preset <preset>` (and optionally `--build-command`) to the
   same `create` step instead of `--runtime-mode static`.
 
-Discover the exact accepted flags with `deno deploy create --help` — the static
-example it prints is authoritative:
-`create --json --non-interactive --org my-org --app my-app --source local --runtime-mode static --static-dir dist --region us`.
+Discover the exact accepted flags with `deno deploy create --help` — the printed
+option list is authoritative. A valid static create is:
+`deno deploy create --json --org my-org --app my-app --source local --runtime-mode static --static-dir dist --region us < /dev/null`.
 See `common-mistakes.md` (#11) for the failure signature.
 
 For InstantDB, add an `instant-cli push` step to the SAME workflow (before or

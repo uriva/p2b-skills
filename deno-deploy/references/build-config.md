@@ -18,10 +18,12 @@ framework for a new dynamic project.
      what triggers NOT_FOUND; creating first is what makes deploys
      deterministic.
   2. **Every `deno deploy` invocation — in CI or the occasional VM-side
-     `env`/`logs` inspection — MUST pass `--non-interactive` and close stdin
-     with `< /dev/null`** so it fails fast instead of looping on a prompt. On a
-     VM, also wrap with a hard timeout, e.g.
-     `timeout 120 deno deploy env list --app=<slug> --org=<org> --non-interactive < /dev/null`.
+     `env`/`logs` inspection — MUST close stdin with `< /dev/null` and supply
+     every required flag** so it fails fast instead of looping on a prompt.
+     There is NO `--non-interactive` flag (it gets misparsed as a positional
+     path); non-interactive behaviour comes from closed stdin + complete flags.
+     On a VM, also wrap with a hard timeout, e.g.
+     `timeout 120 deno deploy env list --app=<slug> --org=<org> < /dev/null`.
      If it hits the timeout, treat it as a real failure to diagnose — do not
      blindly retry.
   3. **Never poll a `deno deploy` command with `check_vm_progress` in a tight
