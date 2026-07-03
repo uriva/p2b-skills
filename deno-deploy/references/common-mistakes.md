@@ -7,16 +7,24 @@ has actually burned a real deployment.
 
 ## 1. Using `deployctl` (in a command OR a CI workflow)
 
-- **Symptom:** `APIError: The authorization token is not valid: The bearer
-  token is invalid` — even though the token is a fresh `ddo_` token that works
-  elsewhere. Often appears inside a GitHub Actions log running
-  `deno run -A jsr:@deno/deployctl deploy ...`.
+- **Symptom:** `APIError: The authorization token is not valid` (either "The
+  bearer token is invalid" or "You don't have permission to access the project
+  '<slug>'") — even though the token is a fresh `ddo_` token that works
+  elsewhere. Appears inside a GitHub Actions log running the `denoland/deployctl`
+  action (`uses: denoland/deployctl@v1`) or `deno run -A jsr:@deno/deployctl
+  deploy ...`. A classic tell: the live site **works** (you deployed it another
+  way) but the CI run is **red** on the "Deploy to Deno Deploy" step.
 - **Why:** `deployctl` authenticates against the deprecated Deploy Classic
   backend, which rejects new-console `ddo_` tokens. The token is fine; the CLI
-  is wrong.
-- **Fix:** Use `deno deploy` (the built-in subcommand) everywhere — VM shell,
-  scripts, and CI YAML. Never install, run, or reference `deployctl`. Seeing
-  this error means "switch CLI", not "fix the token".
+  is wrong. This is the most common way a generated CI workflow ships red,
+  because `denoland/deployctl@v1` is the "obvious" action from general knowledge.
+- **Fix:** Do NOT write `uses: denoland/deployctl@...` in a workflow. Use the
+  canonical workflow from `SKILL.md` ("Deployments are CI-only"), which runs
+  `deno run -A --minimum-dependency-age=0 jsr:@deno/deploy@<pin> --app=<slug>
+  --org=<org> --prod` with `DENO_DEPLOY_TOKEN` as an `env:` var. Seeing this
+  error means "switch CLI/action", not "fix the token", and not "set the token
+  as an `with: token:` input" (deployctl ignores that too). Never install, run,
+  or reference `deployctl` anywhere — VM shell, scripts, or CI YAML.
 
 ## 2. Reporting a `*.deno.dev` URL
 
@@ -269,3 +277,14 @@ has actually burned a real deployment.
   client-mount check. To diagnose any failed revision, always pull
   `/v2/revisions/<id>/build_logs` — the CLI output alone won't show the real
   cause.
+
+## 17. Hono `serveStatic` imported from the wrong path (build/check fails)
+
+- **Symptom:** `deno check`/deploy fails with `Unknown export './middleware'
+  for '@hono/hono@<v>'` (or a similar unknown-export error) from
+  `import { serveStatic } from "hono/middleware"`.
+- **Why:** On the JSR/Deno build of Hono there is no `hono/middleware` export;
+  the Deno static-file middleware lives in the Deno-specific entry.
+- **Fix:** Import from `hono/deno`:
+  `import { serveStatic } from "hono/deno";`. Run `deno check` locally on the VM
+  before deploying so import-path errors surface at build time, not mid-deploy.

@@ -55,6 +55,10 @@ These do NOT deploy code — a production deploy still runs through CI (see
   wrong URL scheme, VM/CI hangs, slug guessing, ephemeral deploys) with symptom →
   cause → fix. **Load and skim it before any deploy** and re-check whenever a
   deploy misbehaves — most incidents are one of these.
+- `dashboard-recovery.md`: How to recover when the user created the app via the
+  dashboard's "+ New app" / GitHub-integration flow (which conflicts with
+  CLI/CI deploys). **Read when the user is on an Edit App Config / Retry Build /
+  Build Triggers screen** or otherwise set the app up through the dashboard.
 - `build-config.md`: Build/entrypoint config, excluding heavy frontend deps from
   root `deno.json`, lockfile sync, VM CLI-loop prevention, Next.js default-framework
   policy, and **§6 making a Next.js build succeed under Deno** (`.mjs` config, skip
@@ -84,18 +88,26 @@ before any CLI call.
 
 Deploys and app creation run in CI (see "Deployments are CI-only" below). For
 app/env-var inspection and changes, **prefer the VM-less safescript tools
-above** over the CLI. If you do use the CLI on a VM, follow these rules:
+above** over the CLI.
+
+**NEVER run `deno deploy … --prod` from the VM.** The VM is ephemeral, so a
+site made live from it vanishes when the VM dies, and — worse — it makes the
+live URL work while CI is still misconfigured, so you "succeed" without noticing
+the deploy pipeline is broken (the exact failure that shipped a red CI). The
+`--prod` deploy runs ONLY in the canonical CI workflow (see "Deployments are
+CI-only"). On the VM, the only allowed `deno deploy` calls are read-only
+inspection (`whoami`, `logs --once`) — everything that changes prod goes through
+CI. If you do run an inspection CLI on a VM, follow these rules:
 
 The VM base image shims `deno deploy` to ≥ 0.0.9903, which exits cleanly after a
 successful deploy and adds `logs --once` (drain current logs then exit). Still
 wrap every VM `deno deploy` in `timeout … < /dev/null` as insurance. Pass
-`--non-interactive` (fast-fail on missing input) and supply every REQUIRED flag;
-non-interactive create/deploy needs no extra authorization flag.
+`--non-interactive` (fast-fail on missing input) and supply every REQUIRED flag.
 
 ```bash
-timeout 300 deno deploy --app=<slug> --org=<org> --prod --non-interactive < /dev/null   # Deploy (exits 0 on success)
-timeout 180 deno deploy create --app=<slug> --org=<org> --source local --region global --non-interactive < /dev/null  # Create app
-timeout 120 deno deploy logs --app=<slug> --org=<org> --once --non-interactive < /dev/null       # Capture current logs then exit
+timeout 60 deno deploy whoami --json < /dev/null                                          # Inspect token's orgs (read-only)
+timeout 120 deno deploy logs --app=<slug> --org=<org> --once --non-interactive < /dev/null  # Capture current logs then exit
+# Do NOT run `deno deploy --prod` or `deno deploy create` here — those belong in CI.
 ```
 
 `deno deploy create` REQUIRES `--source local` and `--region` (`us`|`eu`|`global`)
@@ -151,39 +163,15 @@ Never use `--source github` (the dashboard would own the build pipeline and
 watch specific commits, conflicting with CLI deploys). The CI workflow uploads
 the checked-out code directly. The two paths do not mix.
 
-**Recovery — user already created an app via the dashboard GitHub flow:**
-Signs: the user is looking at an Entrypoint / Edit App Config screen, a Retry
-Build button, or Build Triggers showing GitHub commits.
+**Recovery — user already created an app via the dashboard GitHub flow:** if the
+user set the app up through the dashboard's "+ New app" / GitHub-integration flow
+(signs: Entrypoint / Edit App Config screen, Retry Build button, or Build
+Triggers showing GitHub commits), that path conflicts with CLI/CI deploys —
+**read `dashboard-recovery.md`** for the exact check-state-then-migrate steps
+(never delete an app with user data without explicit confirmation).
 
-First, check whether the app holds any state:
-
-```bash
-deno deploy env list --org <org> --app <slug>      # any env vars?
-deno deploy database list --org <org>              # any database linked?
-# Also check the dashboard for successful prior revisions.
-```
-
-- **If the app is empty** (no env vars, no linked database, no successful prior
-  deploys, no real traffic), delete it and recreate via CLI:
-
-  ```bash
-  curl -X DELETE -H "Authorization: Bearer $DENO_DEPLOY_TOKEN" \
-    https://api.deno.com/v2/apps/<slug>
-  # then let the CI workflow recreate + deploy it (see "Deployments are
-  # CI-only" — the "Ensure app exists" step recreates it on the next push).
-  ```
-
-- **If the app has state** (env vars set, database linked, prior successful
-  deploys, or any user traffic), do NOT delete it. Ask the user to disconnect
-  the GitHub repo from the app in the dashboard (or remove the Build Trigger),
-  then deploy to the same app from the VM with
-  `deno deploy --app=<slug> --prod`. This preserves env vars, database links,
-  and the URL.
-
-Never delete an app that holds user data or has served traffic without an
-explicit confirmation from the user.
-
-`deno deploy --app=<slug> --prod` is the standard way to deploy. It does
+`deno deploy --app=<slug> --prod` is the standard deploy command, **but it runs
+in the CI workflow, not on the VM** (see "Deployments are CI-only"). It does
 diff-sync file upload, tracks the build via SSE (building -> warming ->
 routing), and prints the final URL. No entrypoint argument needed if there's a
 `deno.json` with a `start` task or a `main.ts` in the project root.
@@ -191,7 +179,7 @@ routing), and prints the final URL. No entrypoint argument needed if there's a
 **Do not reimplement Deno Deploy.** Do not write custom scripts that clone the
 CLI internals, call hidden tRPC mutations directly, or manually reproduce the
 diffsync upload protocol. The correct path is: discover the exact org/app slug,
-then run `deno deploy --app=<slug> --prod`. If it fails, report the exact
+then let CI run `deno deploy --app=<slug> --prod`. If it fails, report the exact
 command and full stderr to the user and stop.
 
 Note: `deno deploy` may create a `deno.jsonc` config file in the project
