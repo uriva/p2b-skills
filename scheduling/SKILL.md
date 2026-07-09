@@ -1,6 +1,6 @@
 ---
 name: scheduling
-description: AI agent skill for scheduling meetings via Calendly, Google Calendar, and Microsoft 365 Calendar (Outlook).
+description: "Create, query, and manage calendar events and meeting availability across Calendly, Google Calendar, and Microsoft 365 Calendar (Outlook). Covers event creation, searching events, free/busy availability, and booking. Triggers: calendar, event, meeting, schedule, scheduling, availability, free busy, booking, appointment, reminder, timezone, create event, Google Calendar, Outlook, Microsoft 365, Calendly."
 ---
 
 # Scheduling Skill

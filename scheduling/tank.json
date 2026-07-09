@@ -1,8 +1,8 @@
 {
   "name": "@uriva/p2b-scheduling",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/scheduling",
-  "description": "Scheduling and calendar usage utils using safescript.",
+  "description": "Create, query, and manage calendar events and meeting availability across Calendly, Google Calendar, and Microsoft 365 Calendar (Outlook) using safescript. Covers event creation, searching events, free/busy availability, and booking. Triggers: calendar, event, meeting, schedule, scheduling, availability, free busy, booking, appointment, reminder, timezone, create event, Google Calendar, Outlook, Microsoft 365, Calendly.",
   "visibility": "public",
   "skills": {
     "scheduling": "SKILL.md"
