@@ -14,7 +14,14 @@ listFilesByFolder = (googleToken: string, folderId: string): { success: boolean,
 }
 
 searchDrive = (googleToken: string, query: string): { success: boolean, result: { id: string, name: string, mimeType: string }[], error: string } => {
-  fullQuery = stringConcat({ parts: ["fullText contains '", query, "' and trashed = false"] })
+  hasEquals = stringIncludes({ haystack: query, needle: "=" }).result
+  hasContains = stringIncludes({ haystack: query, needle: "contains" }).result
+  hasIn = stringIncludes({ haystack: query, needle: "in" }).result
+  isFormattedQuery = hasEquals ? true : (hasContains ? true : (hasIn ? true : false))
+
+  rawQuery = isFormattedQuery ? query : stringConcat({ parts: ["fullText contains '", query, "'"] }).result
+  hasTrashed = stringIncludes({ haystack: rawQuery, needle: "trashed" }).result
+  fullQuery = hasTrashed ? rawQuery : stringConcat({ parts: [rawQuery, " and trashed = false"] }).result
   encodedQuery = urlEncode({ text: fullQuery.result })
   path = stringConcat({ parts: ["/drive/v3/files?q=", encodedQuery.encoded, "&fields=files(id,name,mimeType)&pageSize=20"] })
   auth = stringConcat({ parts: ["Bearer ", googleToken] })

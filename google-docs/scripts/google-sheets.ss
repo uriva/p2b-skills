@@ -1,3 +1,14 @@
+createSpreadsheet = (googleToken: string, title: string): { success: boolean, result: string, error: string } => {
+  path = "/v4/spreadsheets"
+  auth = stringConcat({ parts: ["Bearer ", googleToken] })
+  body = jsonStringify({ value: { properties: { title: title } } })
+  res = httpRequest({ host: "sheets.googleapis.com", method: "POST", path: path, headers: { "Authorization": auth.result, "content-type": "application/json" }, body: body.text })
+  isHtml = stringIncludes({ haystack: stringLower({ text: res.body }).result, needle: "<html" })
+  isSuccess = res.status == 200 ? true : false
+  errorBody = isHtml.result ? "GOOGLE_SHEETS_API_ERROR: Received non-JSON response. Check token secret name and Sheets scopes." : stringConcat({ parts: ["GOOGLE_SHEETS_API_ERROR: ", res.body] }).result
+  return isSuccess ? { success: true, result: res.body, error: "" } : { success: false, result: "", error: errorBody }
+}
+
 appendRowToSheet = (googleToken: string, spreadsheetId: string, range: string, row: string[]): { success: boolean, result: string, error: string } => {
   encodedRange = urlEncode({ text: range })
   path = stringConcat({ parts: ["/v4/spreadsheets/", spreadsheetId, "/values/", encodedRange.encoded, ":append?valueInputOption=USER_ENTERED"] })

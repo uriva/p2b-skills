@@ -20,3 +20,12 @@ Do not guess secret names. Do not pass env var names like `GOOGLE_TOKEN` as
 token values. Always discover the name first.
 
 All functions return `{ success, result, error }`.
+
+## Functions
+
+### searchDrive(googleToken, query)
+Searches Google Drive for files.
+- `query`: A search term (e.g., `"Moving"`) OR a Google Drive API query expression (e.g., `"name contains 'Moving'"`, `"name = 'Moving Log' and mimeType = 'application/vnd.google-apps.spreadsheet'"`). Plain search terms are automatically wrapped in `fullText contains '...' and trashed = false`.
+
+### listFilesByFolder(googleToken, folderId)
+Lists non-trashed files inside a Google Drive folder by folder ID (e.g. `"root"`).

@@ -32,6 +32,9 @@ export const myTask = async () => {
 
 ## Google Sheets Functions
 
+### createSpreadsheet(googleToken, title)
+Creates a new Google Spreadsheet with the specified title and returns the new spreadsheet metadata (including `spreadsheetId`).
+
 ### appendRowToSheet(googleToken, spreadsheetId, range, row)
 Appends a single row (array of strings) of values to a sheet at the end of the specified range.
 
