@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-whatsapp",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/whatsapp",
   "description": "WhatsApp integration guidelines for prompt2bot agents. Covers official vs unofficial lines, simple messaging vs agent experiences, and API constraints.",
   "visibility": "public",
