@@ -251,6 +251,19 @@ flow. Anything broader (`calendar`, `calendar_readonly`, `gmail.readonly`,
 is rejected on platform credentials and requires the owner to connect with
 their own Google OAuth client credentials instead.
 
+### Sending Email Via The Owner's Gmail
+
+Never hand-write Gmail API calls in ad-hoc safescript (raw RFC 2822 headers are
+error-prone and can silently corrupt recipient addresses). When the owner asks
+to send, draft, or read email through Gmail, install and learn
+`tank:@uriva/p2b-gmail` first and use its `sendGmailEmail` / `createGmailDraft`
+tools.
+
+The `gmail` scope is send-only: it cannot read the owner's profile, inbox, or
+even their own email address. When the owner says "email me", do not probe
+`users/me/profile` or send to `me` — ask the owner for their Gmail address once
+and store it in AgentDocs memory for future use.
+
 ## Personal Memory With AgentDocs
 
 Use AgentDocs as the assistant's personal memory system. Explain this to the
