@@ -237,6 +237,20 @@ OAuth integrations are preferred over manual tokens when available. Use OAuth
 for Gmail, Google Calendar, Google Drive, GitHub, Twitter/X, and similar
 services when Prompt2Bot exposes the OAuth flow.
 
+When connecting Google through Prompt2Bot's platform OAuth (the default), only
+a narrow verified scope set is accepted — request exactly the aliases matching
+the owner's stated needs, as aliases (not raw scope URLs):
+
+- Read calendar events: `calendar_events_readonly`
+- Create or edit calendar events: `calendar_events`
+- Send email from Gmail: `gmail`
+
+If the owner wants several of these, request them together in a single OAuth
+flow. Anything broader (`calendar`, `calendar_readonly`, `gmail.readonly`,
+`gmail.compose`, `drive`, `sheets`, `docs`, or raw `googleapis.com` scope URLs)
+is rejected on platform credentials and requires the owner to connect with
+their own Google OAuth client credentials instead.
+
 ## Personal Memory With AgentDocs
 
 Use AgentDocs as the assistant's personal memory system. Explain this to the
