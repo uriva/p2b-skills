@@ -24,7 +24,7 @@ facebookPosts = (rapidApiKey: string, query: string, groupId: string, sortingOrd
 doc({ text: "### Start LinkedIn Profile Scrape\n\nStart a LinkedIn profile scrape via Bright Data. Pass up to 10 LinkedIn profile URLs. Returns either an immediate result or a `snapshot_id` that can be polled with `getLinkedInProfileSnapshot`.\n\n#### Parameters\n- `brightDataToken` — Your Bright Data API token (pass via secretMapping)\n- `urls` — Array of LinkedIn profile URLs, e.g. `[\"https://www.linkedin.com/in/uriv\"]`\n\n#### Example\n```\nparams: { urls: [\"https://www.linkedin.com/in/uriv\"] }\nsecretMapping: { brightDataToken: \"BRIGHTDATA_TOKEN\" }\n```" })
 
 isLinkedInUrl = (url: string): boolean => {
-  matched = stringRegex({ text: url, pattern: "^https://(www\.)?linkedin\.com/in/[a-zA-Z0-9_-]+/?$" })
+  matched = stringRegex({ text: url, pattern: "^https://(www\\.)?linkedin\\.com/in/[a-zA-Z0-9_-]+/?$" })
   return matched.match
 }
 
