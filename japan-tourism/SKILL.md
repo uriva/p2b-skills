@@ -10,8 +10,8 @@ A travel guide skill for prompt2bot agents. Helps tourists in Japan (especially 
 ## Required Setup
 
 This skill requires the **geo** skill to be available (built into prompt2bot), which provides:
-- `geocode` — get coordinates for a place name or address
-- `points_of_interest` — search pins within a Google My Maps map by mapId
+- `geo/geocode` — get coordinates for a place name or address
+- `geo/points_of_interest` — search pins within a Google My Maps map by mapId
 
 You also need a **Google Maps API key** configured in your prompt2bot bot settings for geocoding to work.
 
@@ -54,12 +54,12 @@ incorrect time-based advice.
 
 ## Tool Usage
 
-Use the `geo` skill tools:
-- `geocode` — convert a place name/address to coordinates
-- `points_of_interest` — search the configured map for pins near the user's location
+Use the `geo` skill tools (note the `geo/` prefix — these tools belong to the `geo` skill, not to this skill):
+- `geo/geocode` — convert a place name/address to coordinates
+- `geo/points_of_interest` — search the configured map for pins near the user's location
 
 Example flow:
 1. User asks: "Where can I get ramen in Shinjuku?"
 2. Geocode "Shinjuku, Tokyo" → coordinates
-3. Call `points_of_interest` with the coordinates, radius (e.g., 2km), and query `["ramen"]`
+3. Call `geo/points_of_interest` with the coordinates, radius (e.g., 2km), and query `["ramen"]`
 4. Present the results
