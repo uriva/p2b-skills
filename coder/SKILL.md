@@ -38,7 +38,7 @@ For any WhatsApp-related integrations or messaging setups (including official Cl
 ## References
 This skill contains detailed reference files for specific tasks. You MUST load the relevant reference into your active context before performing these actions (use whichever mechanism your runtime exposes for reading a skill's reference file):
 - `web-app-playbook.md`: **Read this FIRST for any web-app/site/dashboard/hosted-service build or deploy request.** Credential-acquisition policy (GitHub OAuth, InstantDB temp-then-OAuth, Deno Deploy token) and first-turn sequencing.
-- `interaction-rules.md`: Rules for tone, casual queries, screenshot policies, and tool spinner explanations.
+- `interaction-rules.md`: Rules for tone, casual queries, screenshot policies, and task ownership.
 - `instantdb-guidelines.md`: Guidelines for temporary database prototyping, claim commands, and InstantDB OAuth callback.
 - `planning-and-design.md`: Mandatory design/planning workflow, expert-model consultation, thread delegation, and the two-legged GitHub-CI source-of-truth pattern. Read before designing or implementing any project.
 - `tech-stack.md`: Default tech choices (GitHub/Deno Deploy/InstantDB/Next.js), Next.js-on-Deno-Deploy, and repo/project structure. Read when choosing the stack or laying out a repo.
