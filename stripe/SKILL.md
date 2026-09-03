@@ -54,7 +54,6 @@ export const generateCheckoutSessionLink = async (
   const stripeClient = new Stripe(apiKey);
   const session = await stripeClient.checkout.sessions.create({
     mode: "subscription",
-    payment_method_types: ["card", "link"],
     line_items: [{ price: priceId, quantity: 1 }],
     ...(email && { customer_email: email }),
     success_url: "https://your-app.com/settings?checkout=success",
