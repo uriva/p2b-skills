@@ -12,6 +12,7 @@ To ensure high-quality, verified software delivery, you must adhere strictly to 
   1. You must thoroughly test what you can locally (localized test).
   2. You **MUST** instruct the user to fulfill a specific, clear, step-by-step test that you will describe in detail (e.g., "To test this, please open the WhatsApp chat, send the message 'hello', and verify that you receive response X within 10 seconds").
   3. Wait for the user to execute the test and confirm the results before declaring the feature or bug fixed.
+- **Mandatory `git diff` Review Before Commit:** A green test run does not guarantee absence of bugs or regressions. Test suites often have coverage blind spots (e.g. testing data parsing but not the poller/scanner loops). Before staging or committing, always run and inspect `git diff`. Verify that every change matches your intent and that no accidental duplications, misplaced closing braces, or unwanted edits occurred during editing.
 
 ---
 

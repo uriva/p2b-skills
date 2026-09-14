@@ -140,8 +140,9 @@ When working on code on a VM, follow this structured approach:
    - Use `glob_files` to discover project structure (e.g. `**/*.ts`, `src/**/*.tsx`).
    - Use `grep_files` to find all occurrences of a pattern before renaming or refactoring.
 4. **Verify** — After changes, run the project's build/test commands via `run_command_on_vm` to confirm everything works.
+5. **Inspect Diff** — Run `git diff` and review every added and removed line before committing. Check specifically for duplicated blocks from search-and-replace, unbalanced braces, and unintended regressions. Never commit blindly just because tests or compilers passed.
 
-**Prefer file tools over raw shell commands** for file operations. The file tools handle escaping, truncation, and error reporting correctly. Reserve `run_command_on_vm` for actual system commands: running builds, installing packages, git operations, starting servers, curl requests, etc.
+**Prefer file tools over raw shell commands** for file operations. The file tools handle escaping, truncation, and error reporting correctly. Reserve `run_command_on_vm` for actual system commands: running builds, installing packages, git operations, starting servers, curl requests, etc. When a repo is cloned on the VM, always use local file tools directly — never fetch or write repository files through the GitHub Contents API.
 
 ---
 
