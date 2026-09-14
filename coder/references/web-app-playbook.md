@@ -37,22 +37,6 @@ The `repo` scope enables creating/reading/writing the private repo; the
 `workflow` scope is required so the CI/CD GitHub Actions pipeline can run.
 Without `workflow`, CI steps silently fail to trigger.
 
-### InstantDB — temp app first, then OAuth to make it permanent.
-
-- **Turn 1 (frictionless):** create a temporary app programmatically with
-  `instant-cli init-without-files --temp` — no user credentials needed. You
-  **MUST** tell the user this is a temporary prototype DB that auto-deletes in 24
-  hours, and that making it permanent later requires authorizing the bot.
-- **Making it permanent (preferred — OAuth):** prompt the user with a verbatim
-  clickable InstantDB OAuth authorization link (redirect URI
-  `https://api.prompt2bot.com/oauth-callback`). Once authorized, read the
-  permanent `INSTANTDB_TOKEN` from the VM env and run `instant-cli claim` to
-  transfer the temp DB into their account, preserving all data.
-- **Fallback (manual):** only if OAuth is not used, ask the user to generate an
-  App ID + Admin Token from the InstantDB dashboard and paste them.
-
-Do not ask for an InstantDB App ID on turn 1 — start with a temp app.
-
 ### Deno Deploy — this is the ONLY credential the user generates manually.
 
 There is no platform OAuth flow for Deno Deploy tokens. Ask the user to generate
@@ -79,11 +63,9 @@ supplies for Deno Deploy is the token.
 
 1. Load the coder skill (already done if you are reading this) and this playbook.
 2. Call `list_env_variables` to see what credentials already exist.
-3. For a working prototype immediately, create the InstantDB temp app
-   (`init-without-files --temp`) and tell the user it is temporary.
-4. Acquire GitHub access via OAuth (`create_oauth_callback`) — never a PAT.
-5. Acquire the Deno Deploy token via the manual console flow above.
-6. Batch your asks: send the GitHub OAuth link and the Deno-token instructions
+3. Acquire GitHub access via OAuth (`create_oauth_callback`) — never a PAT.
+4. Acquire the Deno Deploy token via the manual console flow above.
+5. Batch your asks: send the GitHub OAuth link and the Deno-token instructions
    together so the user has one clear set of steps, not a wall of manual
    token-generation instructions.
 
@@ -91,5 +73,4 @@ Never write code to the ephemeral VM and run it as a "shortcut" before GitHub +
 Deno Deploy are set up — the VM expires and the user's work is lost. Set up
 permanent hosting (Git + CI/CD) first.
 
-See `vm-and-secrets.md` for the full secret-handling and VM decision matrix, and
-`instantdb-guidelines.md` for the full InstantDB progression.
+See `vm-and-secrets.md` for the full secret-handling and VM decision matrix.

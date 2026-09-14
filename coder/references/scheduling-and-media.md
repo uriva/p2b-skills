@@ -66,7 +66,7 @@ Always seek push-based patterns over pull-based ones:
 
 prompt2bot agents are **multimodal** — they can see and analyze images and video that users send in chat. When a user sends a photo via WhatsApp (or any other channel), the agent receives it as part of the conversation context and can analyze it directly using its built-in AI model. **No separate Gemini API key, Vision API, or external image analysis service is needed.**
 
-This means: if the product requires analyzing user-sent images (e.g. food photos for a nutrition bot, receipts, documents, screenshots), the prompt2bot agent handles that natively. The agent just needs a prompt that tells it what to extract from images, and it should store the results (e.g. in InstantDB). Don't build a separate image-processing microservice or request AI API keys for this — it's already built in.
+This means: if the product requires analyzing user-sent images (e.g. food photos for a nutrition bot, receipts, documents, screenshots), the prompt2bot agent handles that natively. The agent just needs a prompt that tells it what to extract from images, and it should store the results (e.g. in a database). Don't build a separate image-processing microservice or request AI API keys for this — it's already built in.
 
 The only time you need a separate AI API is for **batch processing of images that don't come from user conversations** (e.g. processing a backlog of images from a storage bucket). For anything sent by users in chat, the agent does it.
 
@@ -82,16 +82,16 @@ When building pipelines to parse and extract structured data from documents (suc
 
 **Never suggest Google Sheets, Airtable, Notion databases, or any spreadsheet-like tool as the backing store for an application.** These tools let users add columns, change types, and rename fields on the fly — every such edit silently breaks the code that reads from them. Production bugs from out-of-sync spreadsheets are extremely common and hard to debug because the schema lives outside the repo, outside CI, outside types.
 
-**Use InstantDB** (or any real database) with the schema defined in `instant.schema.ts` and pushed from CI. The schema is code, lives in git, is reviewed in PRs, and is type-checked.
+**Use a real database** with schemas/migrations defined in code and pushed from CI. The schema is code, lives in git, is reviewed in PRs, and is type-checked.
 
 ### What to do when the user asks for spreadsheet-like capabilities:
 
 | User wants | Do this instead |
 |---|---|
-| "I want to see/edit the data" | Build them an admin dashboard (Next.js + InstantDB + shadcn/ui). Give them proper forms and tables. |
+| "I want to see/edit the data" | Build them an admin dashboard (Next.js + shadcn/ui). Give them proper forms and tables. |
 | "I want to add a new column myself" | Push back. Schemas are code. Offer to add the column for them in the repo, or teach them to PR it. |
 | "I want non-developers to change the schema" | Push back harder. This is how data corruption and broken code happens. The schema is a contract between the database and all code that reads it. |
-| "Our ops team lives in Sheets" | Export a read-only Sheet from your InstantDB via a scheduled job if they need to view data. Writes still go through the dashboard. |
+| "Our ops team lives in Sheets" | Export a read-only Sheet from your database via a scheduled job if they need to view data. Writes still go through the dashboard. |
 
 **If the user insists on a spreadsheet-backed system, explain the tradeoff clearly and object.** "I can build this with Google Sheets, but every time someone changes a column name or type, the bot breaks silently and no one will know until a user complains. Schemas are a contract — they belong in code, managed by a developer (human or p2b-coder), not in a document anyone can edit."
 

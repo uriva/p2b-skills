@@ -101,7 +101,7 @@ fetch("https://api.prompt2bot.com/api", {
 
 If the user needs a bot that follows a multi-step flow (e.g. onboarding, intake form, support ticket), implement it as:
 - A **prompt** that describes the flow and decision points
-- **Tools** the agent can call to read/write data (e.g. InstantDB queries)
+- **Tools** the agent can call to read/write data (e.g. database queries)
 - The agent's own **conversation history** to track where the user is in the flow
 
 Never build: a webhook endpoint that receives each message, looks up state in a database, decides what to reply, and sends the reply back. That's reimplementing the agent from scratch and throwing away everything prompt2bot gives you.

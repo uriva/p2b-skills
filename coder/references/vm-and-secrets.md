@@ -2,14 +2,14 @@
 
 Guidelines for virtual machine environments, environment variables, cost optimization, and secrets management.
 
-**For the pre-installed CLIs (`gh`, `deno deploy`, `instant-cli`), their command reference, and Deno Deploy log/debugging operations, see `vm-cli-tools.md`.** For the first-turn credential-acquisition policy, see `web-app-playbook.md`.
+**For the pre-installed CLIs (`gh`, `deno deploy`), their command reference, and Deno Deploy log/debugging operations, see `vm-cli-tools.md`.** For the first-turn credential-acquisition policy, see `web-app-playbook.md`.
 
 ---
 
 ## Cost Optimization & Resource Rules (CRITICAL)
 
 - **Safescript is preferred for no-brainer operations, API calls, and spec fetching:** Utilizing Safescript is highly encouraged because it is more efficient, faster, and avoids the compute costs and latency of provisioning a VM. Use it whenever you need simple GET/POST requests, fetching OpenAPI/Swagger schemas or API docs, basic config lookups, testing REST payloads, or simple integrations. Spinning up a VM for simple API requests or fetching Swagger specs unnecessarily triggers user-approval prompts (`Approval Required for create_vm`), creating severe friction for users.
-- **Use a VM if it is considerably better:** If a task involves complex multi-step database operations, calling non-trivial SDKs (like `@instantdb/admin`), heavy data parsing, extensive pagination, or actual file system development tasks (writing multiple files, cloning/pushing repositories, installing packages, compiling, or running tests), you are encouraged to spin up and use a VM. Do not struggle with custom sandbox limitations if a VM provides a considerably better/safer implementation path.
+- **Use a VM if it is considerably better:** If a task involves complex multi-step database operations, calling non-trivial SDKs, heavy data parsing, extensive pagination, or actual file system development tasks (writing multiple files, cloning/pushing repositories, installing packages, compiling, or running tests), you are encouraged to spin up and use a VM. Do not struggle with custom sandbox limitations if a VM provides a considerably better/safer implementation path.
 - **Report uncomfortable or restrictive tooling:** If you find any tooling (such as Safescript syntax, limitations, missing functions, or policies) uncomfortable, buggy, or overly restrictive for the task at hand, do not spend hours fighting or guessing the syntax. Instead, **report a platform bug** explaining the discomfort and requesting an improvement, and immediately proceed to use a VM to complete the user's task.
 
 ---
@@ -17,7 +17,7 @@ Guidelines for virtual machine environments, environment variables, cost optimiz
 ## Workflow Decision (VM vs. Safescript)
 
 - **When to use Safescript:** Simple or nested HTTP requests, fetching/posting JSON, basic string parsing, and secret mapping.
-- **When to use a VM:** Actual development, file system tasks (writing TypeScript/JavaScript files, cloning/pushing repositories, installing packages, running tests), or any complex database operations (e.g. InstantDB admin transactions/pagination) where a VM with an SDK is considerably better.
+- **When to use a VM:** Actual development, file system tasks (writing TypeScript/JavaScript files, cloning/pushing repositories, installing packages, running tests), or any complex database operations where a VM with an SDK is considerably better.
 - Before deploying or integrating with an external service, first read and analyze the target (fetch the URL, inspect API docs or HTML structure). Don't write integration code against assumptions — verify the actual interface first.
 - If a deployment or integration fails twice on the same issue, stop retrying. Tell the user what failed and ask for specific information (logs or environment variables).
 
@@ -48,11 +48,8 @@ fetch("https://api.github.com/user", {
 
 **SDKs work normally.** Since the real value is available, you can pass secrets directly to SDK constructors:
 ```ts
-import { init } from "npm:@instantdb/admin";
-const db = init({
-  appId: Deno.env.get("INSTANTDB_APP_ID")!,
-  adminToken: Deno.env.get("INSTANTDB_ADMIN_TOKEN")!,
-});
+import Stripe from "npm:stripe";
+const stripe = new Stripe(Deno.env.get("STRIPE_API_KEY")!);
 ```
 
 ### Rules:
@@ -87,21 +84,21 @@ Code that reads secrets via `Deno.env.get()` works identically on both.
 
 ## Pre-installed CLIs and Deno Deploy operations
 
-The VM has pre-installed CLIs for GitHub (`gh`), Deno Deploy (`deno deploy`), and InstantDB (`instant-cli`), all auto-authenticated from the injected secrets. For the full command reference, required secrets/variables, Deno Deploy log fetching, tRPC app listing, and integration debugging, load **`vm-cli-tools.md`**.
+The VM has pre-installed CLIs for GitHub (`gh`) and Deno Deploy (`deno deploy`), all auto-authenticated from the injected secrets. For the full command reference, required secrets/variables, Deno Deploy log fetching, tRPC app listing, and integration debugging, load **`vm-cli-tools.md`**.
 
-The required secrets (store via `set_secret`) are `GITHUB_TOKEN` (obtained via GitHub OAuth — never a PAT; see `web-app-playbook.md`), `DENO_DEPLOY_TOKEN` (`ddo_` prefix), and `INSTANTDB_ADMIN_TOKEN`; plus the `INSTANTDB_APP_ID` variable.
+The required secrets (store via `set_secret`) are `GITHUB_TOKEN` (obtained via GitHub OAuth — never a PAT; see `web-app-playbook.md`) and `DENO_DEPLOY_TOKEN` (`ddo_` prefix).
 
 ---
 
-## CI-Only for Deployments and Schema Pushes
+## CI-Only for Deployments
 
-**Never run `deno deploy` or `instant-cli push` manually on the VM.** The VM is ephemeral — it can be deleted at any time, which means any manually triggered deployment disappears with it. Both Deno Deploy and InstantDB schema pushes must be done via **CI** (GitHub Actions), not via direct CLI on the VM.
+**Never run `deno deploy` manually on the VM.** The VM is ephemeral — it can be deleted at any time, which means any manually triggered deployment disappears with it. Deployments must be done via **CI** (GitHub Actions), not via direct CLI on the VM.
 
 ### Correct Pattern:
 1. On the VM, write and test code.
 2. Push changes to GitHub (via Contents API or `gh`).
-3. Set up a GitHub Actions workflow in the repo that runs `deno deploy --app=<slug> --prod` or `instant-cli push` on every push to `main`. The workflow runs on GitHub's infrastructure, not the VM, so it persists regardless of what happens to the VM.
-4. Merging or pushing to `main` triggers the workflow, which deploys or pushes the schema.
+3. Set up a GitHub Actions workflow in the repo that runs `deno deploy --app=<slug> --prod` on every push to `main`. The workflow runs on GitHub's infrastructure, not the VM, so it persists regardless of what happens to the VM.
+4. Merging or pushing to `main` triggers the workflow, which deploys the application.
 
 **If the repo doesn't have a CI workflow yet**, create one:
 ```yaml
@@ -121,8 +118,6 @@ jobs:
         env:
           DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
 ```
-
-For InstantDB, the same pattern applies — add `instant-cli push` to a workflow step, and set `INSTANTDB_APP_ID` + `INSTANTDB_ADMIN_TOKEN` as repo secrets.
 
 **Common mistake to avoid:** Running `deno deploy --prod` directly on the VM to "test the deployment". It works in the moment, but the next time the VM is recreated (or destroyed), the deployment is gone. Always push to GitHub and let CI handle it.
 
@@ -152,7 +147,7 @@ When working on code on a VM, follow this structured approach:
 
 ## Anti-Pattern: Running Production Services on a Persistent VM
 
-**Never run a user-facing server (API, webhook endpoint, web app) on a persistent VM.** The VM is your development workspace — a disposable box for coding, running `gh` / `instant-cli` / `deno deploy`, and building. It is NOT a hosting platform. It can be destroyed at any time (1 hour idle, manual destroy, provisioning churn) and everything on it disappears. When a VM with a "prod" server on it dies, the user's service goes down and they have no idea why.
+**Never run a user-facing server (API, webhook endpoint, web app) on a persistent VM.** The VM is your development workspace — a disposable box for coding, running `gh` / `deno deploy`, and building. It is NOT a hosting platform. It can be destroyed at any time (1 hour idle, manual destroy, provisioning churn) and everything on it disappears. When a VM with a "prod" server on it dies, the user's service goes down and they have no idea why.
 
 **CRITICAL MANDATE — NO TOKENS, NO CODE EXECUTION SHORTCUTS:** If the user has not provided a `GITHUB_TOKEN` or a `DENO_DEPLOY_TOKEN` (check using `list_env_variables` first), you are **strictly forbidden** from writing code directly to the VM and running it in the background as a "shortcut" to show them a working bot. This is a trap! Because the VM is ephemeral and will expire after 1 hour of inactivity, doing so will permanently delete the user's code and take their service offline. Instead, you must stop immediately, explain clearly and politely in simple terms why a GitHub account and a Deno Deploy account are required for permanent, 24/7 hosting, and guide them through authentication. For GitHub, initiate the OAuth flow using the `create_oauth_callback` tool with scopes `["repo", "workflow"]`. For Deno Deploy, guide them to get the token. Do not proceed to build any code until they complete the authentication so we can do it correctly via CI/CD and Git.
 
@@ -176,7 +171,7 @@ If you need to give the user a URL, the answer is always a proper domain pointin
 **Never build HTTP endpoints (like setup/webhook routes) that accept API tokens, keys, or secrets in URL search/query parameters, URL paths, headers, or request bodies.**
 - Exposing secrets in URL parameters is a severe security vulnerability. They leak in browser history, server logs, reverse proxy logs, and `Referer` headers.
 - Exposing endpoints that accept a secret from the request and then run actions with it (like configuring prompts or sending messages) allows anyone who finds the endpoint to hijack or abuse your bot.
-- **The Correct Pattern:** Always read all secrets (e.g., `P2B_API_TOKEN`, `INSTANTDB_ADMIN_TOKEN`, etc.) directly from the server's environment variables (e.g., `Deno.env.get("P2B_API_TOKEN")`). If a script/endpoint needs to run a setup or privileged action, it should either be triggered locally/via CI, or verify the request using a securely stored signature/HMAC, never by having the user pass the raw secret in the request URL.
+- **The Correct Pattern:** Always read all secrets (e.g., `P2B_API_TOKEN`, `DENO_DEPLOY_TOKEN`, etc.) directly from the server's environment variables (e.g., `Deno.env.get("P2B_API_TOKEN")`). If a script/endpoint needs to run a setup or privileged action, it should either be triggered locally/via CI, or verify the request using a securely stored signature/HMAC, never by having the user pass the raw secret in the request URL.
 
 ---
 
