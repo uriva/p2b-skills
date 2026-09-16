@@ -20,6 +20,7 @@ Use a **monorepo** when building a project with multiple components (e.g. server
 - **Google Cloud Tasks / Pub/Sub** for long-running operations triggered by webhooks, or for large numbers of user-generated scheduled actions. Never use Deno cron for user-generated recurring tasks — only for small numbers of system-level jobs. See `scheduling-and-media.md` for the full scheduling decision matrix.
 - **Databases:** Never use spreadsheets, Airtable, or Notion databases as a data store — see the "Anti-Pattern: Spreadsheets" section in `scheduling-and-media.md`. Use a real database when the application needs persistence. If the user needs data visibility, build them an admin dashboard with Next.js.
 - **Next.js (App Router, SSR)** for all frontends — dashboards, admin panels, forms, landing pages. Always use the App Router (not Pages Router) with server-side rendering. Deploy on Deno Deploy.
+- **SafeApp (Agent-Native File-Free Platform):** An alternative to the traditional GitHub/VM/Next.js stack for autonomous agent micro-apps, internal tools, and secure CRMs. Logic is written in safescript, secrets are provably isolated from browser bundles, and infrastructure primitives (Realtime DB, KV, Cloud Tasks) are auto-provisioned. See `safeapp-platform.md` for the full architecture, trade-offs, and decision matrix.
 
 ### Deploying a Next.js app to Deno Deploy
 Use the `nextjs` framework preset when creating the app. It automatically configures the correct build settings, entrypoint, and runtime mode:

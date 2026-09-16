@@ -48,3 +48,4 @@ This skill contains detailed reference files for specific tasks. You MUST load t
 - `testing-guidelines.md`: Mandatory E2E and localized unit testing rules.
 - `vm-and-secrets.md`: VM vs Safescript decision matrix, how secrets are injected/stored, CI-only deployment rule, and VM anti-patterns. Read before storing secrets or doing VM work.
 - `vm-cli-tools.md`: Command reference for the pre-installed CLIs (`gh`, `deno deploy`, `instant-cli`) and Deno Deploy log/debugging operations. Read when running CLI commands or debugging a deployment.
+- `safeapp-platform.md`: SafeApp platform reference (`https://safeapp.uriva.deno.net/llms.txt`), advantages, disadvantages, and decision matrix for agent-native file-free deployment vs traditional GitHub/VM stacks. Read when evaluating architecture or building autonomous micro-apps.
