@@ -76,62 +76,10 @@ Instead of editing files on disk and managing git repositories, agents build and
 
 ---
 
-## 5. Authentication, InstantDB Permissions & Schema Modifications
+## 5. Platform Documentation & API Instructions
 
-### A. Preview Route vs. Application Auth
-- `/preview/:appId/:branch` is the live web host for the app. It is **intentionally public** to serve end-users, clients, and anonymous visitors without requiring a SafeApp developer account.
-- **Access control belongs in the application code:**
-  - `initialState`: Never return confidential multi-tenant or CRM data for anonymous visitors. Initialize with `{ user: null, leads: [], view: "login" }`.
-  - `render`: Display a Login screen (`_ctx.auth.sendMagicCode` / `signInWithMagicCode`) when `state.user == null`.
-  - Server Functions: Guard sensitive operations with `if (ctx.auth.user == null) { return { error: "Unauthorized" }; }`.
+All implementation instructions, API endpoints, authentication flows (including headless agent token minting and preview route behavior), InstantDB permissions (`rules`) and schema modifications, and primitive capabilities are maintained canonically at:
 
-### B. InstantDB Permissions & The Admin Token Bypass (CRITICAL)
-- **Why incognito / curl saw data:** Server functions and SSR run with `INSTANT_ADMIN_TOKEN`. **Admin privileges bypass InstantDB permission rules completely.**
-- If `initialState` or a server function queries `dbQuery` without checking `ctx.auth.user`, InstantDB returns all records because it executes as Admin, and SSR embeds them into static HTML and `__SAFEAPP_STATE__`!
-- InstantDB permissions (CEL expressions like `"allow": { "view": "auth.id != null" }`) protect **direct client queries**, not unauthenticated server queries running with admin tokens.
+👉 **`https://safeapp.uriva.deno.net/llms.txt`**
 
-### C. Modifying Permissions (Rules) and Schema
-Agents can modify their app's InstantDB database rules and schema directly via REST API:
-- **Inspect Permissions:** `GET /api/v1/apps/:appId/resources/database/rules` (or `/perms`)
-- **Update Permissions:** `POST /api/v1/apps/:appId/resources/database/rules` (or `/perms`)
-  ```json
-  {
-    "rules": {
-      "leads": {
-        "allow": {
-          "view": "auth.id != null",
-          "create": "auth.id != null",
-          "update": "auth.id in data.ref('owner.id')",
-          "delete": "auth.id in data.ref('owner.id')"
-        }
-      }
-    }
-  }
-  ```
-- **Inspect Schema:** `GET /api/v1/apps/:appId/resources/database/schema`
-- **Update Schema:** `POST /api/v1/apps/:appId/resources/database/schema`
-  ```json
-  {
-    "schema": {
-      "leads": {
-        "name": "string",
-        "status": "string",
-        "ownerId": "string"
-      }
-    }
-  }
-  ```
-- **Via CLI (if local files exist):**
-  Run `npx instant-cli push perms --yes` (using `instant.perms.ts`) or `npx instant-cli push schema --yes` (using `instant.schema.ts`).
-
----
-
-## 6. Quick API Cheat Sheet for Agents
-
-- **Documentation:** Fetch `https://safeapp.uriva.deno.net/llms.txt` for live endpoint schemas.
-- **Scaffold App:** `POST https://safeapp.uriva.deno.net/api/v1/apps` with `{ "id": "my-app", "name": "My App" }`.
-- **Deploy Code:** `POST https://safeapp.uriva.deno.net/api/v1/apps/:appId/branches/:branch/functions` with `{ "updates": { ... } }`.
-- **Update DB Rules:** `POST https://safeapp.uriva.deno.net/api/v1/apps/:appId/resources/database/rules` with `{ "rules": { ... } }`.
-- **Mint Auth Token for Testing:** `POST https://safeapp.uriva.deno.net/api/v1/apps/:appId/auth/token` with `{ "email": "agent@system.local" }`.
-- **Open in Browser:** `https://safeapp.uriva.deno.net/preview/:appId/:branch?auth_token=<token>`.
-- **Merge Branch:** `POST https://safeapp.uriva.deno.net/api/v1/apps/:appId/branches/:branch/merge` with `{ "targetBranch": "main" }`.
+Before building, deploying, modifying permissions, or automating apps on SafeApp, fetch and read `https://safeapp.uriva.deno.net/llms.txt` directly. For Safescript syntax and built-in language semantics, refer to `https://safescript.dev/llms.txt`.
