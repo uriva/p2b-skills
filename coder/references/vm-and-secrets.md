@@ -154,16 +154,16 @@ When working on code on a VM, follow this structured approach:
 
 ### Where production services go:
 - **Anything long-running or user-facing** → deploy it to Deno Deploy via CI (`deno deploy --app=<slug> --prod`). Static apps, APIs, webhook handlers, Next.js apps, tool servers — all of these.
-- **Quick demo or throwaway URL to share briefly** → use the ephemeral sandbox's `run_web_service` tool. It spins up a short-lived public HTTPS URL (minutes, not hours). Perfect for "can you show me a quick preview?".
+- **Quick demo or throwaway URL to share briefly** → use the ephemeral sandbox's `run_web_service` tool, or open an ephemeral Cloudflare Quick Tunnel (`cloudflared tunnel --url http://localhost:<port>`, see `quick-tunnels.md`). It spins up a short-lived public HTTPS URL. Perfect for "can you show me a quick preview?" or testing inbound webhooks locally.
 
-Do not use `run_command_on_vm "deno run --allow-net server.ts &"` or similar to leave a server running on the VM in the background. If you catch yourself reaching for that, stop and deploy instead.
+Do not use `run_command_on_vm "deno run --allow-net server.ts &"` or similar to leave a server running on the VM in the background as permanent hosting. If you catch yourself reaching for that, stop and deploy instead. Quick Tunnels and sandboxes are for testing and previews only.
 
 **Never share the VM's IP address with the user.** The IP is an implementation detail of your dev environment — not a public endpoint. Telling the user "your service is at http://46.x.x.x:8080" will:
 - Stop working the moment the VM is recreated (new IP)
 - Leave the user pointing at a stranger's server when Hetzner recycles the IP
 - Encourage the anti-pattern above (treating the VM as a host)
 
-If you need to give the user a URL, the answer is always a proper domain pointing at Deno Deploy (or an ephemeral sandbox URL for quick demos). If the user asks for the VM's IP, push back: "The VM is my workspace, not a hosting platform — I'll deploy this to Deno Deploy and send you the real URL."
+If you need to give the user a URL, the answer is always a proper domain pointing at Deno Deploy (or an ephemeral sandbox URL / Quick Tunnel for quick demos and testing). If the user asks for the VM's IP, push back: "The VM is my workspace, not a hosting platform — I'll deploy this to Deno Deploy and send you the real URL."
 
 ---
 

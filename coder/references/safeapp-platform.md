@@ -76,10 +76,10 @@ Instead of editing files on disk and managing git repositories, agents build and
 
 ---
 
-## 5. Platform Documentation & API Instructions
+## 5. SafeApp Skill & Implementation Instructions
 
-All implementation instructions, API endpoints, authentication flows (including headless agent token minting and preview route behavior), InstantDB permissions (`rules`) and schema modifications, and primitive capabilities are maintained canonically at:
+All implementation instructions, API endpoints, authentication flows (including headless agent token minting and preview route behavior), InstantDB permissions (`rules`), real database operations (`dbQuery`, `dbTransact`), and primitive capabilities belong exclusively to the **`safeapp`** skill.
 
-👉 **`https://safeapp.uriva.deno.net/llms.txt`**
+👉 **To build, deploy, or manage apps on SafeApp, acquire and activate the `safeapp` skill (call `learn_skill` with `skillName: "safeapp"`).**
 
-Before building, deploying, modifying permissions, or automating apps on SafeApp, fetch and read `https://safeapp.uriva.deno.net/llms.txt` directly. For Safescript syntax and built-in language semantics, refer to `https://safescript.dev/llms.txt`.
+Do not duplicate or hardcode SafeApp instructions across other skills or attempt to fetch raw documentation without the skill. The `safeapp` skill provides the authoritative application contract, REST API endpoints, and database guidelines. For Safescript syntax and built-in language semantics, refer to the `safescript` skill.
