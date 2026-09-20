@@ -48,7 +48,9 @@ shopifyGetTracking = (shopifyStoreDomain: string, shopifyAccessToken: string, or
   orders = searchParsed.value.orders
   hasOrder = orders.length > 0
   order = hasOrder ? orders[0] : { id: "", name: "" }
-  orderId = order.id
+  rawOrderId = jsonStringify({ value: order.id })
+  cleanedOrderId = stringReplace({ haystack: rawOrderId.text, needle: "\"", replacement: "", all: true })
+  orderId = cleanedOrderId.result
   orderName = order.name
 
   fulfillPath = stringConcat({ parts: ["/admin/api/2025-10/orders/", orderId, "/fulfillments.json"] })
