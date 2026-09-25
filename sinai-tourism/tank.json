@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-sinai-tourism",
+  "version": "1.0.1",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/sinai-tourism",
+  "description": "Sinai travel guide skill. Helps tourists and vacationers with camps, beaches, logistics, border crossing, and partner matching based on real community data.",
+  "visibility": "public",
+  "skills": {
+    "sinai-tourism": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": ["https://topicmatch.xyz"]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}

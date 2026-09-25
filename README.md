@@ -17,6 +17,8 @@ Community skills for Prompt2Bot agents.
   via Bright Data.
 - `japan-tourism/` - Japan travel guide for Tokyo tourists. Food and activity
   recommendations using Google My Maps integration.
+- `sinai-tourism/` - Sinai travel guide for tourists and vacationers. Camps,
+  beaches, border logistics, and travel partner matching.
 
 Each skill directory has its own `tank.json`. CI discovers every `*/tank.json`
 and runs `tank publish` from that directory.
