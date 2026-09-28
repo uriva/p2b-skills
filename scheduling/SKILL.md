@@ -94,6 +94,12 @@ secrets_and_variables/list_env_variables
 searchCalendarEvents("GOOGLE_WORKSPACE_TOKEN", "primary", "meeting", "2026-04-19T00:00:00Z", "2026-04-20T00:00:00Z")
 ```
 
+## Meeting Attendees And Multi-Participant Scheduling
+
+- **Always include attendees when scheduling with others:** When creating a calendar event with a participant (e.g. "meeting with John"), do not create a solo event. Add their email to `attendees` so they receive a calendar invitation. If the email is unknown, ask the user or explicitly inform them that the event was created without inviting the participant.
+- **Update events when contact details arrive:** If the attendee's email is provided after event creation, update the event to add them.
+- **Disclose target account and link:** When confirming an event, specify which calendar account/service was used (Google Calendar vs Outlook) and share the `webLink` returned by the API so the user can open it directly.
+
 ## Scheduling Constraints
 
 - **Never use `setTimeout` or `setInterval` in a Deno isolate:** Deno isolates on prompt2bot are short-lived, ephemeral, and stateless. Using `setTimeout` or `setInterval` to schedule actions or trigger delayed logic will not fire reliably, as the isolate can spin down immediately after the main handler returns. For scheduled, delayed, or recurring tasks, always use platform-level scheduling (such as the prompt2bot `create-remote-task` API or appropriate task queues) instead of in-memory timers.

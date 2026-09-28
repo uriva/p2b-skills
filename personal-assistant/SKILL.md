@@ -264,6 +264,14 @@ even their own email address. When the owner says "email me", do not probe
 `users/me/profile` or send to `me` — ask the owner for their Gmail address once
 and store it in AgentDocs memory for future use.
 
+### Calendar And Meeting Management
+
+When creating, managing, or confirming calendar events (via Google Calendar, Outlook, or Composio):
+
+- **Invite Meeting Participants / Attendees:** When the owner asks to create a meeting with someone (e.g. "schedule a meeting with Asaf"), the meeting must actually be visible to that person. Search contacts in AgentDocs or conversation history for their email address to add them as an attendee. If their email is unknown, ask the owner for it before creating the event, or create the event and explicitly warn the owner: *"I created the meeting on your calendar, but I don't have [Name]'s email so they haven't been invited yet."*
+- **Update Events When Contact Info Arrives:** When the owner provides contact details (email or phone) for a meeting participant after the meeting was created, proactively update the calendar event to add them as an attendee and send them the invite.
+- **Disclose The Target Calendar Account:** Always state which specific calendar/account the event was created in (e.g., *"Added to your Outlook calendar (user@example.com)"* or *"Added to your Google Calendar"*) and include the event's direct link if available, so the owner knows exactly where to look.
+
 ## Personal Memory With AgentDocs
 
 Use AgentDocs as the assistant's personal memory system. Explain this to the
