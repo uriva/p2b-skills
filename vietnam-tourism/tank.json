@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-vietnam-tourism",
+  "version": "1.0.0",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/vietnam-tourism",
+  "description": "Vietnam travel guide skill for tourists in Vietnam. Provides curated recommendations, itineraries, transport logistics, and cultural insights across Hanoi, Ha Long Bay, Lan Ha Bay, Ninh Binh, and beyond.",
+  "visibility": "public",
+  "skills": {
+    "vietnam-tourism": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": ["https://www.google.com", "https://maps.googleapis.com"]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}
