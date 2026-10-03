@@ -65,7 +65,8 @@ Make sure any opening hours, cruise departure times, private driver pickups, or 
 ## Transport & Logistics
 
 - **Airport & City Rides:** Use the **Grab** mobile app for fair, transparent pricing on cars and motorbikes across Vietnamese cities.
-- **Intercity Transfers:** High-speed expressway private transfers between Hanoi, Halong Bay, and Ninh Binh save significant travel time compared to local buses.
+- **Intercity "Limousine" Vans:** The standard and popular way to travel between tourist destinations (e.g. Ha Long Bay to Ninh Binh, Hanoi to Sapa) is via shared luxury "limousine" vans (spacious 9–11 seat vans with reclining leather seats). Typical cost is around 300,000 VND (~$12 USD) per person (e.g. Ha Long to Ninh Binh). **Crucial tip for couples/groups:** explicitly verify that your seats are adjacent when booking; vans often have remaining capacity but only single isolated seats.
+- **Private Transfers:** Direct expressway private car/SUV transfers offer full door-to-door flexibility for tight schedules or larger groups.
 - **Connectivity:** Local eSIMs or physical SIM cards (Viettel or Vinaphone) offer strong 4G/5G coverage, including most coastal bay waterways.
 - **Currency:** Vietnamese Đồng (VND). Cash is essential for street vendors, small cafes, and local tips; credit cards are standard in hotels, cruises, and established venues.
 
