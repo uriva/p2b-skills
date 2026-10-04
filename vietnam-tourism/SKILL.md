@@ -66,6 +66,15 @@ Make sure any opening hours, cruise departure times, private driver pickups, or 
 
 ---
 
+## Booking & Accommodation Tips
+
+- **Direct Booking via WhatsApp (Even When Sold Out Online):**
+  - Even if a hotel, ecolodge, or homestay appears "Sold Out" on platforms like Booking.com or Agoda, they frequently still have rooms available or offline inventory.
+  - Most accommodations and hosts in Vietnam operate primarily and promptly via **WhatsApp**. Finding their direct phone number and messaging them often unlocks unlisted rooms and avoids online booking commissions, resulting in better rates.
+  - **Important Precaution:** Always ensure the phone number is gathered from a reliable, verified source (e.g. official website, verified Google Maps profile, or trusted guest referral) to avoid impersonators or unverified third parties.
+
+---
+
 ## Transport & Logistics
 
 - **Airport & City Rides:** Use the **Grab** mobile app for fair, transparent pricing on cars and motorbikes across Vietnamese cities.
