@@ -54,6 +54,10 @@ Make sure any opening hours, cruise departure times, private driver pickups, or 
 - **Atmosphere & Stays:**
   - Relaxed countryside vibe best explored by bicycle or motorbike.
   - Boutique Indochine-style eco-lodges and resorts surrounded by lotus ponds and karsts (e.g. Tam Coc / Ninh Binh boutique stays).
+- **Recommended Nature Stays (Community Sourced):**
+  - **Trang An Retreat / Trang An Valley Bungalow:** Bungalows nestled directly in the karst valley of Trang An, surrounded by sheer limestone cliffs, quiet greenery, and pools facing the mountains. Highly recommended for complete immersion in nature. (Ref: [קבוצת וייטנאם למטיילים - פוסט המלצות לינה](https://www.facebook.com/groups/1867142293330973/posts/26154346907517173/), 2025–2026).
+  - **Tam Coc Garden Resort:** Boutique eco-resort nestled among emerald rice paddies and karst formations in Tam Coc, offering high-end tranquility, private gardens, and rural nature scenery. (Ref: [קבוצת וייטנאם למטיילים](https://www.facebook.com/groups/1867142293330973/posts/26154346907517173/), 2025–2026).
+  - **Emeralda Resort Ninh Binh:** High-end eco-resort styled as a traditional northern Vietnamese village situated on the edge of the Van Long Nature Reserve, surrounded by tranquil waterways and wildlife. (Ref: [קבוצת וייטנאם למטיילים](https://www.facebook.com/groups/1867142293330973/posts/26154346907517173/), 2025–2026).
 
 ### 4. Further Destinations (Central & South)
 - **Hội An:** Preserved lantern-lit ancient trading port, tailored clothes, and riverside dining.
