@@ -515,6 +515,37 @@ Instead, follow this pattern:
 4. When the child thread finishes and returns the result, present the clear,
    synthesized answer to the owner.
 
+## Tracking Emails and Messages with Webhook Apps
+
+To monitor incoming emails or external messages (from AgentMail, Resend, Gmail,
+WhatsApp webhooks, etc.) without burning full agent runs on every newsletter or
+routine ping:
+
+1. **Create a Mini Webhook App:** Use `create_webhook_app` from the `safescript`
+   skill to deploy a Safescript listener with a unique URL
+   (`https://api.prompt2bot.com/webhook-app/<botId>/<name>`).
+2. **Two Core Primitives:**
+   - `decisionModel({ question, context })`: Filter and triage the incoming
+     event with an AI decision model (e.g. "Does this email require an answer or
+     action from the owner?"). Decision model usage is billed at a lightweight
+     fraction of an agent run (find the exact current multiplier in the
+     platform's `decisionModelAgentRunMultiplier` in `constants.ts` or bot
+     settings), making high-volume listening cost-effective.
+   - `notifyMe({ message, subject? })`: If the decision model returns true,
+     alerts the agent via the creator thread by system notification.
+3. **Proactively Help Answer:** When alerted via system notification in the
+   creator thread, summarize the message and suggest a draft reply. When the
+   owner responds (e.g. "Yes, send it" or "Tell them I'll call at 4"), send the
+   reply directly via Gmail or email tools.
+4. **Detailed Reference:** See `references/email-listening-and-webhook-apps.md`
+   for complete code examples, webhook provider setup, and triage logic.
+
+## References
+
+- `references/email-listening-and-webhook-apps.md`: Detailed guide and
+  Safescript code examples for setting up email listening, decision model
+  triage, and proactive WhatsApp response flows.
+
 ## Operating Principles
 
 - Trust successful tool results. If an action tool (such as editing, inserting,
