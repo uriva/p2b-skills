@@ -30,7 +30,7 @@ Quick Tunnels solve several critical development and verification challenges for
 
 ### A. Local Webhook Testing Before Deployment (CRITICAL SPEED ADVANTAGE)
 When building integrations that receive incoming webhooks (Stripe, GitHub, Shopify, Supergreen WhatsApp/Facebook, Telegram bot webhooks, Calendly, Make, etc.):
-- **Without a tunnel:** You must commit, push to GitHub, wait for CI to deploy to Deno Deploy, configure environment variables, and trigger the webhook against the live service. If payload parsing or signature validation fails, you must repeat the entire push-and-deploy cycle to debug.
+- **Without a tunnel:** You must commit, push to GitHub, wait for CI to deploy to your hosting platform, configure environment variables, and trigger the webhook against the live service. If payload parsing or signature validation fails, you must repeat the entire push-and-deploy cycle to debug.
 - **With a Quick Tunnel:** Start the local server on the VM (`http://localhost:8000`), open a Quick Tunnel, register the generated `https://<random>.trycloudflare.com` URL as the webhook callback with the external service, trigger a test event, and inspect incoming requests and logs directly in your local terminal. Once verified, push to GitHub for production CI deployment.
 
 ### B. Pre-Deployment E2E and Headless Browser Verification
@@ -94,6 +94,6 @@ curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cl
   - **No Server-Sent Events (SSE):** Quick Tunnels do not support SSE streaming.
   - **Ephemeral Domains:** The random subdomain changes every time `cloudflared` restarts.
   - **No SLA:** Cloudflare provides no uptime SLA for TryCloudflare.
-  - **Cardinal Rule:** Never use a Quick Tunnel as a permanent hosting solution. The VM is an ephemeral workspace. All production user-facing applications, APIs, and webhooks MUST be deployed to Deno Deploy via GitHub Actions CI (see `vm-and-secrets.md` and `planning-and-design.md`).
+  - **Cardinal Rule:** Never use a Quick Tunnel as a permanent hosting solution. The VM is an ephemeral workspace. All production user-facing applications, APIs, and webhooks MUST be deployed to a permanent hosting platform via GitHub Actions CI (see `vm-and-secrets.md` and `planning-and-design.md`).
 - **Always Clean Up Background Processes:** Do not leave background `cloudflared` processes running when you are done testing. Terminate the process to free resources and close the tunnel.
 - **Never Put Secrets in Public Tunnel URLs:** Keep all tokens and secrets in HTTP headers or environment variables, never in URL query parameters.

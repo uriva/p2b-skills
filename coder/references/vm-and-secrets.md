@@ -2,7 +2,7 @@
 
 Guidelines for virtual machine environments, environment variables, cost optimization, and secrets management.
 
-**For the pre-installed CLIs (`gh`, `deno deploy`), their command reference, and Deno Deploy log/debugging operations, see `vm-cli-tools.md`.** For the first-turn credential-acquisition policy, see `web-app-playbook.md`.
+**For the pre-installed CLIs (`gh`), their command reference, and service debugging operations, see `vm-cli-tools.md`.** For the first-turn credential-acquisition policy, see `web-app-playbook.md`.
 
 ---
 
@@ -25,7 +25,7 @@ Guidelines for virtual machine environments, environment variables, cost optimiz
 
 ## Environment Secrets and Variables
 
-- **Before asking the user for any secret, API key, or initiating an OAuth flow, call `list_env_variables` to check what's already stored.** It shows secret and variable names (not values). If a secret/token for the service you need (like `GITHUB_TOKEN` or `DENO_DEPLOY_TOKEN`) is already there, use it — don't ask or trigger authentication again. Only request credentials or trigger OAuth when nothing suitable is stored.
+- **Before asking the user for any secret, API key, or initiating an OAuth flow, call `list_env_variables` to check what's already stored.** It shows secret and variable names (not values). If a secret/token for the service you need (like `GITHUB_TOKEN` or deployment credentials) is already there, use it — don't ask or trigger authentication again. Only request credentials or trigger OAuth when nothing suitable is stored.
 - **NEVER ASK THE USER FOR A GITHUB PERSONAL ACCESS TOKEN (PAT) OR GITHUB_TOKEN:** You must use the platform's OAuth tools instead. Call the `create_oauth_callback` tool with `provider: "github"`, `env_variable_name: "GITHUB_TOKEN"`, and scopes `["repo", "workflow"]`. Present the returned clickable authorization URL verbatim to the user. Once they authorize, call `check_oauth_result` with the state to verify. If repository access is missing, present the returned `github_install_url` verbatim so they can grant Prompt2Bot GitHub App permissions to their repository.
 - **Never write secrets to files, environment variables, or inline in code.** When a user gives you an API key or token, always store it using the `set_secret` tool. This encrypts and stores the secret — it gets injected as a real environment variable on VM creation. If you put a secret in a file or embed it in a CLI command, it will be logged in conversation history in plaintext. Always use `set_secret`.
 
@@ -68,36 +68,36 @@ If an API call fails with "Invalid token" or auth errors:
 
 ---
 
-## VM Secrets vs Deno Deploy Env Vars
+## VM Secrets vs Production Environment Variables
 
-Both the VM and Deno Deploy use real environment variables. The difference is only how secrets are set:
+Both the VM and the production hosting platform use real environment variables. The difference is only how secrets are set:
 
-| | VM | Deno Deploy |
+| | VM | Production Hosting |
 |---|---|---|
-| **How secrets are set** | `set_secret` tool | `deno deploy env set KEY=VALUE` |
-| **How code accesses them** | `Deno.env.get("KEY")` / `$KEY` | `Deno.env.get("KEY")` / `$KEY` |
+| **How secrets are set** | `set_secret` tool | Hosting provider dashboard / CLI / CI secrets |
+| **How code accesses them** | `Deno.env.get("KEY")` / `process.env.KEY` | `Deno.env.get("KEY")` / `process.env.KEY` |
 | **Real value available?** | Yes | Yes |
 
-Code that reads secrets via `Deno.env.get()` works identically on both.
+Code that reads secrets via environment variables works identically on both.
 
 ---
 
-## Pre-installed CLIs and Deno Deploy operations
+## Pre-installed CLIs and Deployment Operations
 
-The VM has pre-installed CLIs for GitHub (`gh`) and Deno Deploy (`deno deploy`), all auto-authenticated from the injected secrets. For the full command reference, required secrets/variables, Deno Deploy log fetching, tRPC app listing, and integration debugging, load **`vm-cli-tools.md`**.
+The VM has pre-installed CLIs for GitHub (`gh`), auto-authenticated from injected secrets. For the command reference and integration debugging, load **`vm-cli-tools.md`**.
 
-The required secrets (store via `set_secret`) are `GITHUB_TOKEN` (obtained via GitHub OAuth — never a PAT; see `web-app-playbook.md`) and `DENO_DEPLOY_TOKEN` (`ddo_` prefix).
+The required secrets (store via `set_secret`) include `GITHUB_TOKEN` (obtained via GitHub OAuth — never a PAT; see `web-app-playbook.md`) and any deployment credentials required by your hosting provider.
 
 ---
 
 ## CI-Only for Deployments
 
-**Never run `deno deploy` manually on the VM.** The VM is ephemeral — it can be deleted at any time, which means any manually triggered deployment disappears with it. Deployments must be done via **CI** (GitHub Actions), not via direct CLI on the VM.
+**Never run deployment commands manually on the VM.** The VM is ephemeral — it can be deleted at any time, which means any manually triggered deployment disappears with it. Deployments must be done via **CI** (GitHub Actions), not via direct CLI on the VM.
 
 ### Correct Pattern:
 1. On the VM, write and test code.
 2. Push changes to GitHub (via Contents API or `gh`).
-3. Set up a GitHub Actions workflow in the repo that runs `deno deploy --app=<slug> --prod` on every push to `main`. The workflow runs on GitHub's infrastructure, not the VM, so it persists regardless of what happens to the VM.
+3. Set up a GitHub Actions workflow in the repo that deploys your application on every push to `main`. The workflow runs on GitHub's infrastructure, not the VM, so it persists regardless of what happens to the VM.
 4. Merging or pushing to `main` triggers the workflow, which deploys the application.
 
 **If the repo doesn't have a CI workflow yet**, create one:
@@ -111,15 +111,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v1
-        with:
-          deno-version: 2.x
-      - run: deno deploy --app=<slug> --prod
+      - name: Deploy application
+        run: <deploy command>
         env:
-          DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
 ```
 
-**Common mistake to avoid:** Running `deno deploy --prod` directly on the VM to "test the deployment". It works in the moment, but the next time the VM is recreated (or destroyed), the deployment is gone. Always push to GitHub and let CI handle it.
+**Common mistake to avoid:** Running deployment commands directly on the VM to "test the deployment". It works in the moment, but the next time the VM is recreated (or destroyed), the deployment is gone. Always push to GitHub and let CI handle it.
 
 ---
 
@@ -148,12 +146,12 @@ When working on code on a VM, follow this structured approach:
 
 ## Anti-Pattern: Running Production Services on a Persistent VM
 
-**Never run a user-facing server (API, webhook endpoint, web app) on a persistent VM.** The VM is your development workspace — a disposable box for coding, running `gh` / `deno deploy`, and building. It is NOT a hosting platform. It can be destroyed at any time (1 hour idle, manual destroy, provisioning churn) and everything on it disappears. When a VM with a "prod" server on it dies, the user's service goes down and they have no idea why.
+**Never run a user-facing server (API, webhook endpoint, web app) on a persistent VM.** The VM is your development workspace — a disposable box for coding, running `gh`, and building. It is NOT a hosting platform. It can be destroyed at any time (1 hour idle, manual destroy, provisioning churn) and everything on it disappears. When a VM with a "prod" server on it dies, the user's service goes down and they have no idea why.
 
-**CRITICAL MANDATE — NO TOKENS, NO CODE EXECUTION SHORTCUTS:** If the user has not provided a `GITHUB_TOKEN` or a `DENO_DEPLOY_TOKEN` (check using `list_env_variables` first), you are **strictly forbidden** from writing code directly to the VM and running it in the background as a "shortcut" to show them a working bot. This is a trap! Because the VM is ephemeral and will expire after 1 hour of inactivity, doing so will permanently delete the user's code and take their service offline. Instead, you must stop immediately, explain clearly and politely in simple terms why a GitHub account and a Deno Deploy account are required for permanent, 24/7 hosting, and guide them through authentication. For GitHub, initiate the OAuth flow using the `create_oauth_callback` tool with scopes `["repo", "workflow"]`. For Deno Deploy, guide them to get the token. Do not proceed to build any code until they complete the authentication so we can do it correctly via CI/CD and Git.
+**CRITICAL MANDATE — NO TOKENS, NO CODE EXECUTION SHORTCUTS:** If the user has not provided a `GITHUB_TOKEN` or required hosting credentials (check using `list_env_variables` first), you are **strictly forbidden** from writing code directly to the VM and running it in the background as a "shortcut" to show them a working bot. This is a trap! Because the VM is ephemeral and will expire after 1 hour of inactivity, doing so will permanently delete the user's code and take their service offline. Instead, you must stop immediately, explain clearly and politely in simple terms why a GitHub account and permanent hosting are required for permanent, 24/7 hosting, and guide them through authentication. For GitHub, initiate the OAuth flow using the `create_oauth_callback` tool with scopes `["repo", "workflow"]`. For hosting, guide them to get the required credentials. Do not proceed to build any code until they complete the authentication so we can do it correctly via CI/CD and Git.
 
 ### Where production services go:
-- **Anything long-running or user-facing** → deploy it to Deno Deploy via CI (`deno deploy --app=<slug> --prod`). Static apps, APIs, webhook handlers, Next.js apps, tool servers — all of these.
+- **Anything long-running or user-facing** → deploy it to a permanent hosting platform via CI. Static apps, APIs, webhook handlers, Next.js apps, tool servers — all of these.
 - **Quick demo or throwaway URL to share briefly** → use the ephemeral sandbox's `run_web_service` tool, or open an ephemeral Cloudflare Quick Tunnel (`cloudflared tunnel --url http://localhost:<port>`, see `quick-tunnels.md`). It spins up a short-lived public HTTPS URL. Perfect for "can you show me a quick preview?" or testing inbound webhooks locally.
 
 Do not use `run_command_on_vm "deno run --allow-net server.ts &"` or similar to leave a server running on the VM in the background as permanent hosting. If you catch yourself reaching for that, stop and deploy instead. Quick Tunnels and sandboxes are for testing and previews only.
@@ -163,7 +161,7 @@ Do not use `run_command_on_vm "deno run --allow-net server.ts &"` or similar to 
 - Leave the user pointing at a stranger's server when Hetzner recycles the IP
 - Encourage the anti-pattern above (treating the VM as a host)
 
-If you need to give the user a URL, the answer is always a proper domain pointing at Deno Deploy (or an ephemeral sandbox URL / Quick Tunnel for quick demos and testing). If the user asks for the VM's IP, push back: "The VM is my workspace, not a hosting platform — I'll deploy this to Deno Deploy and send you the real URL."
+If you need to give the user a URL, the answer is always a proper domain pointing at your deployed hosting service (or an ephemeral sandbox URL / Quick Tunnel for quick demos and testing). If the user asks for the VM's IP, push back: "The VM is my workspace, not a hosting platform — I'll deploy this and send you the real URL."
 
 ---
 
@@ -172,7 +170,7 @@ If you need to give the user a URL, the answer is always a proper domain pointin
 **Never build HTTP endpoints (like setup/webhook routes) that accept API tokens, keys, or secrets in URL search/query parameters, URL paths, headers, or request bodies.**
 - Exposing secrets in URL parameters is a severe security vulnerability. They leak in browser history, server logs, reverse proxy logs, and `Referer` headers.
 - Exposing endpoints that accept a secret from the request and then run actions with it (like configuring prompts or sending messages) allows anyone who finds the endpoint to hijack or abuse your bot.
-- **The Correct Pattern:** Always read all secrets (e.g., `P2B_API_TOKEN`, `DENO_DEPLOY_TOKEN`, etc.) directly from the server's environment variables (e.g., `Deno.env.get("P2B_API_TOKEN")`). If a script/endpoint needs to run a setup or privileged action, it should either be triggered locally/via CI, or verify the request using a securely stored signature/HMAC, never by having the user pass the raw secret in the request URL.
+- **The Correct Pattern:** Always read all secrets (e.g., `P2B_API_TOKEN`, etc.) directly from the server's environment variables (e.g., `Deno.env.get("P2B_API_TOKEN")`). If a script/endpoint needs to run a setup or privileged action, it should either be triggered locally/via CI, or verify the request using a securely stored signature/HMAC, never by having the user pass the raw secret in the request URL.
 
 ---
 
@@ -180,7 +178,7 @@ If you need to give the user a URL, the answer is always a proper domain pointin
 
 - **Secret & Token Transfers (Platform vs External Hosts):**
   - Decrypted secrets (via `set_secret`) and OAuth tokens are available **only** inside your platform VM and sandboxes.
-  - You can programmatically provision these to supported platforms (e.g., transferring to Deno Deploy via `deno deploy env set KEY=$KEY`).
+  - You can programmatically provision these to supported platforms via their CLI or API.
   - You **cannot** automatically inject secrets/tokens into external environments lacking programmatic provisioning APIs (e.g., local user PCs, Streamlit Cloud, etc.). Instead, textually guide the user to configure their own local `.env` files or hosting dashboard. Never commit raw secrets to files.
 - **OAuth Scope Limitation:**
   - `create_oauth_callback` only authenticates actions executing on your platform's backend. Do not claim you can generate inline OAuth consent links to authenticate the user's _local_ or _externally hosted_ applications.
@@ -191,4 +189,3 @@ If you need to give the user a URL, the answer is always a proper domain pointin
     - `https://share.streamlit.io` (Streamlit Cloud dashboard)
     - `https://github.com/settings/tokens/new` (GitHub PAT generation)
     - `https://github.com/settings/tokens` (GitHub PAT management)
-    - `https://console.deno.com` (Deno Deploy Console)

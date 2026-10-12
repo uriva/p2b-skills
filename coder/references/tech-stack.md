@@ -16,19 +16,12 @@ Use a **monorepo** when building a project with multiple components (e.g. server
 ## Tech Stack
 
 - **GitHub** for code hosting. Always create repositories as **private**. You are **strictly forbidden** from creating public repositories unless the user has explicitly requested it in the chat. Use the native `gh` CLI on the VM for GitHub API operations (create repos, list repos, issues, PRs). For downloading and uploading code, use curl with the GitHub Contents API.
-- **Deno Deploy** for most things: microservices, cron jobs, dashboard backends, webhook responders/senders. Deno also supports Next.js apps for frontends. The only exception is when you need Docker or long-running operations. Use the native `deno deploy` subcommand on the VM for all Deno Deploy operations (create apps, deploy, set env vars). Never use `deployctl` — it is deprecated.
-- **Google Cloud Tasks / Pub/Sub** for long-running operations triggered by webhooks, or for large numbers of user-generated scheduled actions. Never use Deno cron for user-generated recurring tasks — only for small numbers of system-level jobs. See `scheduling-and-media.md` for the full scheduling decision matrix.
-- **Databases:** Never use spreadsheets, Airtable, or Notion databases as a data store — see the "Anti-Pattern: Spreadsheets" section in `scheduling-and-media.md`. Use a real database when the application needs persistence. If the user needs data visibility, build them an admin dashboard with Next.js.
-- **Next.js (App Router, SSR)** for all frontends — dashboards, admin panels, forms, landing pages. Always use the App Router (not Pages Router) with server-side rendering. Deploy on Deno Deploy.
+- **Permanent Cloud Hosting:** Deploy microservices, cron jobs, dashboard backends, APIs, and webhook responders to a permanent cloud hosting platform via CI/CD. Never host production services on the ephemeral VM. Choose a cloud platform that fits the workload (e.g. serverless functions, container hosting, or application platforms).
+- **Google Cloud Tasks / Pub/Sub** for long-running operations triggered by webhooks, or for large numbers of user-generated scheduled actions. Never use in-memory timers or high-frequency polling crons for user-generated recurring tasks — only for small numbers of system-level jobs. See `scheduling-and-media.md` for the full scheduling decision matrix.
+- **Databases:** Never use spreadsheets, Airtable, or Notion databases as a data store — see the "Anti-Pattern: Spreadsheets" section in `scheduling-and-media.md`. Use a real database when the application needs persistence with schemas and migrations managed in code. If the user needs data visibility, build them an admin dashboard with Next.js.
+- **Next.js (App Router, SSR)** for all frontends — dashboards, admin panels, forms, landing pages. Always use the App Router (not Pages Router) with server-side rendering. Deploy to your hosting platform via automated CI/CD.
 - **SafeApp (Agent-Native File-Free Platform):** An alternative to the traditional GitHub/VM/Next.js stack for autonomous agent micro-apps, internal tools, and secure CRMs. Logic is written in safescript, secrets are provably isolated from browser bundles, and infrastructure primitives (Realtime DB, KV, Cloud Tasks) are auto-provisioned. See `safeapp-platform.md` for the full architecture, trade-offs, and decision matrix.
 - **Cloudflare Quick Tunnels (TryCloudflare):** For exposing local development servers on the VM to a temporary public HTTPS URL (`cloudflared tunnel --url http://localhost:<port>`). Used for testing inbound webhooks and pre-deploy browser/E2E verification without deploying to production first. Ephemeral and for testing only — never for production hosting. See `quick-tunnels.md`.
-
-### Deploying a Next.js app to Deno Deploy
-Use the `nextjs` framework preset when creating the app. It automatically configures the correct build settings, entrypoint, and runtime mode:
-```bash
-deno deploy create --framework-preset nextjs --org <your-org> --app <your-app> --source local
-```
-For subsequent deploys after the app is created, just run `deno deploy` from your project directory. All dashboard options have CLI flag equivalents, so you can use them in CI pipelines or scripts without any interactive prompts.
 
 - **shadcn/ui** (https://ui.shadcn.com/) and **AI SDK Elements** (https://elements.ai-sdk.dev/) for UI design.
 - **Search agent-skill registries before building UI from scratch.** Before starting a non-trivial frontend, check whether someone has already published a skill that fits. Two registries worth searching every time:

@@ -15,7 +15,7 @@ When building for WhatsApp, there are two axes to consider: **Integration Pathwa
 
 | Integration Pathway | Simple Messaging (One-Way Notification) | Agent Experience (Interactive Conversational Bot) |
 | :--- | :--- | :--- |
-| **Official (Meta Business API / Cloud API)** | Send transactional messages programmatically. **Strictly limited to pre-approved templates** outside a 24-hour window. | Back-and-forth AI conversations. Requires the WhatsApp for Business Token (`whatsappForBusinessToken`) configured in InstantDB. |
+| **Official (Meta Business API / Cloud API)** | Send transactional messages programmatically. **Strictly limited to pre-approved templates** outside a 24-hour window. | Back-and-forth AI conversations. Requires the WhatsApp for Business Token (`whatsappForBusinessToken`) configured for the bot. |
 | **Unofficial (Supergreen)** | Direct outbound API pings via Supergreen. Free-form text and attachments, skipping Meta's approval process and template restrictions. | Connect a Supergreen WhatsApp line to the prompt2bot agent via `setSupergreenWhatsapp` or the dashboard. |
 
 ---
@@ -53,7 +53,7 @@ Use the `@prompt2bot/client` API to schedule the notification.
 Use this when you want a smart, back-and-forth conversational AI with access to tools, knowledge bases, and persistent context.
 
 ### Setup and Integration
-1. **Official**: Bot must have its WhatsApp for Business Token (`whatsappForBusinessToken`) stored and configured in InstantDB.
+1. **Official**: Bot must have its WhatsApp for Business Token (`whatsappForBusinessToken`) stored and configured.
 2. **Unofficial**: Link your Supergreen line to the prompt2bot instance via the `@prompt2bot/client` SDK or the dashboard:
    ```typescript
    import { setSupergreenWhatsapp } from "@prompt2bot/client";
@@ -97,8 +97,8 @@ await createRemoteTask({
 ## 3. Best Practices & Webhook Hygiene
 
 - **Verify Tokens Programmatically:** Before attempting to test or invoke any message flow, programmatically verify that the target bot has either `whatsappForBusinessToken` (for official lines) or an active Supergreen configuration. Proactively report missing tokens to users rather than letting calls fail silently.
-- **Never Lie About Failures:** If a webhook, test message, or scheduled task fails, do not invent system myths (e.g., claiming a phone line is "sleeping" or in a "cold state"). Check the logs, check InstantDB task states, and communicate transparently.
-- **Avoid Polling Loops:** Do not set up high-frequency cron jobs or polling loops (polling more than once per hour is strictly forbidden on Deno Deploy). Instead:
+- **Never Lie About Failures:** If a webhook, test message, or scheduled task fails, do not invent system myths (e.g., claiming a phone line is "sleeping" or in a "cold state"). Check the logs, check task queue states, and communicate transparently.
+- **Avoid Polling Loops:** Do not set up high-frequency cron jobs or polling loops (polling more than once per hour is strictly forbidden). Instead:
   1. Use push-based **Webhooks**.
   2. Use the prompt2bot native **Wakeup Timer** (`timeout-wakeup`) to let the bot wake itself up after a duration.
   3. Use **Upstash QStash** to queue delayed callbacks statelessly via HTTP triggers.

@@ -70,7 +70,7 @@ Instead of editing files on disk and managing git repositories, agents build and
 | **High security requirements with vaulted API secrets and strict egress allowlists** | **SafeApp** | Provable placement guarantees secrets never leak to browser bundles or untrusted hosts. |
 | **Agent needs to test the app in a headless browser with authentication** | **SafeApp** | Headless token minting (`/auth/token`) allows browser entry without an email inbox. |
 | **Multi-branch rapid iteration with automated policy-gated merges** | **SafeApp** | Mathematical zero-diff security gate allows safe autonomous branch merging without human review. |
-| **User explicitly asks for a GitHub repo to clone and run locally with `npm run dev`** | **Traditional Stack** | Traditional GitHub repo + Next.js + Deno Deploy fits traditional human developer workflows. |
+| **User explicitly asks for a GitHub repo to clone and run locally with `npm run dev`** | **Traditional Stack** | Traditional GitHub repo + Next.js + cloud hosting fits traditional human developer workflows. |
 | **App requires heavy third-party npm client packages (Three.js, WebGL, Canvas games, etc.)** | **Traditional Stack** | Next.js / Vite allows bundling arbitrary npm packages that require deep browser DOM hooks. |
 | **App requires custom Docker containers, Python/Rust microservices, or long background daemons** | **Traditional Stack** | Modal VMs or container hosting support arbitrary system runtimes. |
 
@@ -78,7 +78,7 @@ Instead of editing files on disk and managing git repositories, agents build and
 
 ## 5. SafeApp Skill & Implementation Instructions
 
-All implementation instructions, API endpoints, authentication flows (including headless agent token minting and preview route behavior), InstantDB permissions (`rules`), real database operations (`dbQuery`, `dbTransact`), and primitive capabilities belong exclusively to the **`safeapp`** skill.
+All implementation instructions, API endpoints, authentication flows (including headless agent token minting and preview route behavior), database permissions (`rules`), real database operations (`dbQuery`, `dbTransact`), and primitive capabilities belong exclusively to the **`safeapp`** skill.
 
 👉 **To build, deploy, or manage apps on SafeApp, acquire and activate the `safeapp` skill (call `learn_skill` with `skillName: "safeapp"`).**
 

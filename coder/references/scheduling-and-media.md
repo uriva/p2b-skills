@@ -15,31 +15,31 @@ Before doing any work with WhatsApp integrations (including using Supergreen or 
 
 ## Scheduling, Webhooks & Background Tasks
 
-Never design polling-based systems. Deno Deploy charges per request, so polling loops will drain the user's credits fast.
+Never design polling-based systems. Polling loops drain bandwidth and cloud compute resources fast.
 
 ### 1. Avoid Polling (Use Webhooks or Wakeup Timers)
 Always seek push-based patterns over pull-based ones:
-1. **Webhooks:** Have the external service push events to your Deno Deploy endpoint. This is always the first option to explore.
+1. **Webhooks:** Have the external service push events to your webhook endpoint. This is always the first option to explore.
 2. **Streaming / change-notification APIs:** Some services offer long-lived connections or change feeds.
 3. **prompt2bot's built-in wakeup timer:** If an agent needs to check back on something later (e.g. "did I get a reply?", "has the deployment finished?"), it can set a timeout in its own prompt. The prompt2bot API lets a bot schedule itself to wake up after N milliseconds via `timeout-wakeup`. This means the agent can say "check again in 10 minutes" without any cron job at all—the platform handles the timer.
-   - _Example — agent waiting for an external response:_ Bad: set up a cron that runs every minute to check if a reply arrived. Good: the prompt2bot agent uses its wakeup timer (`timeout-wakeup`) to schedule itself 10 minutes in the future. When it wakes up, it checks for the reply. If not yet received, it sets another timer. Zero cron, zero Deno credits burned—it's all handled by the prompt2bot platform.
+   - _Example — agent waiting for an external response:_ Bad: set up a cron that runs every minute to check if a reply arrived. Good: the prompt2bot agent uses its wakeup timer (`timeout-wakeup`) to schedule itself 10 minutes in the future. When it wakes up, it checks for the reply. If not yet received, it sets another timer. Zero cron, zero wasted compute credits burned—it's all handled by the prompt2bot platform.
 
 ### 2. Hard Limits on Cron Frequency
-- **Hard rule: cron jobs must never run more frequently than once per hour.** Daily is preferred, hourly is the absolute maximum. A cron that runs every minute or every 5 minutes will burn through Deno Deploy's free tier in days. If you find yourself reaching for a short-interval cron, you are using the wrong pattern—stop and rethink.
+- **Hard rule: cron jobs must never run more frequently than once per hour.** Daily is preferred, hourly is the absolute maximum. A cron that runs every minute or every 5 minutes will burn through compute quotas in days. If you find yourself reaching for a short-interval cron, you are using the wrong pattern—stop and rethink.
 - If no alternatives are feasible and you genuinely need frequent polling, **do not implement it**. Instead, notify admins and explain the constraint. Let them decide the architecture.
 
-### 3. Scaling & Architecture Choice (Upstash QStash vs. Deno Cron)
-- **Deno Cron:** Use Deno cron **only** for small numbers of system-level background/recurring jobs (e.g. exporting a daily read-only report to Google Sheets). Never use Deno cron for user-generated recurring tasks or high-frequency polling, as it burns unnecessary compute hours on Deno Deploy.
+### 3. Scaling & Architecture Choice (Task Queues vs. Cron)
+- **System Cron:** Use platform or system cron **only** for small numbers of system-level background/recurring jobs (e.g. exporting a daily read-only report to Google Sheets). Never use high-frequency polling crons for user-generated recurring tasks, as it burns unnecessary compute hours.
 - **Upstash QStash (Recommended):** For scheduling events/scripts at arbitrary timestamps, long-running delayed tasks, or handling a large volume of user-generated scheduled actions, use **Upstash QStash** as your event queue.
 
 #### Why Upstash QStash?
-- **How it works:** QStash holds your timer/delay in the cloud entirely over stateless HTTP. You publish a delayed execution payload to QStash, and when the timestamp is reached, QStash fires an HTTP POST request back to your webhook endpoint to execute the task. It requires zero idle compute or open connections on Deno Deploy.
+- **How it works:** QStash holds your timer/delay in the cloud entirely over stateless HTTP. You publish a delayed execution payload to QStash, and when the timestamp is reached, QStash fires an HTTP POST request back to your webhook endpoint to execute the task. It requires zero idle compute or open connections on your hosting platform.
 - **How to get API Key:** Sign up at [console.upstash.com](https://console.upstash.com/), go to the **QStash** tab, and copy your `QSTASH_TOKEN` (Current Signing Key) into your project's environment variables (`QSTASH_TOKEN`).
 - **Pricing:** An extremely generous free tier of **10,000 scheduled requests per day** ($0, no credit card required). Pay-as-you-go thereafter is just $1.00 per 100,000 requests.
 - **How to use (Example):** Schedule an execution at a specific Unix timestamp (in milliseconds) using the `Upstash-Not-Before` header:
   ```typescript
   const qstashToken = Deno.env.get("QSTASH_TOKEN");
-  const targetUrl = `https://your-app.deno.dev/w/your-route-id`;
+  const targetUrl = `https://your-app.example.com/w/your-route-id`;
 
   const response = await fetch(
     `https://qstash.upstash.io/v2/publish/${targetUrl}`,

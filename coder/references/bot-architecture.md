@@ -112,4 +112,4 @@ Never build: a webhook endpoint that receives each message, looks up state in a 
 
 **Agent frontend + pipeline backend:** Many systems combine a data pipeline / scraping / recurring tasks (on Deno) with an agent that helps the user interact with the system (on prompt2bot). Use the prompt2bot API to create an agent, get a secret token, and inject context or activate it from the backend based on schedules or events.
 
-**Simple frontend / forms:** Use Next.js (App Router) on Deno Deploy.
+**Simple frontend / forms:** Use Next.js (App Router) deployed via CI.

@@ -1,8 +1,8 @@
 # Web-App Build & Deploy Playbook
 
 Read this **before doing anything** when the user asks you to build and/or deploy
-a web app, dashboard, site, or any hosted service (GitHub repo + CI + Deno
-Deploy). It defines how to acquire credentials and how to sequence the first
+a web app, dashboard, site, or any hosted service (GitHub repo + CI/CD + permanent
+hosting). It defines how to acquire credentials and how to sequence the first
 turns. The most common production failure is asking the user for credentials the
 wrong way on the very first message — this playbook exists to prevent that.
 
@@ -37,40 +37,24 @@ The `repo` scope enables creating/reading/writing the private repo; the
 `workflow` scope is required so the CI/CD GitHub Actions pipeline can run.
 Without `workflow`, CI steps silently fail to trigger.
 
-### Deno Deploy — this is the ONLY credential the user generates manually.
+### Hosting & Deployment Credentials
 
-There is no platform OAuth flow for Deno Deploy tokens. Ask the user to generate
-a Deno Deploy **organization** token — its value starts with `ddo_`. A personal
-token (value starts with `ddp_`) is rejected by the Deno Deploy v2 REST API, so
-never request one. Steps to give the user:
-
-1. Sign in at `https://console.deno.com` and create/select an organization first
-   (token pages return `404 ORGANIZATION_NOT_FOUND` without one).
-2. Open that **organization's** page → **Settings** → **Organization Tokens**,
-   and generate the token there. The correct token page lives under the
-   organization, never under a personal/account area.
-3. Do not output any direct token URL (404s without an org context) or any
-   deprecated Deno URL (e.g. `dash.deno.com`). When the user pastes a token,
-   confirm it begins with `ddo_`; if it begins with `ddp_`, tell them it is a
-   personal token and ask for an organization token via
-   Settings → Organization Tokens instead.
-
-Do not ask the user for their Deno Deploy **organization** name — derive it from
-the token (the `p2b-deno-deploy` skill covers this). The only thing the user
-supplies for Deno Deploy is the token.
+When deploying to a cloud hosting platform, identify what credentials or API tokens are needed for automated deployment.
+1. Check `list_env_variables` first to see if deployment credentials are already stored.
+2. If credentials are required, guide the user with clear, concise instructions on where to generate them in their hosting provider's dashboard or settings.
+3. Once provided, store them immediately using `set_secret` and configure them as repository secrets via `gh secret set` for automated CI/CD workflows. Never hardcode credentials in code or repository files.
 
 ## First-turn sequencing
 
 1. Load the coder skill (already done if you are reading this) and this playbook.
 2. Call `list_env_variables` to see what credentials already exist.
 3. Acquire GitHub access via OAuth (`create_oauth_callback`) — never a PAT.
-4. Acquire the Deno Deploy token via the manual console flow above.
-5. Batch your asks: send the GitHub OAuth link and the Deno-token instructions
-   together so the user has one clear set of steps, not a wall of manual
-   token-generation instructions.
+4. Acquire any required hosting deployment credentials.
+5. Batch your asks: send the GitHub OAuth link and any deployment credential instructions
+   together so the user has one clear set of steps, not a wall of manual instructions.
 
 Never write code to the ephemeral VM and run it as a "shortcut" before GitHub +
-Deno Deploy are set up — the VM expires and the user's work is lost. Set up
+hosting are set up — the VM expires and the user's work is lost. Set up
 permanent hosting (Git + CI/CD) first.
 
 See `vm-and-secrets.md` for the full secret-handling and VM decision matrix.

@@ -3,7 +3,7 @@
 Before starting the implementation of any project or significant feature, you must rigorously design and verify your approach using this structured workflow.
 
 Related references (load as needed):
-- `tech-stack.md` — default tech choices, Next.js on Deno Deploy, project structure.
+- `tech-stack.md` — default tech choices, Next.js, project structure.
 - `bot-architecture.md` — putting behavior in prompts, the prompt2bot API, `remote_config`, state-machine anti-pattern.
 - `scheduling-and-media.md` — webhooks/cron/QStash scheduling, multimodal media, spreadsheet anti-pattern, WhatsApp pointer.
 
@@ -66,7 +66,7 @@ When faced with complex, multi-step tasks or open-ended research, you can spawn 
 
 Most non-trivial bots are **two-legged**:
 1. **Rep agent** — the prompt2bot bot itself. It owns the system prompt, the tool registry, and the conversation loop.
-2. **Backend server** — a Deno Deploy service owned by you. It hosts the HTTP tool endpoints the bot calls, runs recurring jobs, handles webhooks, and stores business data.
+2. **Backend server** — a backend service owned by you. It hosts the HTTP tool endpoints the bot calls, runs recurring jobs, handles webhooks, and stores business data.
 
 The two legs talk to each other over signed HTTP: the prompt2bot server calls your backend's tool endpoints; your backend calls prompt2bot's API (`setPrompt`, `setCustomTools`, `createRemoteTask`, `injectContext`, etc.). See `bot-architecture.md` for the full prompt2bot API reference.
 
@@ -76,7 +76,7 @@ When building or integrating with agents that use remote skills or tools, **you 
 - **Why?** Relying on manual updates or treating any dashboard as the source of truth leads to configuration drift, desynchronized routes, and broken agent behaviors. A GitHub Actions pipeline ensures that tool schemas, skill configurations, system prompts, and server handlers are deployed atomically and kept in perfect sync.
 - **Never ask users to paste prompts or tools into the dashboard by hand.**
 - Both the backend server and the bot's prompt/tools should be configured by CI on push to `main`:
-  - **Backend code** is deployed to Deno Deploy automatically on push (GitHub integration).
+  - **Backend code** is deployed to the hosting platform automatically on push (GitHub integration).
   - **Automated Database Migrations/Schema Sync:** If the application uses a database with code-managed schemas or migrations, include an automated step in your GitHub Actions deployment pipeline (`deploy.yml`) to automatically apply schema updates or migrations to production on every push to `main`. Never rely on manual database updates.
   - **Bot prompt and custom tools** are pushed by a CI step that calls `setPrompt` and `setCustomTools` against the prompt2bot API, using the bot's Remote Tools Secret stored as a GitHub Actions secret.
 
@@ -90,7 +90,7 @@ This keeps the bot's behavior version-controlled, reviewable in PRs, and reprodu
 **Typical repo layout for a two-legged system:**
 ```
 my-bot/
-  backend/              # Deno Deploy service
+  backend/              # Backend service
     tools/              # HTTP tool handlers
     main.ts
   bot/
