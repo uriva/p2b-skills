@@ -1,0 +1,20 @@
+{
+  "name": "@uriva/p2b-haskalah",
+  "version": "1.0.0",
+  "repository": "https://github.com/uriva/p2b-skills/tree/main/haskalah",
+  "description": "Guidance and educational resource skill for Ultra-Orthodox (Haredi) Jews looking to expand their horizons, complete core studies, explore science and rational inquiry, or navigate practical steps toward independence and integration into broader Israeli society, based on the Haskalah (ההשכלה) knowledge base.",
+  "visibility": "public",
+  "skills": {
+    "haskalah": "SKILL.md"
+  },
+  "permissions": {
+    "network": {
+      "outbound": ["https://haskalah.pages.dev"]
+    },
+    "filesystem": {
+      "read": [],
+      "write": []
+    },
+    "subprocess": false
+  }
+}

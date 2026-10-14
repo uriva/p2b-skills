@@ -19,6 +19,9 @@ Community skills for Prompt2Bot agents.
   recommendations using Google My Maps integration.
 - `sinai-tourism/` - Sinai travel guide for tourists and vacationers. Camps,
   beaches, border logistics, and travel partner matching.
+- `haskalah/` - guidance, core curriculum (Limudei Liba), rational inquiry, and
+  practical independence resources for Ultra-Orthodox (Haredi) Jews looking to
+  expand their horizons, grounded in `https://haskalah.pages.dev/`.
 
 Each skill directory has its own `tank.json`. CI discovers every `*/tank.json`
 and runs `tank publish` from that directory.
