@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-gmail",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/gmail",
   "description": "Google Gmail utils using safescript.",
   "visibility": "public",

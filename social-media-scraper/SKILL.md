@@ -68,20 +68,17 @@ Used by `startLinkedInProfileScrape` and `getLinkedInProfileSnapshot`.
 
 - `youtubeSubtitles` — Fetch SRT subtitles for a YouTube video URL.
 
-## Example usage
+## Example Tool Call
 
-```typescript
-import { facebookPosts } from "./scripts/social-media-scraper.ss";
+All functions in this skill (`facebookPosts`, `startLinkedInProfileScrape`, `getLinkedInProfileSnapshot`, `youtubeSubtitles`) are exposed directly as callable tools — invoke them directly as tools (never `import` `.ss` files in `run_safescript`):
 
-export const myTask = async () => {
-  const result = await facebookPosts(
-    process.env.RAPIDAPI_KEY,
-    "deno programming",
-    "",
-    "",
-  );
-  console.log(result);
-};
+```json
+{
+  "rapidApiKey": "SECRET:RAPIDAPI_KEY",
+  "query": "deno programming",
+  "groupId": "",
+  "cursor": ""
+}
 ```
 
 ## Facebook

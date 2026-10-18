@@ -1,31 +1,29 @@
 ---
 name: gmail
-description: AI agent skill for reading, writing, drafting, and sending emails via Gmail using Safescript.
+description: AI agent skill for sending and drafting emails via Gmail.
 ---
 
 # Gmail Skill
 
-Allows bot to interact with the Gmail API to send emails and create drafts securely, with automatic RFC 1342 encoding of non-ASCII characters (e.g. Hebrew) in headers to prevent garbled text/mojibake.
+Allows the bot to interact with the Gmail API to send emails and create drafts securely, with automatic RFC 1342 encoding of non-ASCII characters (e.g. Hebrew) in headers to prevent garbled text/mojibake.
 
-Pass the configured secret name as `googleToken` when calling tools. Do not pass env var names (for example `GOOGLE_TOKEN`) as the token value.
+## Important Usage Rules
+
+- **Direct Callable Tools:** `sendGmailEmail` and `createGmailDraft` are exposed directly as callable tools. Call them directly as tools (or via `run_command` with `"gmail/sendGmailEmail"` / `"gmail/createGmailDraft"`). **Never** write `import { ... } from "./scripts/gmail.ss"` inside `run_safescript`.
+- **Secret Prefix:** Pass the configured secret name with the `SECRET:` prefix as `googleToken` (for example `"SECRET:GMAIL_ACCESS_TOKEN"` or `"SECRET:GOOGLE_ACCESS_TOKEN"`). Use `list_env_variables` from `secrets_and_variables` if you need to check which secret name is configured.
+- **Reading / Searching Emails (Inbox):** This skill is for sending and drafting emails (`gmail.send` scope). To read, list, or search incoming Gmail messages in the user's inbox, use the `composio` skill (`list_composio_tools` with `app: "gmail"`, `inspect_composio_tool`, and `execute_composio_tool` with `GMAIL_FETCH_EMAILS` or `GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID`).
 
 All functions return `{ success, result, error }`.
 
-## Example usage
+## Example Tool Call
 
-```typescript
-import { sendGmailEmail } from "./scripts/gmail.ss";
-import { createGmailDraft } from "./scripts/gmail.ss";
-
-export const myTask = async () => {
-  // Send email safely (subject line non-ASCII characters automatically encoded cleanly)
-  const sendRes = await sendGmailEmail(
-    "GOOGLE_ACCESS_TOKEN", 
-    "recipient@example.com", 
-    "הצעה להופעה אקוסטית של שיר אלוני - עדה'ס", 
-    "<h1>היי!</h1><p>זהו גוף המייל.</p>"
-  );
-};
+```json
+{
+  "googleToken": "SECRET:GMAIL_ACCESS_TOKEN",
+  "to": "recipient@example.com",
+  "subject": "הצעה להופעה אקוסטית",
+  "htmlBody": "<h1>היי!</h1><p>זהו גוף המייל.</p>"
+}
 ```
 
 ---
@@ -34,14 +32,14 @@ export const myTask = async () => {
 
 ### sendGmailEmail(googleToken, to, subject, htmlBody)
 Sends an HTML email directly through the Gmail API, properly encoding non-ASCII subject lines to avoid mojibake/garbled text.
-- `googleToken`: Name of the Gmail OAuth token secret.
+- `googleToken`: Secret reference for the Gmail OAuth token (e.g. `"SECRET:GMAIL_ACCESS_TOKEN"`).
 - `to`: Recipient email address.
 - `subject`: Email subject (automatically encoded to ASCII using UTF-8 Base64 RFC 1342).
 - `htmlBody`: HTML content of the email body.
 
 ### createGmailDraft(googleToken, to, subject, htmlBody)
 Creates an email draft in the user's Gmail account, properly encoding non-ASCII subject lines to avoid mojibake/garbled text.
-- `googleToken`: Name of the Gmail OAuth token secret.
+- `googleToken`: Secret reference for the Gmail OAuth token (e.g. `"SECRET:GMAIL_ACCESS_TOKEN"`).
 - `to`: Recipient email address.
 - `subject`: Email subject (automatically encoded to ASCII using UTF-8 Base64 RFC 1342).
 - `htmlBody`: HTML content of the email body.

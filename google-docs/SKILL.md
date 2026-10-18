@@ -12,20 +12,15 @@ env var names (for example `GOOGLE_TOKEN`) as the token value.
 
 All functions return `{ success, result, error }`.
 
-## Example usage
+## Example Tool Calls
 
-```typescript
-import { createDocument } from "./scripts/google-docs.ss";
-import { createSheet } from "./scripts/google-sheets.ss";
+All functions in this skill (`createDocument`, `fetchDocument`, `executeBatchUpdate`, `createSpreadsheet`, `readSpreadsheet`, `appendRowToSheet`, etc.) are exposed directly as callable tools — call them directly as tools with `SECRET:<name>` (never `import` `.ss` files in `run_safescript`):
 
-export const myTask = async () => {
-  const doc = await createDocument(process.env.GOOGLE_TOKEN, "New Doc");
-  const sheet = await createSheet(
-    process.env.GOOGLE_TOKEN,
-    "some-spreadsheet-id",
-    "New Sheet",
-  );
-};
+```json
+{
+  "googleToken": "SECRET:GOOGLE_ACCESS_TOKEN",
+  "title": "New Doc"
+}
 ```
 
 ---
