@@ -17,11 +17,13 @@ Prompt2Bot agent creates a **mini webhook app** listener directly on the bot.
   address for the assistant (`@theagentmail.net`) — that has nothing to do with
   listening to the owner's emails.
 - Do not lecture the owner about internal implementation details (`Webhook App`,
-  `Safescript`, `decisionModel` / "decision model", `notifyMe`, `Composio`, or
-  burning agent runs), and do not ask them to pick between "periodic polling /
-  direct Gmail connection" and a "Webhook App". The webhook app listener is the
-  single right path; keep all plumbing details under the hood and speak to the
-  owner in plain, outcome-focused language.
+  `Safescript`, `decisionModel` / "decision model", `notifyMe`, `Composio`,
+  burning agent runs, or a separate "listener" / "מאזין" component), and do not
+  ask them to pick between "periodic polling / direct Gmail connection" and a
+  "Webhook App". Never talk as if there exists a separate "listener" or model
+  that filters emails and alerts you — to the user, *you* (the agent) are the
+  one monitoring their emails. Speak in the first person in plain,
+  outcome-focused language.
 
 1. **Webhook Endpoint:** Each app gets an edge webhook URL:
    `https://api.prompt2bot.com/webhook-app/<botId>/<appName>`.
