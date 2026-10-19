@@ -6,15 +6,28 @@ webhook-driven apps** powered by Safescript.
 
 ---
 
-## Architecture Overview
+## Architecture Overview (Internal — Do Not Dump Details on the User)
 
 Instead of spinning up external infrastructure or polling inboxes repeatedly, a
-Prompt2Bot agent can create **mini webhook apps** directly on the bot.
+Prompt2Bot agent creates a **mini webhook app** listener directly on the bot.
+
+**Important User-Facing Rule:**
+- When the owner asks if you can listen to their emails ("my emails"), they mean
+  **their own inbox** (e.g. Gmail). Never mention `AgentMail` or an email
+  address for the assistant (`@theagentmail.net`) — that has nothing to do with
+  listening to the owner's emails.
+- Do not lecture the owner about internal implementation details (`Webhook App`,
+  `Safescript`, `decisionModel` / "decision model", `notifyMe`, `Composio`, or
+  burning agent runs), and do not ask them to pick between "periodic polling /
+  direct Gmail connection" and a "Webhook App". The webhook app listener is the
+  single right path; keep all plumbing details under the hood and speak to the
+  owner in plain, outcome-focused language.
 
 1. **Webhook Endpoint:** Each app gets an edge webhook URL:
    `https://api.prompt2bot.com/webhook-app/<botId>/<appName>`.
-2. **Event Trigger:** An external email service (such as AgentMail, Resend,
-   SendGrid, or mail forwarding) POSTs incoming email data to this endpoint.
+2. **Event Trigger:** Incoming email events from the owner's email integration
+   (such as Gmail push/forwarding, Resend, or SendGrid) POST incoming email data
+   to this endpoint.
 3. **Edge Safescript Execution:** The incoming payload is executed in Safescript
    using two core primitives:
    - `decisionModel`: Intelligently classifies the email (urgency, importance,
@@ -101,15 +114,13 @@ main = (payload) => {
 The tool returns the webhook URL:
 `https://api.prompt2bot.com/webhook-app/<botId>/email-listener`
 
-### Step 2: Connect External Email Webhook
+### Step 2: Connect Incoming Email Trigger
 
-Point the incoming email provider to the webhook URL:
+Connect the owner's email source to trigger the webhook URL:
 
-- **AgentMail:** Set webhook URL in the AgentMail dashboard or API.
+- **Gmail:** Use Gmail push notifications or forwarding to trigger the webhook.
 - **Resend / ForwardEmail / SendGrid:** Add the URL as the inbound webhook
   target.
-- **Gmail:** Use Gmail push notifications or forwarding rules to trigger the
-  webhook.
 
 ### Step 3: Proactive Answering on WhatsApp
 

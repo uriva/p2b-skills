@@ -311,8 +311,11 @@ owner instead of inventing.
 ## Owned Email And WhatsApp Setup
 
 The assistant can receive and send email through AgentMail (`theagentmail.net`).
-Explain this setup when the owner wants the assistant to have its own email
-address.
+Explain this setup **only** when the owner explicitly asks for the assistant to
+have its own separate email address (e.g. `assistant@theagentmail.net`).
+AgentMail has nothing to do with reading, sending from, or listening to the
+owner's own email inbox (such as the owner's Gmail) — never mention AgentMail or
+a dedicated assistant email address when the owner asks about their own emails.
 
 High-level setup:
 
@@ -477,28 +480,43 @@ Instead, follow this pattern:
 
 ## Tracking Emails and Messages with Webhook Apps
 
-To monitor incoming emails or external messages (from AgentMail, Resend, Gmail,
-WhatsApp webhooks, etc.) without burning full agent runs on every newsletter or
-routine ping:
+When the owner asks if you can listen to, monitor, or alert them about their
+incoming emails (or external messages), the right path is always a webhook app
+with a listener:
 
-1. **Create a Mini Webhook App:** Use `create_webhook_app` from the `safescript`
-   skill to deploy a Safescript listener with a unique URL
-   (`https://api.prompt2bot.com/webhook-app/<botId>/<name>`).
-2. **Two Core Primitives:**
-   - `decisionModel({ question, context })`: Filter and triage the incoming
-     event with an AI decision model (e.g. "Does this email require an answer or
-     action from the owner?"). Decision model usage is billed at a lightweight
-     fraction of an agent run (find the exact current multiplier in the
-     platform's `decisionModelAgentRunMultiplier` in `constants.ts` or bot
-     settings), making high-volume listening cost-effective.
-   - `notifyMe({ message, subject? })`: If the decision model returns true,
-     alerts the agent via the creator thread by system notification.
-3. **Proactively Help Answer:** When alerted via system notification in the
-   creator thread, summarize the message and suggest a draft reply. When the
-   owner responds (e.g. "Yes, send it" or "Tell them I'll call at 4"), send the
-   reply directly via Gmail or email tools.
-4. **Detailed Reference:** See `references/email-listening-and-webhook-apps.md`
-   for complete code examples, webhook provider setup, and triage logic.
+1. **Internal Implementation (How You Build It):**
+   - Use `create_webhook_app` from the `safescript` skill to deploy a Safescript
+     listener (`https://api.prompt2bot.com/webhook-app/<botId>/<name>`).
+   - Use `decisionModel({ question, context })` inside the listener to filter
+     and triage incoming events (e.g. "Does this email require an answer or
+     action from the owner?") without burning full agent runs on newsletters or
+     routine pings (billed at the lightweight `decisionModelAgentRunMultiplier`
+     fraction in `constants.ts`).
+   - Use `notifyMe({ message, subject? })` when `decisionModel` returns true to
+     alert the agent in the creator thread via system notification. When woken
+     by that system notification, summarize the email for the owner and suggest
+     a draft reply; once approved, send it via the owner's Gmail tools.
+   - See `references/email-listening-and-webhook-apps.md` for complete code
+     examples and setup details.
+2. **User-Facing Communication (What the Owner Hears):**
+   - **Never mention assistant email (AgentMail):** Listening to the owner's
+     emails ("my emails") is about the owner's own inbox (e.g. Gmail). The
+     assistant's own email address (`AgentMail` / `@theagentmail.net`) has
+     nothing to do with this — never mention AgentMail or a dedicated assistant
+     email address.
+   - **Single path — never offer architecture choices:** Do not present multiple
+     options (such as "Option 1: Direct Gmail connection / periodic polling vs.
+     Option 2: Webhook App") or ask the owner to choose a technical mechanism.
+     The webhook app listener is the path to use.
+   - **Keep implementation details internal:** The owner does not need to hear
+     technical plumbing. Never mention "Webhook App", "Mini Webhook App",
+     "Safescript", "`decisionModel`", "decision model" ("מודל החלטה"),
+     "`notifyMe`", "Composio", or "agent runs" / quota costs in your reply.
+     Simply confirm in plain, natural language that you can listen to their
+     incoming emails and alert them here in chat (with a summary and draft
+     reply) whenever an important email arrives that needs their attention, and
+     ask a simple human question (such as what kinds of emails they want to be
+     alerted about) or proceed directly with setting up the listener.
 
 ## References
 
