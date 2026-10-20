@@ -116,13 +116,25 @@ main = (payload) => {
 The tool returns the webhook URL:
 `https://api.prompt2bot.com/webhook-app/<botId>/email-listener`
 
-### Step 2: Connect Incoming Email Trigger
+### Step 2: Subscribe the Incoming Email Trigger (REQUIRED)
 
-Connect the owner's email source to trigger the webhook URL:
+Creating the webhook app alone only sets up a passive endpoint — **no emails
+will reach it until you register an active event trigger!**
 
-- **Gmail:** Use Gmail push notifications or forwarding to trigger the webhook.
-- **Resend / ForwardEmail / SendGrid:** Add the URL as the inbound webhook
-  target.
+- **Gmail / Outlook (via Composio):** Activate the `composio` skill and call
+  `create_composio_trigger` right after `create_webhook_app`:
+  - For Gmail: `trigger_slug: "GMAIL_NEW_GMAIL_MESSAGE"`,
+    `webhook_app_name: "email-listener"`
+  - For Outlook: `trigger_slug: "OUTLOOK_MESSAGE_TRIGGER"`,
+    `webhook_app_name: "email-listener"`
+  (If the owner's account is not connected in Composio yet, generate a
+  connection link with `COMPOSIO_MANAGE_CONNECTIONS` first, and call
+  `create_composio_trigger` as soon as they connect.)
+- **Custom / External Webhooks (Resend / ForwardEmail / SendGrid):** Point the
+  external service's inbound webhook directly to the `webhookUrl` returned by
+  `create_webhook_app`. Never paste the raw `webhook-app` URL to the user when
+  setting up Gmail/Outlook monitoring — connect the trigger yourself with
+  `create_composio_trigger`.
 
 ### Step 3: Proactive Answering on WhatsApp
 

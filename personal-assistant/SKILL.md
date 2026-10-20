@@ -493,6 +493,16 @@ with a listener:
 1. **Internal Implementation (How You Build It):**
    - Use `create_webhook_app` from the `safescript` skill to deploy a Safescript
      listener (`https://api.prompt2bot.com/webhook-app/<botId>/<name>`).
+   - **CRITICAL — Subscribe the Event Trigger:** Creating the webhook app alone
+     only creates a passive endpoint; nothing will call it unless you register a
+     trigger! Immediately after calling `create_webhook_app`, activate the
+     `composio` skill and call `create_composio_trigger` (e.g.
+     `trigger_slug: "GMAIL_NEW_GMAIL_MESSAGE"`, `webhook_app_name: "<name>"` for
+     Gmail, or `"OUTLOOK_MESSAGE_TRIGGER"` for Outlook) to subscribe the owner's
+     connected inbox so incoming emails actually invoke the webhook app. (If the
+     owner's Gmail/Outlook is not connected yet, generate a Composio auth link
+     via `COMPOSIO_MANAGE_CONNECTIONS` first, then call `create_composio_trigger`
+     once connected.)
    - Use `decisionModel({ question, context })` inside the listener to filter
      and triage incoming events (e.g. "Does this email require an answer or
      action from the owner?") without burning full agent runs on newsletters or
