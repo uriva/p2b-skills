@@ -1,8 +1,8 @@
 # SafeApp Platform: Agent-Native Full-Stack Architecture
 
-This guide explains **SafeApp** (`https://safeapp.uriva.deno.net`), its architecture, advantages, disadvantages, and the exact decision matrix for when to choose it over a traditional GitHub/Next.js/VM stack.
+This guide explains **SafeApp** (`https://app.safescript.cc`), its architecture, advantages, disadvantages, and the exact decision matrix for when to choose it over a traditional GitHub/Next.js/VM stack.
 
-- **Primary Platform Spec:** `https://safeapp.uriva.deno.net/llms.txt`
+- **Primary Platform Spec:** `https://app.safescript.cc/llms.txt`
 - **Safescript Language Spec:** `https://safescript.cc/llms.txt`
 
 ---
