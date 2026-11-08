@@ -96,6 +96,8 @@ main = (payload) => {
   sender = payload.from == null ? "Unknown" : payload.from
   subject = payload.subject == null ? "No subject" : payload.subject
   text = payload.text == null ? "" : payload.text
+  messageId = payload.messageId == null ? (payload.id == null ? "" : payload.id) : payload.messageId
+  threadId = payload.threadId == null ? "" : payload.threadId
 
   isImportant = decisionModel({
     question: "Does this email require an answer, decision, or timely action from the recipient?",
@@ -105,7 +107,7 @@ main = (payload) => {
   if (isImportant) {
     notifyMe({
       subject: "Urgent: " + subject,
-      message: "From: " + sender + "\nSubject: " + subject + "\n\n" + text
+      message: "From: " + sender + "\nSubject: " + subject + "\nMessage ID: " + messageId + "\nThread ID: " + threadId + "\n\n" + text
     })
   }
 

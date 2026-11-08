@@ -4,7 +4,7 @@ authHeader = (githubToken: string): string => {
 }
 
 githubHeaders = (githubToken: string) => {
-  return { Authorization: authHeader(githubToken), Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }
+  return { Authorization: authHeader(githubToken), Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "p2b-github-skill" }
 }
 
 repoPath = (owner: string, repo: string, suffix: string): string => {
@@ -26,7 +26,7 @@ readGithubFile = (githubToken: string, owner: string, repo: string, path: string
   encodedRef = urlEncode(ref)
   suffix = stringConcat({ parts: ["/contents/", path, "?ref=", encodedRef.encoded] })
   requestPath = repoPath(owner, repo, suffix.result)
-  res = httpRequest({ host: "api.github.com", method: "GET", path: requestPath, headers: { Authorization: authHeader(githubToken), Accept: "application/vnd.github.raw+json", "X-GitHub-Api-Version": "2022-11-28" } })
+  res = httpRequest({ host: "api.github.com", method: "GET", path: requestPath, headers: { Authorization: authHeader(githubToken), Accept: "application/vnd.github.raw+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "p2b-github-skill" } })
   error = stringConcat({ parts: ["GITHUB_READ_FILE_ERROR: ", res.body] })
   return res.status == 200 ? { success: true, result: res.body, error: "" } : { success: false, result: "", error: error.result }
 }
