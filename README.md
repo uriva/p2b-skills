@@ -1,6 +1,6 @@
 # p2b-skills
 
-Community skills for [Prompt2Bot](https://prompt2bot.com) agents. Click **Launch Agent** on any skill below to spin up a live agent on WhatsApp, Telegram, or Web in one click.
+Community skills for [Prompt2Bot](https://prompt2bot.com) agents, powered by **Safescript** (`@uri/safescript`) for zero-VM, statically verified host-scoped tool execution. Click **Launch Agent** on any skill below to spin up a live agent on WhatsApp, Telegram, or Web in one click.
 
 ## Skills
 
