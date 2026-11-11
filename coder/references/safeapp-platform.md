@@ -58,7 +58,7 @@ Instead of editing files on disk and managing git repositories, agents build and
    - If a client or user specifically demands a standard GitHub repository they can `git clone` to their local machine and run `npm run dev`, SafeApp is not a traditional file-based repository.
 
 3. **View Structure:**
-   - UIs are constructed via a structured View ADT (`{ tag, attrs, children, on }`) rather than raw JSX with arbitrary custom React hook lifecycles.
+   - UIs are written in clean SafeScript JSX (`<Card>`, `<Table>`, `<form onSubmit={add}>`, custom stateless Capitalized components) which desugars statically at compile time—no stateful React hook lifecycles (`useEffect`/`useRef`) or arbitrary npm DOM libraries.
 
 ---
 
