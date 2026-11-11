@@ -80,6 +80,6 @@ Instead of editing files on disk and managing git repositories, agents build and
 
 All implementation instructions, API endpoints, authentication flows (including headless agent token minting and preview route behavior), database permissions (`rules`), real database operations (`dbQuery`, `dbTransact`), and primitive capabilities belong exclusively to the **`safeapp`** skill.
 
-👉 **To build, deploy, or manage apps on SafeApp, acquire and activate the `safeapp` skill (call `learn_skill` with `skillName: "safeapp"`).**
+👉 **To build, deploy, or manage apps on SafeApp, acquire and activate the `safeapp` skill.**
 
 Do not duplicate or hardcode SafeApp instructions across other skills or attempt to fetch raw documentation without the skill. The `safeapp` skill provides the authoritative application contract, REST API endpoints, and database guidelines. For Safescript syntax and built-in language semantics, refer to the `safescript` skill.
