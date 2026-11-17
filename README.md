@@ -17,6 +17,7 @@ Community skills for [Prompt2Bot](https://prompt2bot.com) agents, powered by **S
 - `shopify/` — manage Shopify products, orders, and customers. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=tank%3A%40uriva%2Fp2b-shopify)
 - `social-media-scraper/` — search Facebook posts and scrape LinkedIn profiles via Bright Data. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=tank%3A%40uriva%2Fp2b-social-media-scraper)
 - `document-pipeline/` — guidelines and best practices for building document ingestion, parsing, and extraction pipelines. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=tank%3A%40uriva%2Fp2b-document-pipeline)
+- `anime-podcast/` — turn long multi-speaker podcast/audio recordings into low-cost, zero-jitter 2D anime video clips using diarized transcription, pixel-locked kuchi-paku cel rigs, and bidirectional karaoke captions. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=tank%3A%40uriva%2Fp2b-anime-podcast)
 - `haskalah/` — guidance, core curriculum (Limudei Liba), rational inquiry, and practical independence resources for Ultra-Orthodox (Haredi) Jews looking to expand their horizons, grounded in `https://haskalah.pages.dev/`. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=https%3A%2F%2Fgithub.com%2Furiva%2Fp2b-skills%2Ftree%2Fmain%2Fhaskalah)
 
 Each skill directory has its own `tank.json`. CI discovers every `*/tank.json`

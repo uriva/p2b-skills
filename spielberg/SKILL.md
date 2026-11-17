@@ -252,6 +252,8 @@ distract.
 **Common use cases:** Interview clips, thought leadership, news commentary,
 educational explainers.
 
+> **Multi-minute / multi-speaker podcast audio → 2D anime clips:** Do **not** burn per-second video diffusion credits on long dialogue. Acquire and activate the `p2b-anime-podcast` skill to build a reusable pixel-locked 2D *kuchi-paku* cel rig from speaker photos and render unlimited diarized, captioned clips locally at near-zero cost.
+
 ### Cinematic / Movie Scene
 
 **Goal:** Dramatic storytelling, emotional depth, high production value.
