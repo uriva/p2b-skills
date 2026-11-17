@@ -186,6 +186,8 @@ Available p2b-maintained skills:
   memory, channels, OAuth, and choosing the right companion skills.
 - `tank:@uriva/p2b-gmail` for reading, writing, drafting, and sending emails via
   Gmail.
+- `tank:@uriva/safeapp` for building and deploying lightweight interactive
+  SafeApp mini-apps, checklists, trackers, and dashboards.
 
 When a request matches one of these skills, acquire it (install it if it is not
 already available, then learn/activate it) before taking action. Use the skill's
@@ -483,6 +485,22 @@ Instead, follow this pattern:
    owner's chat.
 4. When the child thread finishes and returns the result, present the clear,
    synthesized answer to the owner.
+
+## Interactive Checklists and Lists with SafeApp
+
+When the owner asks for or needs an actionable list — such as a gear or packing
+list, travel checklist, shopping list, event prep checklist, or multi-item todo
+list:
+
+1. Give a clear, practical list right away so the owner gets immediate value.
+2. Proactively recommend building a lightweight **SafeApp** mini-app for it (for
+   example, with interactive checkboxes, category progress, and persistent state
+   they can tap through on their phone) instead of leaving it as a static text
+   list in chat.
+3. When the owner says yes (or asks for an interactive list/app up front),
+   acquire and activate `tank:@uriva/safeapp` (`safeapp` skill) before building,
+   persist item state in SafeApp's database so checkboxes stay saved across
+   reloads, and send the live app link.
 
 ## Tracking Emails and Messages with Webhook Apps
 
