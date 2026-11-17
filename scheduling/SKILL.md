@@ -31,10 +31,9 @@ Search events in a calendar and return `{ success, result, error }`.
 
 Create a new calendar event and return `{ success, result, error }`.
 
-### updateCalendarEvent(googleToken, calendarId, eventId, summary, desc, location)
+### updateCalendarEvent(googleToken, calendarId, eventId, summary?, desc?, location?, start?, endTime?)
 
-Update an existing event and return `{ success, result, error }`. Only provide
-fields to change.
+Update or reschedule an existing event in place and return `{ success, result, error }`. Only non-empty fields are patched (leave unchanged fields omitted or `""`), so rescheduling an event uses a single `updateCalendarEvent` call with `start` and `endTime` rather than deleting and recreating the event.
 
 ### deleteCalendarEvent(googleToken, calendarId, eventId)
 
@@ -59,9 +58,9 @@ array of events with `id`, `subject`, `start`, `end`, `webLink`.
 Create a new event. `start` and `endTime` are ISO timestamps. Returns
 `{ success, result, error }` where `result` has `id` and `webLink`.
 
-### updateMicrosoftCalendarEvent(microsoftToken, eventId, subject, body, location)
+### updateMicrosoftCalendarEvent(microsoftToken, eventId, subject?, body_?, location?, start?, endTime?)
 
-Update an existing event. Only the provided fields are changed.
+Update or reschedule an existing event in place. Only non-empty fields are patched (leave unchanged fields omitted or `""`), so rescheduling uses a single `updateMicrosoftCalendarEvent` call rather than deleting and recreating the event.
 
 ### deleteMicrosoftCalendarEvent(microsoftToken, eventId)
 
@@ -69,8 +68,7 @@ Delete an event from the user's calendar.
 
 ## Usage
 
-All functions require a token parameter that must be mapped to a bot secret via
-`secretMapping`. The exact secret names vary per bot. To find the correct name:
+All functions require a token parameter mapped to a bot secret (`secretMapping` or `"SECRET:<name>"`). When the secret name is already known from the conversation or memory, use it directly without re-listing secrets. Only when the secret name is not yet known:
 
 1. Call `secrets_and_variables/list_env_variables`
 2. Pick the secret whose hosts match the service you need:
@@ -81,8 +79,7 @@ All functions require a token parameter that must be mapped to a bot secret via
 3. Pass that secret name in `secretMapping` (e.g.
    `{ "googleToken": "GOOGLE_WORKSPACE_TOKEN" }`)
 
-Do not guess secret names. Do not pass env var names like
-`GOOGLE_CALENDAR_TOKEN` as token values. Always discover the name first.
+Do not guess unknown secret names.
 
 Example:
 
@@ -98,7 +95,7 @@ searchCalendarEvents("GOOGLE_WORKSPACE_TOKEN", "primary", "meeting", "2026-04-19
 
 - **Always include attendees when scheduling with others:** When creating a calendar event with a participant (e.g. "meeting with John"), do not create a solo event. Add their email to `attendees` so they receive a calendar invitation. If the email is unknown, ask the user or explicitly inform them that the event was created without inviting the participant.
 - **Update events when contact details arrive:** If the attendee's email is provided after event creation, update the event to add them.
-- **Disclose target account and link:** When confirming an event, specify which calendar account/service was used (Google Calendar vs Outlook) and share the `webLink` returned by the API so the user can open it directly.
+- **Concise confirmations & account clarity:** When creating a new event or when multiple calendar services/accounts are connected (e.g., both Google Calendar and Outlook), mention which calendar was used so the user knows where to look. For routine edits or reschedules on an existing event in a single known calendar, confirm concisely (event title + new day/time) without repeating raw account emails, IANA timezone IDs, or calendar URLs unless asked.
 
 ## Scheduling Constraints
 

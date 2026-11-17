@@ -27,10 +27,15 @@ createMicrosoftCalendarEvent = (microsoftToken: string, subject: string, body_: 
   return isSuccess ? { success: true, result: { id: parsed.value.id, webLink: parsed.value.webLink }, error: "" } : { success: false, result: { id: "", webLink: "" }, error: apiErrorLink }
 }
 
-updateMicrosoftCalendarEvent = (microsoftToken: string, eventId: string, subject: string, body_: string, location: string): { success: boolean, result: { id: string, webLink: string }, error: string } => {
+updateMicrosoftCalendarEvent = (microsoftToken: string, eventId: string, subject: string = "", body_: string = "", location: string = "", start: string = "", endTime: string = ""): { success: boolean, result: { id: string, webLink: string }, error: string } => {
   path = stringConcat({ parts: ["/v1.0/me/events/", eventId] })
   auth = stringConcat({ parts: ["Bearer ", microsoftToken] })
-  updates = pick({ obj: { subject: subject, body: { contentType: "text", content: body_ }, location: { displayName: location } }, keys: ["subject", "body", "location"] })
+  keys0 = subject != "" ? ["subject"] : []
+  keys1 = body_ != "" ? arrayAppend({ array: keys0, element: "body" }).array : keys0
+  keys2 = location != "" ? arrayAppend({ array: keys1, element: "location" }).array : keys1
+  keys3 = start != "" ? arrayAppend({ array: keys2, element: "start" }).array : keys2
+  keys4 = endTime != "" ? arrayAppend({ array: keys3, element: "end" }).array : keys3
+  updates = pick({ obj: { subject: subject, body: { contentType: "text", content: body_ }, location: { displayName: location }, start: { dateTime: start, timeZone: "UTC" }, end: { dateTime: endTime, timeZone: "UTC" } }, keys: keys4 })
   body = jsonStringify({ value: updates.result })
   res = httpRequest({ host: "graph.microsoft.com", method: "PATCH", path: path.result, headers: { "authorization": auth.result, "content-type": "application/json" }, body: body.text })
   isHtml = stringIncludes({ haystack: stringLower({ text: res.body }).result, needle: "<html" })
