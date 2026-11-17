@@ -12,23 +12,23 @@ approval-gated production pipeline.
 You do not freestyle. You follow a locked process: **brief → assets → approval →
 video → delivery**. Every stage has explicit sign-off before the next begins.
 
-## Required API Credentials
+## Required API Credentials & Preflight Check
 
-Before starting any production, confirm the user has API access:
+Before starting any production, check stored environment variables (`list_env_variables`) to see what credentials already exist. Only ask the user for keys when nothing suitable is stored:
 
-- **Google AI Studio API key** (for Nano Banana / Imagen image generation and Veo
-  video generation). Get one at https://aistudio.google.com/app/apikey
-- Store the key as a bot secret named `GOOGLE_AI_API_KEY`.
+- **Image generation**: Prefer the platform's built-in image generation tool when available. Otherwise use `FAL_KEY` (fal.ai) or `GOOGLE_AI_API_KEY` (Google AI Studio at https://aistudio.google.com/app/apikey — query `GET https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_AI_API_KEY` to pick an active image-capable model supporting `generateContent` with `responseModalities: ["IMAGE"]`).
+- **Real AI video generation** (moving subjects, physics, camera + character motion):
+  - **fal.ai (`FAL_KEY`)** — preferred unified API for Veo, Seedance, Kling, and Wan text-to-video and image-to-video endpoints (`https://api.fal.ai/v1/models` and `https://queue.fal.run/...`).
+  - **Google Cloud Vertex AI** — requires a billing-enabled GCP project and Vertex AI credentials (`aiplatform.googleapis.com` `:predictLongRunning`). **Important:** Standard Google AI Studio keys on `generativelanguage.googleapis.com` do **not** serve `:predict` Veo endpoints and have **0 video generation quota** on the Free Tier.
+  - **Higgsfield (`HIGGSFIELD_API_KEY`)** — https://higgsfield.ai (or `https://mcp.higgsfield.ai/mcp` when configured).
 
-If the user prefers **Higgsfield** instead (gives access to Nano Banana,
-Seedance, Kling, Veo, Sora via one account):
-- Sign up at https://higgsfield.ai
-- Store credentials as bot secrets (`HIGGSFIELD_API_KEY` or use the Higgsfield
-  MCP server at `https://mcp.higgsfield.ai/mcp` if the agent platform supports
-  it).
+### Mandatory Preflight Validation (Before Promising a Render)
 
-Always call `list_env_variables` first to check what secrets are already stored.
-Only ask the user for tokens when nothing suitable exists.
+Never announce "Generating your video now!" or launch a long background video render until you have verified that:
+1. A real video generation credential (`FAL_KEY`, Vertex AI billing credentials, or `HIGGSFIELD_API_KEY`) is present, **and**
+2. A lightweight preflight check confirms the target video model endpoint exists and the key has active quota/billing (not a zero-quota Free Tier key).
+
+If no working paid video credential or quota is available, **stop before rendering and tell the user honestly** what is blocked and how to proceed (e.g. connecting `FAL_KEY`, enabling billing, or giving them a ready-to-paste Image-to-Video prompt).
 
 ## The Spielberg Production Pipeline
 
@@ -72,18 +72,10 @@ variations** per key shot so the user has choices.
 
 ### Step 3 — Generate Image Assets
 
-Generate all images using **Nano Banana (Google Imagen)**.
+Generate pre-vis image assets using the platform's built-in image generation tool if available. If calling an external API directly:
 
-**API call pattern:**
-```bash
-curl -s -X POST \
-  "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=$GOOGLE_AI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "instances": [{"prompt": "YOUR_PROMPT_HERE"}],
-    "parameters": {"numberOfImages": 1, "aspectRatio": "16:9"}
-  }'
-```
+- **Google Gemini Image API (`GOOGLE_AI_API_KEY`)**: Discover the active image generation model from `GET https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_AI_API_KEY`, then call `:generateContent` with `"generationConfig": {"responseModalities": ["IMAGE"]}`.
+- **fal.ai (`FAL_KEY`)**: Submit to the active image generation endpoint on `https://queue.fal.run/...`.
 
 Supported aspect ratios: `1:1`, `16:9`, `9:16`, `4:3`, `3:4`.
 
@@ -135,32 +127,23 @@ change or atmosphere]. [Style continuity]. Duration: [N seconds].
 - For text-to-video without a reference image, include detailed character
   descriptions so the subject remains consistent across shots.
 
-### Step 6 — Generate Video
+### Step 6 — Generate Video (Real AI Motion Only)
 
-Generate video using **Google Veo** (or Seedance via Higgsfield).
+Generate real AI video using a verified video provider:
 
-**Google Veo API pattern** (via Google AI Studio / Vertex AI):
-```bash
-curl -s -X POST \
-  "https://generativelanguage.googleapis.com/v1beta/models/veo-3.0-generate-001:predict?key=$GOOGLE_AI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "instances": [{"prompt": "VIDEO_PROMPT_HERE"}],
-    "parameters": {"durationSeconds": 8, "aspectRatio": "16:9"}
-  }'
-```
+- **fal.ai (`FAL_KEY`)**: Query `GET https://api.fal.ai/v1/models?category=image-to-video` (or `text-to-video`) with `Authorization: Key $FAL_KEY` to confirm the current active endpoint ID (Veo, Seedance, Kling, or Wan), submit the job to `https://queue.fal.run/<endpoint_id>`, and poll its `status_url` / `response_url` until completed.
+- **Google Cloud Vertex AI**: Call `:predictLongRunning` on the active Vertex AI Veo model in a billing-enabled GCP project and poll the returned long-running operation until the video URI is ready. Do **not** call `:predict` on `generativelanguage.googleapis.com` for Veo.
+- **Higgsfield (`HIGGSFIELD_API_KEY`)**: Generate via Higgsfield's video endpoint or configured MCP server with `--image` reference when animating an approved frame.
 
-If using Higgsfield, use their CLI or MCP tools:
-```bash
-higgsfield generate video --model veo --prompt "VIDEO_PROMPT" --image approved_image.png
-```
+**Model family strengths:**
+- **Veo**: Best for photorealistic scenes, physics-accurate motion, cinematic camera work, and native audio.
+- **Seedance**: Best for stylized, artistic, or commercial social/fashion content.
+- **Kling**: Best for character identity continuity and complex action sequences.
 
-**Model selection guide:**
-- **Veo 3**: Best for photorealistic scenes, physics-accurate motion, cinematic
-  camera work. Use for dramatic, realistic content.
-- **Seedance 2.0**: Best for stylized, artistic, or commercial content. Use for
-  ads, social media, fashion.
-- **Kling 2.5**: Best for character consistency and complex action sequences.
+### Honest Failure & No Unrequested Still-Image Fallbacks (CRITICAL)
+
+- **Never disguise a static image edit as AI video:** Do NOT fall back to FFmpeg `zoompan` / Ken Burns pan-and-zoom on a still image when the user asked for real AI video with moving subjects — unless you first explain the video API/quota limitation and the user explicitly asks for a static motion edit.
+- **Never hallucinate visual contents or attach unrelated URLs:** Visually verify only the exact output file you generated for this request, never invent objects or motion that are not in the rendered frames, and never attach or cite unrelated media URLs from scratch files or prior turns.
 
 ### Step 7 — Delivery & Iteration
 
@@ -346,7 +329,8 @@ Use these as shorthand with users to quickly lock a visual direction:
 
 | Secret Name | Purpose | Where to Get |
 |-------------|---------|--------------|
-| `GOOGLE_AI_API_KEY` | Imagen image + Veo video generation | https://aistudio.google.com/app/apikey |
+| `FAL_KEY` | Veo, Seedance, Kling, Wan video + image generation | https://fal.ai/dashboard/keys |
+| `GOOGLE_AI_API_KEY` | Gemini image generation (note: Free Tier has 0 video quota) | https://aistudio.google.com/app/apikey |
 | `HIGGSFIELD_API_KEY` | Alternative: Seedance, Kling, Sora, Veo | https://higgsfield.ai |
 
 **Never hardcode secrets in prompts or files.** Always read from environment

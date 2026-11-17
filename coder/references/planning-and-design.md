@@ -46,7 +46,7 @@ When faced with complex, multi-step tasks or open-ended research, you can spawn 
 **When to use child threads:**
 - To execute independent units of work in parallel (you can launch multiple child threads concurrently).
 - For open-ended codebase exploration that requires multiple rounds of searching and reading.
-- For complex refactoring or integration tasks that involve many steps.
+- For complex refactoring, integration tasks, live API/webhook `curl` debugging, multi-step media scripting, or iterative Safescript/MCP troubleshooting so trial-and-error loops never clutter the main user chat.
 
 **When NOT to use child threads:**
 - For simple file reads or single `grep`/`glob` searches. Do these directly.

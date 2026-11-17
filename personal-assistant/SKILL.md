@@ -468,12 +468,14 @@ will not happen.
 ## Offload Research and Heavy Work to Threads
 
 When the owner asks you to research something, look up recommendations, compare
-options, investigate an anomaly or issue, scrape data, or perform multi-step
-analysis:
+options, investigate an anomaly or issue, debug an API or webhook (`curl`
+trials, schema discovery, Safescript/MCP iterations), run multi-step media/video
+processing scripts, scrape data, or perform multi-step analysis:
 
-Do not execute dozens of individual search queries, script runs, or
-trial-and-error commands in the main chat. Cluttering the chat with 20 tool
-commands, spinners, and rework is a poor user experience.
+Do not execute dozens of individual search queries, `curl` probes, Safescript
+iterations, media frame commands, or trial-and-error loops in the main chat.
+Cluttering the chat with intermediate tool commands, spinners, and rework is a
+poor user experience.
 
 Instead, follow this pattern:
 
@@ -481,12 +483,14 @@ Instead, follow this pattern:
    that now...").
 2. Offload the work to a child thread using `run_in_new_thread` from the
    `automation` skill (activate `automation` if needed), passing the complete
-   research goal and instructions.
+   goal, constraints, and every requested output field (such as exact addresses,
+   coordinates, prices, or links so none are omitted).
 3. The child thread runs autonomously in its own isolated context, executing all
-   required searches, page reads, scripts, and iterations without spamming the
-   owner's chat.
+   required searches, API/MCP debugging, scripts, and iterations without
+   spamming the owner's chat, and verifies all requested fields before
+   returning.
 4. When the child thread finishes and returns the result, present the clear,
-   synthesized answer to the owner.
+   synthesized answer (preserving all requested fields) to the owner.
 
 ## Interactive Checklists and Lists with SafeApp
 
@@ -574,7 +578,9 @@ with a listener:
 - Be useful before being powerful. Start with a small reliable workflow.
 - Ask the owner about needs, privacy boundaries, and preferred channels before
   expanding capabilities.
-- Install skills only when they directly support an agreed workflow.
+- Install skills only when they directly support an agreed workflow, and
+  activate skills just-in-time only when immediately invoking a tool or
+  reference from that skill (never speculatively or redundantly).
 - Keep the owner in control of account connections and delegation rules.
 - Never pretend to have access you do not have. If an integration is missing,
   ask the owner to connect it.

@@ -1,15 +1,22 @@
 {
   "name": "@uriva/p2b-spielberg",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/spielberg",
-  "description": "AI video director skill. Repeatable approval-gated workflow: brief → image assets (Nano Banana) → approval → video (Veo/Seedance) → delivery.",
+  "description": "AI video director skill. Repeatable approval-gated workflow: brief → image assets → approval → verified AI video → delivery.",
   "visibility": "public",
   "skills": {
     "p2b-spielberg": "SKILL.md"
   },
   "permissions": {
     "network": {
-      "outbound": ["generativelanguage.googleapis.com", "higgsfield.ai", "mcp.higgsfield.ai"]
+      "outbound": [
+        "api.fal.ai",
+        "queue.fal.run",
+        "aiplatform.googleapis.com",
+        "generativelanguage.googleapis.com",
+        "higgsfield.ai",
+        "mcp.higgsfield.ai"
+      ]
     },
     "filesystem": {
       "read": [],
