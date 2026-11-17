@@ -9,14 +9,7 @@
   },
   "permissions": {
     "network": {
-      "outbound": [
-        "api.fal.ai",
-        "queue.fal.run",
-        "aiplatform.googleapis.com",
-        "generativelanguage.googleapis.com",
-        "higgsfield.ai",
-        "mcp.higgsfield.ai"
-      ]
+      "outbound": ["generativelanguage.googleapis.com", "higgsfield.ai", "mcp.higgsfield.ai"]
     },
     "filesystem": {
       "read": [],
