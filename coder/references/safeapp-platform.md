@@ -76,10 +76,12 @@ Instead of editing files on disk and managing git repositories, agents build and
 
 ---
 
-## 5. SafeApp Skill & Implementation Instructions
+## 5. SafeApp Skill, Onboarding & Fallback
 
-All implementation instructions, API endpoints, authentication flows (including headless agent token minting and preview route behavior), database permissions (`rules`), real database operations (`dbQuery`, `dbTransact`), and primitive capabilities belong exclusively to the **`safeapp`** skill.
+- **Canonical Base URL:** Always use `https://app.safescript.cc` (never legacy preview domains like `safeapp.uriva.deno.net`).
+- **Zero-Auth Onboarding:** SafeApp does **not** require OAuth, a GitHub repo, or a pre-existing user API token to start. A single `POST https://app.safescript.cc/api/v1/apps` call creates a live app and returns `liveUrl`, `claimUrl` (for the user to claim ownership), and an `adminToken` (`sa_...`, which you should store as a secret if managing the app across turns).
+- **Authoritative Contract:** All implementation instructions, API endpoints, authentication flows (including headless agent token minting and preview route behavior), database permissions (`rules`), real database operations (`dbQuery`, `dbTransact`), and primitive capabilities belong exclusively to the **`safeapp`** skill.
 
-👉 **To build, deploy, or manage apps on SafeApp, acquire and activate the `safeapp` skill.**
+👉 **To build, deploy, or manage apps on SafeApp, acquire and activate the `safeapp` skill first.**
 
-Do not duplicate or hardcode SafeApp instructions across other skills or attempt to fetch raw documentation without the skill. The `safeapp` skill provides the authoritative application contract, REST API endpoints, and database guidelines. For Safescript syntax and built-in language semantics, refer to the `safescript` skill.
+Do not duplicate or hardcode SafeApp instructions across other skills. **Fallback if skill loading fails:** if the `safeapp` skill is unavailable or fails to load in the active runtime, immediately report the platform bug (`report_platform_bug` with `isSpecific: false`) and fetch `https://app.safescript.cc/llms.txt` via `safescript` so you can proceed without deadlocking. For Safescript syntax and built-in language semantics, refer to the `safescript` skill.

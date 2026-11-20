@@ -1,10 +1,34 @@
 # Web-App Build & Deploy Playbook
 
 Read this **before doing anything** when the user asks you to build and/or deploy
-a web app, dashboard, site, or any hosted service (GitHub repo + CI/CD + permanent
-hosting). It defines how to acquire credentials and how to sequence the first
-turns. The most common production failure is asking the user for credentials the
-wrong way on the very first message — this playbook exists to prevent that.
+a web app, dashboard, site, or any hosted service. First decide which deployment
+path applies — do **not** ask for GitHub OAuth or hosting credentials when building
+on SafeApp.
+
+## Path A: SafeApp (Zero-Auth, File-Free) — Skip GitHub & Hosting Setup
+
+Choose this path whenever the user asks to build on **SafeApp** (`https://app.safescript.cc`)
+or when an agent-native micro-app/dashboard/internal tool fits the SafeApp decision
+matrix in `safeapp-platform.md`:
+
+1. Acquire and activate the `safeapp` skill (if it fails to load, report the bug via
+   `report_platform_bug` with `isSpecific: false` and read `https://app.safescript.cc/llms.txt`
+   via `safescript`).
+2. **No OAuth or pre-existing token is required.** Call `list_env_variables` only if
+   updating an existing app that already has a stored SafeApp admin token.
+3. Deploy directly via `POST https://app.safescript.cc/api/v1/apps` (using `safescript`),
+   store the returned `adminToken` as a secret if further edits are expected, and
+   share both `liveUrl` and `claimUrl` with the user.
+4. Do **not** trigger GitHub OAuth or provision a VM for a SafeApp build.
+
+---
+
+## Path B: Traditional Stack (GitHub Repo + CI/CD + Permanent Hosting)
+
+Use this path when building a traditional GitHub-backed web app (Next.js/Vite/Deno/etc.).
+It defines how to acquire credentials and how to sequence the first turns. The most
+common production failure is asking the user for credentials the wrong way on the very
+first message — this playbook exists to prevent that.
 
 ## Credential-acquisition policy (READ BEFORE ASKING FOR ANY CREDENTIAL)
 
