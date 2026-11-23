@@ -1,35 +1,49 @@
 # Labeled Social Covers, Reverse-Order Publishing & Mobile Handoff
 
-Detailed patterns for Stage 4 of `p2b-anime-podcast`: generating grid-safe labeled covers, publishing Reels reliably without API timeouts, and serving local mobile handoff galleries.
+Detailed patterns for Stage 4 of `p2b-anime-podcast`: generating completely distinct bespoke anime covers inside the profile-grid safe zone, publishing Reels reliably without API timeouts, and serving local mobile handoff galleries.
 
 ---
 
-## 1. Labeled `1080×1920` Covers Inside the `3:4` / `4:5` Profile Grid Safe Zone
+## 1. Bespoke `9:16` Anime Covers Inside the `3:4` / `4:5` Profile Grid Safe Zone
 
-When you publish multiple clips from the same episode, auto-extracted video thumbnails look nearly identical on a profile grid. Meanwhile, Instagram/TikTok/Shorts grids center-crop `9:16` (`1080×1920`) Reels vertically to **`3:4` (`1080×1440`)** or **`4:5` (`1080×1350`)** (and occasionally `1:1`).
+When you publish multiple clips from the same episode (or across episodes), auto-extracted video thumbnails look nearly identical on a profile grid. **Do NOT reuse the episode's talking-head rig PNGs (`top_rig_png` / `bot_rig_png`) for covers either** — even with swapped expressions or different headline text, covers built from the same episode panels still share identical outfits, camera framing, and backgrounds, making the grid look repetitive.
 
-Instead of rendering separate cropped Feed videos, generate one **`1080×1920` JPEG cover (`cover_url`)** per clip directly from your expressive rig PNGs:
-- Pick host facial states matching each clip's emotional hook (`laugh` + `laugh`, `open` + `closed`, `prop_chew` + `laugh`, etc.) so every tile looks distinct.
-- Place a high-contrast dark title band across **`y = 785..1135`** (dead center, safely inside `1:1`, `4:5`, `3:4`, and `9:16` crops simultaneously) framed by the two hosts' signature accent borders.
-- Include a compact episode/clip pill (`SHOW NAME · EP2 #00`) and auto-shrinking bold RTL/LTR headline text (`66–74px`, stepping down to `44px` until all lines fit `W - 110px`).
+Meanwhile, Instagram/TikTok/Shorts grids center-crop `9:16` (`1080×1920`) Reels vertically to **`3:4` (`1080×1440`)** or **`4:5` (`1080×1350`)** (and occasionally `1:1`).
+
+Instead of rendering separate cropped Feed videos or recycling episode rigs, generate **one completely different, bespoke `1080×1920` JPEG cover (`cover_url`) per clip** in two steps:
+
+### Step A — Generate a Unique `9:16` Anime Illustration for Every Clip
+For each clip, call `generate_image` (with `aspectRatio: "9:16"`) or a reference-conditioned image-generation model using **the hosts' reference portraits** (plus any cameo guest reference featured in that clip) together with a fresh scene concept tailored to **that specific clip's topic, setting, physical action, props, or comedic hook**:
+- **Make every tile unmistakably different:** Vary the setting, poses, props, lighting, color palette, and camera angle across every clip in the batch (e.g., Clip `#00` has the hosts wide-eyed in a chaotic late-night convenience store; Clip `#01` shows one host dramatic-sweating at a glowing server rack while the other laughs over coffee; Clip `#02` stages a noir detective standoff or courtroom desk slam matching the punchline).
+- **Protect the `y = 785..1135` center title band:** Frame the characters and faces in the upper and/or lower thirds (or compose a wider two-shot with clear breathing room across the vertical center) so the centered title band never slices across anyone's eyes.
+- **Keep art style consistent & text-free:** Preserve the series' 2D cel-shaded anime ink linework and two-tone cel shadows while explicitly forbidding baked-in text or watermarks (`no text, no captions, no watermarks`).
+
+> **Per-Clip Bespoke Cover Prompt Template (`9:16`):**
+> *Vertical 9:16 2D cel-shaded seinen anime key illustration featuring the hosts from the attached reference portraits (preserving exact likenesses: hair, glasses, facial hair, proportions) in an original scene depicting [clip's specific topic, setting, action, or comedic hook — e.g. furiously debating beside a glowing holographic chart / shocked mid-bite with a crunchy apple in a neon-lit convenience store]. Distinct camera angle, poses, props, and [warm/neon/moody/sunset] lighting unique to this clip. Frame faces and key details in the upper and lower thirds (keeping the horizontal middle band uncluttered) so a centered title banner will not cover any faces. Crisp dark-brown ink linework, two-tone cel shadows, expressive anime storytelling, NO text, NO logos, NO watermarks, NOT photorealistic, NOT 3D.*
+
+### Step B — Composite the `3:4` / `4:5` Safe-Zone Title Band
+Fit the clip's bespoke `9:16` illustration (`cover_art_path`) to `1080×1920`, then overlay:
+- A high-contrast dark title band across **`y = 785..1135`** (dead center, safely inside `1:1`, `4:5`, `3:4`, and `9:16` crops simultaneously) framed by feathered gradients and the two hosts' signature accent borders.
+- A compact episode/clip pill (`SHOW NAME · EP2 #00`) and auto-shrinking bold RTL/LTR headline text (`66–74px`, stepping down to `44px` until all lines fit `W - 110px`).
 
 ```python
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-def make_labeled_cover(top_rig_png, bot_rig_png, font_path, tag_text, title_text, accent_rgb, out_jpg, rtl=True):
-    W, H, PANEL_H = 1080, 1920, 870
-    canvas = Image.new("RGB", (W, H), (15, 14, 21))
-
-    def crop_panel(path, align_left):
-        im = Image.open(path).convert("RGB")
-        iw, ih = im.size
-        cw = int(round(ih * (W / PANEL_H)))
-        x0 = 40 if align_left else max(0, iw - cw - 40)
-        return im.crop((x0, 0, x0 + cw, ih)).resize((W, PANEL_H), Image.Resampling.LANCZOS)
-
-    canvas.paste(crop_panel(top_rig_png, True), (0, 0))
-    canvas.paste(crop_panel(bot_rig_png, False), (0, H - PANEL_H))
+def make_labeled_cover(
+    cover_art_path,
+    font_path,
+    tag_text,
+    title_text,
+    accent_rgb,
+    out_jpg,
+    rtl=True,
+    border_top_rgb=(245, 184, 65),
+    border_bot_rgb=(115, 210, 252),
+):
+    W, H = 1080, 1920
+    art = Image.open(cover_art_path).convert("RGB")
+    canvas = ImageOps.fit(art, (W, H), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
 
     overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     dr = ImageDraw.Draw(overlay)
@@ -42,8 +56,8 @@ def make_labeled_cover(top_rig_png, bot_rig_png, font_path, tag_text, title_text
         dr.line([(0, band_y1 + grad_h - 1 - i), (W, band_y1 + grad_h - 1 - i)], fill=(15, 14, 21, a))
 
     dr.rectangle((0, band_y0, W, band_y1), fill=(15, 14, 21, 246))
-    dr.rectangle((0, band_y0, W, band_y0 + 6), fill=(245, 184, 65, 255))
-    dr.rectangle((0, band_y1 - 6, W, band_y1), fill=(115, 210, 252, 255))
+    dr.rectangle((0, band_y0, W, band_y0 + 6), fill=(*border_top_rgb, 255))
+    dr.rectangle((0, band_y1 - 6, W, band_y1), fill=(*border_bot_rgb, 255))
 
     def load_font(sz, wgt):
         f = ImageFont.truetype(font_path, size=sz)
@@ -85,7 +99,9 @@ def make_labeled_cover(top_rig_png, bot_rig_png, font_path, tag_text, title_text
         dr.text((W // 2, ly + 4), ln, font=font_title, fill=(0, 0, 0, 190), anchor="mm", direction=direction)
         dr.text((W // 2, ly), ln, font=font_title, fill=(255, 255, 255, 255), anchor="mm", direction=direction, stroke_width=2, stroke_fill=(15, 14, 21, 220))
 
-    os.makedirs(os.path.dirname(out_jpg), exist_ok=True)
+    out_dir = os.path.dirname(out_jpg)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     Image.alpha_composite(canvas.convert("RGBA"), overlay).convert("RGB").save(out_jpg, "JPEG", quality=94, optimize=True)
 ```
 
