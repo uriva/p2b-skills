@@ -1,6 +1,6 @@
 ---
 name: p2b-anime-podcast
-description: Turn long multi-speaker audio recordings or podcasts into low-cost, broadcast-ready 2D anime video clips. Covers silence-aligned transcription and cross-chunk voiceprint diarization, sensitive-content filtering, pixel-locked cel-shaded character rigs (disjoint eye/mouth masking with zero background jitter), 12fps on-twos kuchi-paku lip sync, audio-event visual gags, and bidirectional (RTL/LTR) word-highlighted karaoke captions.
+description: Turn long multi-speaker audio recordings or podcasts into low-cost, broadcast-ready 2D anime video clips. Covers silence-aligned transcription, cross-chunk and cross-episode voiceprint diarization, editorial curation with surgical third-party bleeping, event-driven scene/prop/cameo animations, pixel-locked Peak-Y disjoint cel rigs, 12fps on-twos kuchi-paku lip sync, bidirectional (RTL/LTR) karaoke captions, labeled safe-zone covers, and reliable reverse-order Reels publishing.
 ---
 
 # p2b-anime-podcast
@@ -9,15 +9,16 @@ Produce polished 2D anime video clips from raw multi-speaker audio at **~1/300th
 
 ---
 
-## Core Architectural Principle: Static Cel Rigs Beat Video Diffusion for Dialogue
+## Core Architectural Principle: Static Cel Rigs + Live Event Animation
 
 Per-second audio-to-video lip-sync models charge per output second (often $10–$15 per minute of finished video), struggle with non-English mouth shapes, and introduce line-boil and identity drift over multi-minute clips.
 
-Real 2D TV anime animates dialogue economically using **held cels + mouth flaps (*kuchi-paku*, 口パク)** on twos or threes (`8–12` drawings/sec inside a `24fps` container). Reproducing that exact production grammar gives both dramatically better aesthetics and near-zero marginal cost:
+Real 2D TV anime animates dialogue economically using **held cels + mouth flaps (*kuchi-paku*, 口パク)** on twos or threes (`8–12` drawings/sec inside a `24fps` container), punctuated by expressive character beats whenever something actually happens in the room. Reproducing that exact production grammar delivers both authentic anime feel and near-zero marginal cost:
 
-1. **Transcribe & diarize once** with word-level timestamps and non-speech audio-event tags (laughter, sighs, eating/drinking sounds, applause).
-2. **Generate ~4–6 static cel-shaded frames per speaker once** from reference photos (a base medium close-up plus targeted mouth, blink, laugh, and prop/gag edits), then **mask-composite only the changed facial regions** onto the base frame so 100% of the background, clothing, hair, and linework has **zero pixel jitter**.
-3. **Synthesize unlimited video clips locally on CPU for $0** by driving mouth flaps from the real audio RMS envelope gated by speaker diarization, layering natural eye blinks, active-speaker lighting/camera focus, event-triggered visual gags, and word-by-word karaoke captions.
+1. **Transcribe & diarize once** with word-level timestamps and non-speech audio-event tags (laughter, sighs, eating/drinking sounds, applause, background arrivals).
+2. **Gate expensive work behind user approval:** Before generating expression edits or rendering clips, show the user (a) the episode's base scene portraits and (b) the proposed clip list with durations, flagged third-party names to bleep, and planned event animations.
+3. **Generate ~5–8 pixel-locked static cels per speaker once** (base portrait + mouth/blink/laugh states + any episode-specific event/prop cels), then **mask-composite only the changed regions** onto the exact base frame so 100% of the background, clothing, hair, and linework has **zero pixel jitter**.
+4. **Synthesize unlimited clips locally on CPU for $0** by driving mouth flaps from diarized audio RMS, layering natural blinks, spotlighting the active speaker, triggering event animations on exact audio cues, and rendering word-by-word karaoke captions directly into compact social-ready MP4s.
 
 ---
 
@@ -32,71 +33,78 @@ Speech-to-text APIs frequently enforce per-request duration limits (e.g., 20 min
 ### 2. Multilingual Diarization & Audio-Event Tagging
 - Choose a speech-to-text model that natively outputs **word-level timestamps**, **speaker diarization**, and **non-speech audio events** (laughter, applause, chewing/drinking, sighs).
 - When speakers code-switch (e.g., Hebrew or Arabic mixed with English technical terms), prefer automatic/multilingual language detection over forcing a single-language constraint that garbles embedded English terms.
-- Disable provider payload archiving (`store_payload: false` or equivalent) when transcribing private raw recordings that have not yet been scrubbed for personal content.
+- Disable provider payload archiving (`store_payload: false` or equivalent) when transcribing private raw recordings that have not yet been scrubbed.
 
-### 3. Deterministic Cross-Chunk Speaker Alignment
+### 3. Deterministic Cross-Chunk & Cross-Episode Speaker Alignment
 Independent chunks assign arbitrary local speaker IDs (`speaker_0`, `speaker_1`), which flip whenever a different person speaks first in the next chunk or a third person walks into the room:
 - Never guess speaker continuity from turn order alone.
-- Extract acoustic voiceprints per `(chunk_index, speaker_id)` from each speaker's longest solo turns — specifically **cepstral-mean-normalized log-Mel filterbank vectors** (timbre, invariant to mic distance) plus **median voiced fundamental frequency (`F0`)** (separating pitch registers, e.g. ~140 Hz vs. ~200 Hz when an unexpected guest enters).
-- Match cosine similarity against Chunk 0's reference speakers and confirm identity against conversational self-references.
+- Extract acoustic voiceprints per `(chunk_index, speaker_id)` from each speaker's longest solo turns — specifically **cepstral-mean-normalized 40-band log-Mel vectors** (timbre, invariant to mic distance) plus **median voiced fundamental frequency (`F0`)** (separating pitch registers, e.g., ~140 Hz vs. ~200 Hz when an unexpected guest enters).
+- Match cosine similarity against Chunk 0's reference speakers **and** against saved host voiceprints from prior episodes so canonical speaker labeling stays automatic across an entire series, while immediately flagging any newly arriving guest speaker.
 
-### 4. Editorial Curation & Privacy Filtering
-Read the full diarized transcript before cutting clips:
-- **Exclude sensitive material strictly:** personal finances, bank/billing details, portfolio gains/losses, private relationship gossip, third-party full names without consent, medical/therapy mentions, substance references, off-the-record remarks, and internal/NDA codenames.
-- **Splice cleanly around brief tangents:** If a strong 60-second insight contains a 5-second private aside or codename, splice the surrounding word boundaries cleanly with short audio micro-fades (`40–50ms`) and loudness normalization (`-16 LUFS` podcast standard, resetting audio PTS via `asetpts=N/SR/TB`).
-- **Mine non-speech audio events for comedy:** Check tagged audio events (such as someone crunching an apple during a mic check or laughing mid-sentence) — turning unscripted audio quirks into visual anime gags creates memorable cold opens and recurring bumpers.
+### 4. Editorial Curation: Keep Personal Stories, Bleep Third Parties, Cut Dead Air
+Read the full diarized transcript before proposing clips, applying a clear three-way editorial rule:
+- **Keep interesting personal topics:** Candid, funny, or vulnerable stories about the hosts themselves (personal experiences, mistakes, debates, lifestyle, real-life reactions) often make the highest-retention clips. Do **not** over-censor authentic host stories just because they are personal.
+- **Surgically bleep third parties (don't kill good clips):** When a great story mentions third parties who did not consent to being named publicly (friends, partners, coworkers, acquaintances), **keep the clip and bleep their names** using a sample-accurate `1000Hz` censor tone (`ffmpeg` mute + `sine` mix) paired with a bold red `[BEEP]` / `[ביפ]` caption. This preserves pacing and comedic timing far better than harsh jump cuts.
+- **Cut genuinely unpublishable or uninteresting material:** Exclude dry logistics (flight schedules, routine catch-up, mic setup unless funny), raw credentials/secrets, sensitive banking/billing details, unreleased NDA codenames, or any segment where a participant explicitly asks not to be recorded.
+- **Splice cleanly & patch minor ASR typos:** Splice around brief tangents at word boundaries using `40–50ms` micro-fades, `asetpts=N/SR/TB`, and `-16 LUFS` loudness normalization. Keep a small timestamp-keyed `TEXT_FIXES` override map for occasional ASR mishearings (e.g., an English acronym heard as a native word) instead of re-transcribing.
 
-For complete chunk-splitting, acoustic voiceprint alignment, and multi-segment FFmpeg cutting code, load `references/audio-diarization-and-curation.md`.
+For complete chunk-splitting, acoustic voiceprint alignment, bleeping, and multi-segment FFmpeg cutting code, load `references/audio-diarization-and-curation.md`.
 
 ---
 
-## Stage 2 — Zero-Jitter Cel Rig Construction
+## Stage 2 — Episode Scenes, Event-Driven Animations & Zero-Jitter Cel Rigs
 
-### 1. Reverse-Angle Base Frames from Reference Photos
+### 1. Episode-Specific Settings with Persistent Character Likeness
 - Crop reference photos tightly around each speaker's head/shoulders so background bystanders never confuse character conditioning.
-- Generate **matching reverse-angle medium close-ups** (`16:9` panels work seamlessly in both stacked `9:16` vertical layouts and cut-to-speaker `16:9` horizontal layouts):
-  - Speaker A on the left angled three-quarters right; Speaker B on the right angled three-quarters left, facing each other across the virtual studio.
-  - Specify **cel-shaded 2D anime conventions** explicitly: clean dark-brown ink linework, flat fills with crisp hard-edge two-tone cel shadows, geometric hair highlights, contrasted against a painterly warm studio background.
-  - Keep broadcast boom microphones in the lower foreground **strictly clear of the chin and mouth** so mouth swaps never intersect the mic.
+- Give each episode its own authentic visual setting matching where the hosts actually recorded or the episode's vibe (e.g., late-night studio with boom mics, nighttime park on white plastic lounge chairs under streetlamps, coffee shop) while keeping each host's exact likeness, proportions, and cel-shaded 2D anime ink style consistent across episodes.
+- Frame **matching reverse-angle medium close-ups** (`16:9` panels work in both stacked `9:16` vertical layouts and cut-to-speaker `16:9` horizontal layouts): Host A on the left angled three-quarters right; Host B on the right angled three-quarters left. Keep foreground props (mics, cups, armrests) strictly clear of the chin and mouth.
 
-### 2. Targeted Expression & Gag Edits
-Pass each approved base frame into an image-edit model instructing it to keep 100% of the image pixel-identical while changing **only** one isolated feature:
-- `mouth_half` — medium open mouth (`中口`, *nakakuchi*) for normal syllables.
-- `mouth_open` — wide open mouth (`大口`, *ōkuchi*) with visible upper teeth/tongue for accented vowels.
-- `blink` — relaxed closed eyelids.
-- `laugh` — happily squinted eyes + wide grin (triggered on laughter audio events).
-- Optional **event-driven prop/gag states** — e.g., `apple_bite` + deadpan puffed-cheek `apple_chew` when eating sounds are tagged in the transcript.
+### 2. Animate Real Events Happening in the Audio (CRITICAL)
+Pure talking-head lip-sync carries dialogue, but **animating real-world events happening during the recording is what elevates an anime podcast from a static audio visualizer into memorable storytelling**. Listeners hear clues in the audio — seeing the characters actually react and act them out creates huge comedic payoff and viewer retention.
 
-### 3. Disjoint Mask Compositing (CRITICAL)
-Never swap raw edited images directly — JPEG re-compression and subtle diffusion drift shift hair, collars, or backgrounds by 1–2 pixels, causing visible background shimmer at 12fps:
-1. Compute the blurred per-pixel color difference between each edited image and `base`.
-2. Derive tight bounding boxes for **upper-face (`blink`)** and **lower-face (`mouth`)** separated by a strict horizontal split plane at the nose tip so the two masks **never overlap**.
-3. Feather-composite *only* the masked eye/mouth pixels onto the exact `base` array and pre-save all `(mouth_state × blink_state)` combinations as lossless PNGs. Every non-facial pixel remains **bit-for-bit identical** across the entire video.
+Actively scan the transcript and audio-event tags during curation for live moments worth 1–2 custom cels or layout beats:
+- **A person joining, interrupting, or leaving the room:** When a third speaker walks in, don't leave their voice disembodied on a two-host screen — either animate a **brief cameo entrance** (a dedicated `guest_enter` cel composited into the background, or a smooth slide-in 3rd panel / guest card for their turns) and dim or empty a host's panel if they step away from the mic.
+- **Eating, drinking, crunching, or sipping:** When audio events or banter reveal someone biting an apple, chewing during a mic check, or sipping coffee, generate a pair of prop cels (`prop_bite` + deadpan puffed-cheek `prop_chew` or `mug_sip`) and sync them precisely to the crunch/sip timestamps.
+- **Live real-world reactions & physical beats:** Checking a phone when breaking news or a live model launch drops mid-episode (`phone_check` cel), double-takes/deadpan stares during awkward silences, loud coughing/sneezing, mic bumps, or bursting into laughter (`laugh` cel triggered automatically on every laughter audio event).
+- **Keep event animation cheap:** Condition every event cel on the approved base portrait, isolate the changed region with an organic feathered diff mask (`MaxFilter` + `GaussianBlur`), and trigger it on exact frame ranges in the local renderer — zero video-diffusion cost, zero background shimmer.
+
+### 3. Targeted Rig Edits & Peak-Y Disjoint Mask Compositing (CRITICAL)
+Pass each approved base frame into an image-edit model instructing it to keep 100% of the image pixel-identical while changing **only** one isolated feature: `mouth_half`, `mouth_open`, `blink`, `laugh`, plus any episode event cels.
+
+Never swap raw edited images directly — subtle diffusion drift shifts hair, collars, or backgrounds by 1–2 pixels and causes shimmer at 12fps. And **never** compute the eye/mouth mask split naively from raw diff bounding boxes: if `mouth_open` subtly nudges an eyebrow, a naive split line jumps into the eyes and clips off closed eyelids!
+1. Compute blurred per-pixel color differences for `blink` and `mouth_open` against `base`.
+2. **Peak-Y separation:** Find the peak-diff Y coordinate of the eyes (`eye_cy`), zero out everything above `eye_cy + 40px` before finding the peak-diff Y of the mouth (`mouth_cy`), set `split_y = (eye_cy + mouth_cy) // 2`, and restrict eye/mouth tight bounding boxes strictly above and below `split_y`.
+3. Feather-composite only the masked regions onto `base` and pre-save all `(mouth_state × blink_state)` combinations (plus organic-masked `laugh` and event states) as lossless PNGs. Visually inspect `open_blink` and every event cel before batch rendering.
 
 ---
 
-## Stage 3 — Local `Kuchi-paku` Rendering & BiDi Captions
+## Stage 3 — Local `Kuchi-paku` Rendering, BiDi Captions & Compact Output
 
-### 1. Limited-Animation Cadence & Diarization Gating
-- Render into a standard **`24fps` H.264 (`yuv420p`)** container for universal social-platform playback, while stepping mouth changes **on twos (`12fps`, every 2 frames)** so dialogue reads as authentic 2D anime rather than floaty puppetry.
-- Gate RMS audio amplitude strictly by the diarized word timeline: only the speaker who owns the active word opens their mouth (`amp > 0.50` → `open`, `amp > 0.13` → `half`, else `closed`), preventing coughs or crosstalk from moving the listener's mouth. Insert a brief syllable dip every ~4mouth-steps on sustained medium-amplitude vowels so long words still articulate.
-- Schedule deterministic natural eye blinks (`2–3` frames = `85–125ms` every `3–5s`, with occasional double-blinks) independently for both hosts.
+- **Limited-Animation Cadence & Diarization Gating:** Render a `24fps` H.264 (`yuv420p`) MP4 while stepping mouth flaps **on twos (`12fps`, every 2 frames)**. Gate RMS amplitude strictly by each speaker's diarized word timeline (`amp > 0.50` → `open`, `amp > 0.13` → `half`, else `closed`, with a rhythmic syllable dip every 4th step on sustained medium vowels), overlay deterministic natural blinks (`2–3` frames every `3–5s` + occasional double-blinks), and override with event/laugh states on their exact frame windows.
+- **Visual Hierarchy (`1080×1920` Vertical Stack):** Stack Host A (top `1080×870`), a dark center divider band (`180px`) holding the captions + subtle audio bars + speaker pills, and Host B (bottom `1080×870`). Spotlight the active speaker at `100%` brightness with a gentle push-in and glowing seam line while dimming the listener to `~70%`. Center-band captions never cover faces and stay clear of Reels/TikTok/Shorts top and bottom UI overlays.
+- **Single Multi-Script Font & BiDi Karaoke:** Always use one font containing **both** target-script and ASCII Latin/punctuation glyphs (e.g., `Rubik` or `Heebo` for Hebrew + English; avoid single-script fonts that render Latin/punctuation as `▯` tofu boxes). In `Pillow` + `libraqm`, group consecutive pure-Latin words into `direction="ltr"` visual chunks laid out right-to-left so multi-word English phrases read naturally inside RTL sentences while highlighting each spoken word (and coloring `[BEEP]` tokens bright red).
+- **CPU Speed & Compact Reels-Ready Output:** Pre-crop and overscan (`1.04×`) rig PNGs once as `uint8` NumPy arrays, wrap **only the ~340px center HUD strip** in `PIL.ImageDraw` per frame, and encode directly with `-c:v libx264 -preset fast -threads 2 -crf 21 -pix_fmt yuv420p -movflags +faststart`. Using `-preset fast -crf 21` (instead of `ultrafast`) keeps even 5-minute `1080×1920` clips under `~60 MB` so they upload directly to social APIs and CDNs without a second compression pass.
 
-### 2. Visual Hierarchy & Bidirectional (RTL + LTR) Karaoke Typography
-- **Stacked `9:16` Vertical Layout (`1080×1920`):** Place Host A in the top panel (`1080×870`), Host B in the bottom panel (`1080×870`), and a dark studio divider band (`180px`) across the center seam. Spotlight the active speaker at `100%` brightness with a subtle push-in and glowing seam border while dimming the listener to `~70%`. Placing captions in the center band avoids covering either face and stays clear of TikTok/Reels/Shorts top and bottom UI chrome.
-- **Single Multi-Script Font (Avoid Tofu Boxes `▯`):** Many language-specific system fonts (such as Ubuntu's `NotoSansHebrew-Bold.ttf`) lack ASCII Latin glyphs and punctuation, rendering English terms and periods as `▯` boxes. Always verify and use a single font file containing **both** target-script and Latin/punctuation glyphs (e.g., Google `Rubik` or `Heebo` for Hebrew + English).
-- **BiDi Word-Level Highlighting:** When rendering RTL captions (Hebrew/Arabic) containing embedded English phrases via `Pillow` + `libraqm`, group consecutive pure-Latin words into single `direction="ltr"` visual chunks while stepping `direction="rtl"` across chunks. This preserves 100% accurate bidirectional word order while highlighting each spoken word in real time.
-- **CPU Performance:** Never convert the entire `1080×1920` frame into `PIL.Image` every frame. Composite upper and lower video panels via fast NumPy array slices, wrap **only the ~340px center HUD/caption strip** in `PIL.ImageDraw`, and bound encoder threads (`ffmpeg -threads 2`) when running parallel clip workers.
+For complete prompt templates, Peak-Y mask-compositing code, event-animation triggers, and the fast `24fps` renderer implementation, load `references/cel-rig-and-renderer.md`.
 
-### 3. Mobile Handoff & Social Platform Limits
-- **Instagram Stories vs. Reels:** Instagram desktop web does not support uploading video Stories (only Reels/Feed; Graph API `STORIES` requires a Business/Creator account), and Stories cap single segments at **60 seconds**.
-- For instant lossless phone transfer on a local network or VPN/Tailscale, serve a lightweight dark HTML gallery with inline `<video>` previews, `≤60s` Story-ready badges, `<a download>` buttons, and a terminal QR code generated in **uppercase alphanumeric mode with an inverted solid quiet-zone border** (`qrencode -t UTF8 -l L -m 2 -i "HTTP://..."`) so dark-mode terminals neither clip finder rings nor wrap wide lines.
+---
 
-For complete rig mask-compositing code, prompt templates, and the fast `24fps` renderer implementation, load `references/cel-rig-and-renderer.md`.
+## Stage 4 — Labeled Covers, Grid Ordering & Automated Publishing
+
+- **Custom Labeled `1080×1920` Cover Frames:** Auto-selected video frames look identical across clips from the same episode, and profile grids center-crop `9:16` Reels to `3:4` or `4:5`. Attach a custom JPEG cover (`cover_url`) per clip composed from expressive host rig PNGs (matching each clip's mood: laughing, shocked, debating) with a centered high-contrast title band (`y = 785..1135`, fully inside the `3:4`/`4:5` grid safe zone), an episode/clip pill (`EP2 #00`), and auto-sized bold RTL/LTR typography. No separate Feed video re-render is needed.
+- **Reverse-Order Publishing (`#N → #00`):** Always publish an episode's clips in reverse order so Clip `#00` (the intro/hook) lands at top-left of the profile grid and viewers browse forward sequentially.
+- **Reliable Automated Reels Publishing Loop:**
+  - Stage videos and covers on clean, direct HTTPS URLs with explicit `Content-Type` headers (use signed CDN/object-storage PUT uploads when direct local reverse proxies are unavailable, respecting per-file upload limits).
+  - Never rely on a single long blocking API call to both upload and publish a Reel — video transcoding frequently exceeds `45s` CLI/RPC timeouts. Use an explicit **3-step local polling loop**: (1) create container (`share_to_feed: true`), (2) poll container status locally every `~5s` until `FINISHED` (retrying transient errors), (3) call publish with a short wait, and immediately save `media_id` + `permalink` to `published.json` for idempotent resume.
+  - Check daily API publishing quotas (e.g., Instagram's 50 Reels per rolling 24 hours) before launching large batches, and verify final `media_count` afterwards.
+- **Local Mobile Handoff:** When delivering clips for manual posting (such as `≤60s` Stories on personal accounts), serve a lightweight dark HTML gallery with inline video previews, `≤60s` badges, download links, and an inverted-border alphanumeric terminal QR code (`qrencode -t UTF8 -l L -m 2 -i "HTTP://..."`).
+
+For cover-generation code, the idempotent 3-step Reels publisher, and the local mobile handoff gallery, load `references/covers-and-publishing.md`.
 
 ---
 
 ## References Index
 
-- `references/audio-diarization-and-curation.md` — Read when splitting long audio files at silence boundaries, aligning diarized speaker IDs across chunks via acoustic voiceprints (`log-Mel` + `F0`), filtering sensitive personal content, or cutting loudness-normalized multi-segment `.m4a` + `.srt` clips.
-- `references/cel-rig-and-renderer.md` — Read when crafting reverse-angle anime character and prop/gag edit prompts, building disjoint pixel-locked eye/mouth rig sprites, or implementing the local `24fps` `kuchi-paku` + bidirectional karaoke video renderer.
+- `references/audio-diarization-and-curation.md` — Read when splitting long audio files at silence boundaries, aligning diarized speaker IDs across chunks and episodes via acoustic voiceprints (`log-Mel` + `F0`), applying the keep/bleep/cut editorial policy, or cutting loudness-normalized multi-segment `.m4a` + `.srt` clips with sample-accurate `1000Hz` censor bleeps.
+- `references/cel-rig-and-renderer.md` — Read when designing episode scenes and event-driven animations (guest arrivals, eating/drinking, phone reactions), building Peak-Y disjoint pixel-locked eye/mouth rig sprites, or implementing the local `24fps` `kuchi-paku` + bidirectional karaoke renderer.
+- `references/covers-and-publishing.md` — Read when generating `1080×1920` safe-zone labeled social covers, staging media over HTTPS, running the timeout-safe 3-step reverse-order Reels publishing loop, or serving a local mobile handoff gallery with a terminal QR code.
