@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-anime-podcast",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/anime-podcast",
   "description": "Turn long multi-speaker audio recordings or podcasts into low-cost, zero-jitter 2D anime video clips using diarized transcription, cross-episode voiceprints, surgical third-party bleeping, event-driven scene/prop animations, Peak-Y pixel-locked cel rigs, bidirectional karaoke captions, bespoke labeled safe-zone covers, and reliable Reels publishing.",
   "visibility": "public",
