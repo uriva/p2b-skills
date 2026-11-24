@@ -114,8 +114,30 @@ Review the full diarized transcript end-to-end and propose the clip slate to the
 | **Candid host personal stories** | **KEEP** (confirm in clip slate) | Authentic stories, funny mistakes, opinions, debates, and real-life experiences *about the hosts themselves* often perform best. Never automatically discard a great clip just because it is personal or edgy. |
 | **Third-party names inside a great clip** | **KEEP + BLEEP** | If a strong story mentions non-consenting third parties (partners, friends, coworkers, acquaintances, private clients), keep the clip and apply a sample-accurate `1000Hz` censor bleep + red `[BEEP]` caption over every mention of their name (and any uniquely identifying personal details). |
 | **Dead air, dry logistics & hard privacy** | **CUT** | Skip uninteresting logistics (flight/calendar planning, mundane catch-up), raw credentials/passwords, banking/card/billing specifics, unreleased NDA codenames, or any moment where someone says *"Wait, is this being recorded?"* / *"Cut that out."* |
+| **Long silences (`> ~5s`)** | **TRIM / SPLICE** | Natural pauses (`0.5–2s`) support comedic timing, but **never leave more than `~5 seconds` of silence** inside a clip. Split segments around extended dead air (leaving `~0.8–1.2s` of natural breath/pause via micro-fades) or trim excessive leading/trailing silence. |
 
-**Pre-render name sweep:** After selecting candidate clip ranges, run an automated keyword/proper-noun scan across all words inside the proposed clips so no stray mention of a third-party name slips through unbleeped. Also scan for ASR mishearings (e.g., an English acronym misheard as a Hebrew/local word) and add them to `TEXT_FIXES`.
+**Pre-render name sweep & max-silence check:** After selecting candidate clip ranges, run an automated keyword/proper-noun scan across all words inside the proposed clips so no stray mention of a third-party name slips through unbleeped. Also scan for ASR mishearings (e.g., an English acronym misheard as a Hebrew/local word) and add them to `TEXT_FIXES`, and split any word-to-word gap exceeding `5.0s` into consecutive sub-segments keeping `~1.0s` of natural pause:
+
+```python
+def cap_long_silences(segments, words, max_silence=5.0, keep_pause=1.0):
+    """Split any segment containing >max_silence dead air into tighter sub-segments."""
+    tight = []
+    for seg_s, seg_e in segments:
+        seg_words = sorted([w for w in words if w["end"] > seg_s and w["start"] < seg_e], key=lambda w: w["start"])
+        if not seg_words:
+            if seg_e - seg_s <= max_silence:
+                tight.append((seg_s, seg_e))
+            continue
+        cur_s = max(seg_s, seg_words[0]["start"] - min(0.8, keep_pause))
+        for prev_w, next_w in zip(seg_words, seg_words[1:]):
+            gap = next_w["start"] - prev_w["end"]
+            if gap > max_silence:
+                tight.append((round(cur_s, 3), round(prev_w["end"] + keep_pause * 0.5, 3)))
+                cur_s = next_w["start"] - keep_pause * 0.5
+        cur_e = min(seg_e, seg_words[-1]["end"] + min(0.8, keep_pause))
+        tight.append((round(cur_s, 3), round(cur_e, 3)))
+    return tight
+```
 
 ---
 

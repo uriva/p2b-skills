@@ -4,105 +4,170 @@ Detailed patterns for Stage 4 of `p2b-anime-podcast`: generating completely dist
 
 ---
 
-## 1. Bespoke `9:16` Anime Covers Inside the `3:4` / `4:5` Profile Grid Safe Zone
+## 1. Bespoke `9:16` Editorial & Character Covers for the `3:4` Profile Grid (`y = 240..1680`)
 
-When you publish multiple clips from the same episode (or across episodes), auto-extracted video thumbnails look nearly identical on a profile grid. **Do NOT reuse the episode's talking-head rig PNGs (`top_rig_png` / `bot_rig_png`) for covers either** — even with swapped expressions or different headline text, covers built from the same episode panels still share identical outfits, camera framing, and backgrounds, making the grid look repetitive.
+When publishing multiple clips from an episode or series, auto-extracted video frames look repetitive, and **reusing the episode's talking-head rig PNGs (`top_rig_png` / `bot_rig_png`)** makes every grid tile share identical outfits, framing, and backgrounds.
 
-Meanwhile, Instagram/TikTok/Shorts grids center-crop `9:16` (`1080×1920`) Reels vertically to **`3:4` (`1080×1440`)** or **`4:5` (`1080×1350`)** (and occasionally `1:1`).
+Instagram profile grids center-crop `9:16` (`1080×1920`) Reels vertically to **`3:4` (`1080×1440`, i.e., `y = 240..1680`)** (and occasionally `4:5` or `1:1`). Design every cover as a **`1080×1920` JPEG** tailored for the **`3:4` crop (`y = 240..1680`)** using **title-only floating typography** directly over bespoke artwork — **no eyebrow, no subtitle, and no opaque dark horizontal bands or divider bars**.
 
-Instead of rendering separate cropped Feed videos or recycling episode rigs, generate **one completely different, bespoke `1080×1920` JPEG cover (`cover_url`) per clip** in two steps:
+### Step A — Mix ~28% Character Covers & ~72% Editorial Object Covers with Diverse Palettes
+Across a multi-clip batch, establish strong visual rhythm rather than repeating portraits on every tile:
+- **~72% character-free editorial object covers:** Symbolic 2D anime still-life / atmospheric scenes split between **upper artwork** (sky, lanterns, glowing data clouds, rafters, signage, foliage) and **lower foreground props** (tabletop objects, devices, cups, books, microphones) framing a wide, calm horizontal middle band (`y ≈ 36%–62%`).
+- **~28% anime character/face covers:** Conditioned on the hosts' reference portraits (and any cameo guest), varying **camera angles** (three-quarter, side-profile, over-the-shoulder, subtle peek), **single host vs. duo**, and **placement** (upper-left, upper-right, bottom-left, bottom-right, diagonal opposite corners, or upper split duo).
+- **Diverse background palettes:** Assign a distinct, saturated or atmospheric color palette to every clip (cobalt/ice-cyan, emerald/gold, sunset terracotta, petrol teal, sage olive, golden ochre, royal plum, crimson/amber) and explicitly forbid repetitive plain dark-navy or black voids across adjacent tiles.
+- **`3:4` grid safe-zone rule for faces:** Prompt upper-corner faces to leave the top `18%–20%` as empty sky/mist/ceiling and sit inside **`y = 18%–42%`** so `y = 240` never clips foreheads or eyes. Prompt bottom-corner faces to clear the bottom `15%–17%` (`y <= 1680`) and keep the middle `38%–61%` calm and uncluttered for floating text.
 
-### Step A — Generate a Unique `9:16` Anime Illustration for Every Clip
-For each clip, call `generate_image` (with `aspectRatio: "9:16"`) or a reference-conditioned image-generation model using **the hosts' reference portraits** (plus any cameo guest reference featured in that clip) together with a fresh scene concept tailored to **that specific clip's topic, setting, physical action, props, or comedic hook**:
-- **Make every tile unmistakably different:** Vary the setting, poses, props, lighting, color palette, and camera angle across every clip in the batch (e.g., Clip `#00` has the hosts wide-eyed in a chaotic late-night convenience store; Clip `#01` shows one host dramatic-sweating at a glowing server rack while the other laughs over coffee; Clip `#02` stages a noir detective standoff or courtroom desk slam matching the punchline).
-- **Protect the `y = 785..1135` center title band:** Frame the characters and faces in the upper and/or lower thirds (or compose a wider two-shot with clear breathing room across the vertical center) so the centered title band never slices across anyone's eyes.
-- **Keep art style consistent & text-free:** Preserve the series' 2D cel-shaded anime ink linework and two-tone cel shadows while explicitly forbidding baked-in text or watermarks (`no text, no captions, no watermarks`).
+> **Editorial Object Cover Prompt Pattern (`9:16`, zero characters):**
+> *Vertical 9:16 2D cel-shaded seinen anime background illustration with ZERO characters and ZERO people, vivid [clip palette — e.g. petrol teal twilight and warm amber glow]. Upper third (top 34%): [upper motif]. Middle band (36%–62%): wide, calm uncluttered atmospheric gradient/mist/sky with no high-contrast foreground objects so large centered white text stays legible. Lower third (bottom 36%): [foreground tabletop/environmental props]. Crisp anime ink linework, rich cel shading, NO humans, NO faces, NO text, NO logos, NO watermarks.*
 
-> **Per-Clip Bespoke Cover Prompt Template (`9:16`):**
-> *Vertical 9:16 2D cel-shaded seinen anime key illustration featuring the hosts from the attached reference portraits (preserving exact likenesses: hair, glasses, facial hair, proportions) in an original scene depicting [clip's specific topic, setting, action, or comedic hook — e.g. furiously debating beside a glowing holographic chart / shocked mid-bite with a crunchy apple in a neon-lit convenience store]. Distinct camera angle, poses, props, and [warm/neon/moody/sunset] lighting unique to this clip. Frame faces and key details in the upper and lower thirds (keeping the horizontal middle band uncluttered) so a centered title banner will not cover any faces. Crisp dark-brown ink linework, two-tone cel shadows, expressive anime storytelling, NO text, NO logos, NO watermarks, NOT photorealistic, NOT 3D.*
+> **Character/Face Cover Prompt Pattern (`9:16`, varied corner framing):**
+> *Vertical 9:16 2D cel-shaded seinen anime editorial cover featuring [Host A / Host B / both hosts] from the attached reference photos (preserving exact likenesses) in a vivid [clip palette] atmosphere. [Corner/angle placement — e.g. Upper-left three-quarter portrait positioned LOWER at y=18%–42% with the top 20% left completely empty sky/background so a 3:4 grid crop never clips the head, OR bottom-right over-the-shoulder framing staying above the bottom 17%]. Keep the middle horizontal band (38%–61%) calm and uncluttered. Crisp ink linework, two-tone cel shadows, NO text, NO logos, NO watermarks.*
 
-### Step B — Composite the `3:4` / `4:5` Safe-Zone Title Band
-Fit the clip's bespoke `9:16` illustration (`cover_art_path`) to `1080×1920`, then overlay:
-- A high-contrast dark title band across **`y = 785..1135`** (dead center, safely inside `1:1`, `4:5`, `3:4`, and `9:16` crops simultaneously) framed by feathered gradients and the two hosts' signature accent borders.
-- A compact episode/clip pill (`SHOW NAME · EP2 #00`) and auto-shrinking bold RTL/LTR headline text (`66–74px`, stepping down to `44px` until all lines fit `W - 110px`).
+### Step B — Content-Aware Reframing & Title-Only `Rubik 900` + Gold `X.Y` Stamp
+1. **Face-safe downward shift (`shift_top` ~`215–230px`):** If an upper-corner character generation places the head too close to `y = 240`, smoothly shift the upper portrait slab down by `~215–230px` (extending a feathered top-edge fill and blending into the calm middle band) so the eyes and hair sit cleanly inside the `3:4` crop.
+2. **Content-aware object reframing (`shift_top` / `shift_bot`):** For character-free object covers, measure per-row edge energy (`detect_art_bounds`) to find the calmest middle band (`calm_y`), where upper art ends (`top_end`), and where lower art begins (`bot_start`). Shift the upper and lower slabs inward or outward over a blurred calm-band backdrop so top artwork clears the gold `X.Y` label above the title and bottom artwork hugs cleanly beneath the title.
+3. **Title-only typography + larger gold `X.Y` numbering (`Rubik 900`):**
+   - **Title:** White `#FFFFFF` **Rubik 900** (`14px` `#0F0E15` stroke + Gaussian-blurred drop shadow) starting around **`152px`** (`~146–152px`), vertically centered at `y = 960` and auto-shrinking until every line fits **`<= 980px`** width (and `<= 635px` block height). Use a single multi-script font (`Rubik`) with `Pillow` + `libraqm` (`direction="rtl"`) so RTL Hebrew + mixed LTR English phrases render in natural reading order without `▯` tofu boxes.
+   - **Numbering (`X.Y`):** Stamp compact `episode.clip` numbering (`1.1`, `2.3`, `3.9`) directly above the title in gold **`#F5C563`** Rubik 900 at **`~70–76px`** (larger than `50px` so it remains crisp and readable on mobile grid thumbnails) with `~10px` `#0F0E15` stroke and soft drop shadow.
+4. **`3:4` Contact-Sheet QA:** Before publishing, assemble a contact sheet of `y = 240..1680` crops across all clips in reverse publishing order (`#N → #00`) and inspect visually to catch any clipped heads, overlapping props, or clashing adjacent palettes.
 
 ```python
 import os
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 
-def make_labeled_cover(
-    cover_art_path,
-    font_path,
-    tag_text,
-    title_text,
-    accent_rgb,
-    out_jpg,
-    rtl=True,
-    border_top_rgb=(245, 184, 65),
-    border_bot_rgb=(115, 210, 252),
-):
-    W, H = 1080, 1920
-    art = Image.open(cover_art_path).convert("RGB")
-    canvas = ImageOps.fit(art, (W, H), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
+W, H = 1080, 1920
 
-    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    dr = ImageDraw.Draw(overlay)
+def load_rubik(font_path, size, weight=900):
+    f = ImageFont.truetype(font_path, size=size)
+    try:
+        f.set_variation_by_axes([weight])
+    except Exception:
+        pass
+    return f
 
-    # Center band strictly inside 1:1 / 4:5 / 3:4 profile grid safe zones
-    band_y0, band_y1, grad_h = 785, 1135, 75
-    for i in range(grad_h):
-        a = int(242 * (i / grad_h) ** 1.4)
-        dr.line([(0, band_y0 - grad_h + i), (W, band_y0 - grad_h + i)], fill=(15, 14, 21, a))
-        dr.line([(0, band_y1 + grad_h - 1 - i), (W, band_y1 + grad_h - 1 - i)], fill=(15, 14, 21, a))
+def smoothstep(t):
+    t = np.clip(t, 0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
 
-    dr.rectangle((0, band_y0, W, band_y1), fill=(15, 14, 21, 246))
-    dr.rectangle((0, band_y0, W, band_y0 + 6), fill=(*border_top_rgb, 255))
-    dr.rectangle((0, band_y1 - 6, W, band_y1), fill=(*border_bot_rgb, 255))
-
-    def load_font(sz, wgt):
-        f = ImageFont.truetype(font_path, size=sz)
-        try:
-            f.set_variation_by_axes([wgt])
-        except Exception:
-            pass
-        return f
-
-    # Episode / clip badge pill
-    font_tag = load_font(27, 740)
-    tb = font_tag.getbbox(tag_text)
-    pill_w, pill_h = (tb[2] - tb[0]) + 48, 46
-    pill_x0, pill_y0 = (W - pill_w) // 2, band_y0 + 28
-    ar, ag, ab = accent_rgb
-    dr.rounded_rectangle(
-        (pill_x0, pill_y0, pill_x0 + pill_w, pill_y0 + pill_h),
-        radius=23, fill=(ar, ag, ab, 40), outline=(ar, ag, ab, 230), width=2,
-    )
-    dr.text((W // 2, pill_y0 + pill_h // 2 - 1), tag_text, font=font_tag, fill=(255, 245, 225, 255), anchor="mm")
-
-    # Auto-fit 1–2 line title
-    direction = "rtl" if rtl else "ltr"
-    lines = title_text.split("\n")
-    font_size = 74 if len(lines) == 1 else 66
-    font_title = load_font(font_size, 840)
-    while font_size > 44:
-        max_lw = max(font_title.getbbox(ln, direction=direction)[2] - font_title.getbbox(ln, direction=direction)[0] for ln in lines)
-        if max_lw <= W - 110:
+def detect_art_bounds(img_rgb):
+    """Locate calm middle band, upper-art bottom (top_end), and lower-art top (bot_start)."""
+    arr = np.asarray(img_rgb, dtype=np.float32)
+    gx = np.abs(arr[:, 1:] - arr[:, :-1]).mean(axis=(1, 2))
+    gy = np.abs(arr[1:, :] - arr[:-1, :]).mean(axis=(1, 2))
+    row_e = np.zeros(H, dtype=np.float32)
+    row_e[:-1] += gy
+    row_e += gx
+    smooth_e = np.convolve(row_e, np.ones(45) / 45.0, mode="same")
+    calm_y = 700 + int(np.argmin(smooth_e[700:1220]))
+    calm_e = smooth_e[calm_y]
+    thresh = max(calm_e * 2.1, calm_e + 1.8)
+    top_end = calm_y
+    for y in range(calm_y, 260, -1):
+        if smooth_e[y] > thresh:
+            top_end = y
             break
-        font_size -= 4
-        font_title = load_font(font_size, 840)
+    bot_start = calm_y
+    for y in range(calm_y, 1660):
+        if smooth_e[y] > thresh:
+            bot_start = y
+            break
+    return calm_y, top_end, bot_start
 
-    title_cy = (pill_y0 + pill_h + 18 + band_y1 - 24) // 2
-    step = int(font_size * 1.24)
-    start_y = title_cy - (len(lines) - 1) * step // 2
-    for idx, ln in enumerate(lines):
-        ly = start_y + idx * step
-        dr.text((W // 2, ly + 4), ln, font=font_title, fill=(0, 0, 0, 190), anchor="mm", direction=direction)
-        dr.text((W // 2, ly), ln, font=font_title, fill=(255, 255, 255, 255), anchor="mm", direction=direction, stroke_width=2, stroke_fill=(15, 14, 21, 220))
+def shift_upper_face_safe(img_rgb, shift_top=220, fade_start=640, fade_end=1020):
+    """Lower an upper-corner portrait so its head/eyes sit safely below y=240 (3:4 crop)."""
+    arr = np.asarray(img_rgb, dtype=np.float32)
+    top_strip = arr[0:24].mean(axis=0, keepdims=True)
+    bg = np.repeat(top_strip, H, axis=0)
+    ys = np.arange(H, dtype=np.float32)[:, None]
+    src_y = np.clip(np.round(ys - shift_top).astype(int), 0, H - 1)
+    shifted = arr[src_y[:, 0]]
+    a_top = smoothstep((ys - (shift_top - 40)) / 90.0)
+    a_bot = 1.0 - smoothstep((ys - fade_start) / max(1, fade_end - fade_start))
+    alpha = np.clip(a_top * a_bot, 0.0, 1.0)[..., None]
+    out = arr * (1.0 - alpha) + shifted * alpha
+    if shift_top > 120:
+        fill_a = (1.0 - smoothstep((ys - (shift_top - 40)) / 80.0))[..., None]
+        out = out * (1.0 - fill_a) + bg * fill_a
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+
+def reframe_object_for_title(img_rgb, text_y0, text_y1, label_h=72, max_inward=210, max_outward=150):
+    """Shift upper and lower object artwork to cleanly frame the centered title + X.Y label."""
+    calm_y, top_end, bot_start = detect_art_bounds(img_rgb)
+    desired_top_end = text_y0 - (label_h + 44)
+    desired_bot_start = text_y1 + 42
+    shift_top = max(-max_outward, min(max_inward, desired_top_end - top_end))
+    shift_bot = max(-max_inward, min(max_outward, desired_bot_start - bot_start))
+
+    arr = np.asarray(img_rgb, dtype=np.float32)
+    band = img_rgb.crop((0, max(0, calm_y - 110), W, min(H, calm_y + 110)))
+    bg = np.asarray(band.resize((W, H), Image.Resampling.BICUBIC).filter(ImageFilter.GaussianBlur(40)), dtype=np.float32)
+    ys = np.arange(H, dtype=np.float32)[:, None]
+
+    top_src = np.clip(np.round(ys - shift_top).astype(int), 0, H - 1)
+    top_shifted = arr[top_src[:, 0]]
+    top_edge = min(H - 120, max(280, top_end + shift_top))
+    a_top = (1.0 - smoothstep((ys - (top_edge - 90)) / 180.0))[..., None]
+
+    bot_src = np.clip(np.round(ys - shift_bot).astype(int), 0, H - 1)
+    bot_shifted = arr[bot_src[:, 0]]
+    bot_edge = max(120, min(H - 280, bot_start + shift_bot))
+    a_bot = smoothstep((ys - (bot_edge - 90)) / 180.0)[..., None]
+
+    out = bg.copy()
+    out = out * (1.0 - a_top) + top_shifted * a_top
+    out = out * (1.0 - a_bot) + bot_shifted * a_bot
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+
+def stamp_title_only_cover(canvas_rgb, font_path, ep_clip_label, title_lines, out_jpg, rtl=True, mid_dark=0.22):
+    """Title-only floating Rubik 900 typography + gold X.Y numbering (no eyebrow/subtitle/bars)."""
+    direction = "rtl" if rtl else "ltr"
+    font_size = 152
+    while font_size >= 88:
+        ft = load_rubik(font_path, font_size, 900)
+        d0 = ImageDraw.Draw(canvas_rgb)
+        max_w = max(
+            d0.textbbox((0, 0), ln, font=ft, stroke_width=14, direction=direction)[2]
+            - d0.textbbox((0, 0), ln, font=ft, stroke_width=14, direction=direction)[0]
+            for ln in title_lines
+        )
+        lh = int(font_size * 1.15)
+        if max_w <= 980 and lh * len(title_lines) <= 635:
+            break
+        font_size -= 6
+
+    ft = load_rubik(font_path, font_size, 900)
+    fl = load_rubik(font_path, 72, 900)  # >50px gold X.Y numbering for crisp mobile grid legibility
+    lh = int(font_size * 1.15)
+    total_h = lh * len(title_lines)
+    top_y = (H // 2) - (total_h // 2)
+
+    # Subtle middle darkening (no hard band edges) to guarantee white-text contrast
+    ys = np.arange(H, dtype=np.float32)[:, None]
+    vig = mid_dark * np.exp(-0.5 * ((ys - (top_y + total_h / 2.0)) / 270.0) ** 2)[..., None]
+    base = np.asarray(canvas_rgb, dtype=np.float32) * (1.0 - vig)
+    base_rgba = Image.fromarray(np.clip(base, 0, 255).astype(np.uint8)).convert("RGBA")
+
+    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ds = ImageDraw.Draw(shadow)
+    lbl_cy = top_y - 68
+    ds.text((W // 2, lbl_cy + 8), ep_clip_label, font=fl, fill=(5, 5, 10, 230), anchor="mm", stroke_width=10, stroke_fill=(5, 5, 10, 230))
+    for i, ln in enumerate(title_lines):
+        cy = top_y + i * lh + lh // 2
+        ds.text((W // 2, cy + 9), ln, font=ft, fill=(5, 5, 10, 230), anchor="mm", stroke_width=14, stroke_fill=(5, 5, 10, 230), direction=direction)
+    shadow = shadow.filter(ImageFilter.GaussianBlur(10))
+
+    fg = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    df = ImageDraw.Draw(fg)
+    df.text((W // 2, lbl_cy), ep_clip_label, font=fl, fill=(245, 197, 99, 255), anchor="mm", stroke_width=10, stroke_fill=(15, 14, 21, 255))
+    for i, ln in enumerate(title_lines):
+        cy = top_y + i * lh + lh // 2
+        df.text((W // 2, cy), ln, font=ft, fill=(255, 255, 255, 255), anchor="mm", stroke_width=14, stroke_fill=(15, 14, 21, 255), direction=direction)
 
     out_dir = os.path.dirname(out_jpg)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
-    Image.alpha_composite(canvas.convert("RGBA"), overlay).convert("RGB").save(out_jpg, "JPEG", quality=94, optimize=True)
+    Image.alpha_composite(Image.alpha_composite(base_rgba, shadow), fg).convert("RGB").save(out_jpg, "JPEG", quality=93, optimize=True)
 ```
 
 ---
