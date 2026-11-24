@@ -116,6 +116,8 @@ Review the full diarized transcript end-to-end and propose the clip slate to the
 | **Dead air, dry logistics & hard privacy** | **CUT** | Skip uninteresting logistics (flight/calendar planning, mundane catch-up), raw credentials/passwords, banking/card/billing specifics, unreleased NDA codenames, or any moment where someone says *"Wait, is this being recorded?"* / *"Cut that out."* |
 | **Long silences (`> ~5s`)** | **TRIM / SPLICE** | Natural pauses (`0.5–2s`) support comedic timing, but **never leave more than `~5 seconds` of silence** inside a clip. Split segments around extended dead air (leaving `~0.8–1.2s` of natural breath/pause via micro-fades) or trim excessive leading/trailing silence. |
 
+- **Context-Preserving Segmentation:** Do not over-fragment a discussion into context-less micro-clips. Keep a sub-point attached to its parent segment whenever its argument or punchline relies on the preceding setup. Only split a topic into separate Reels when each piece stands completely on its own; if a long topic must be split into multiple parts, explicitly link them (e.g., Part 1 / Part 2 in the title/cover) so viewers have the full context. Employ judgment rather than rigid rules.
+
 **Pre-render name sweep & max-silence check:** After selecting candidate clip ranges, run an automated keyword/proper-noun scan across all words inside the proposed clips so no stray mention of a third-party name slips through unbleeped. Also scan for ASR mishearings (e.g., an English acronym misheard as a Hebrew/local word) and add them to `TEXT_FIXES`, and split any word-to-word gap exceeding `5.0s` into consecutive sub-segments keeping `~1.0s` of natural pause:
 
 ```python
