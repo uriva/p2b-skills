@@ -21,6 +21,8 @@ Every SaaS growth system needs one shared, pinned funnel view keyed on a single 
 - **Deduplicate milestone events:** Emit one-time milestones (`User Activated`, `User Engaged`, `Subscription Started`, `Referral Prompted`) at most once per user/conversion (backed by a KV flag or DB check) so retries never inflate conversion counts.
 - **Separate unclicked checkout links from real checkout opens:** Never eagerly mint expiring Stripe Checkout sessions inside passive upsell messages — they pollute open-session metrics and hide true click-through rate. Route upsells through a click-tracked on-demand redirect so you measure link clicks independently of checkout completions.
 - **Isolate multi-product billing accounts:** When one Stripe account serves multiple founder products, filter every MRR query, checkout list, webhook handler, and dunning email strictly to the product's price IDs or explicit `metadata.product` tag.
+- **Separate internal dogfooding volume from external customer activation:** High headline API volume (e.g. hundreds of thousands of events/month) often comes from one internal founder workspace and can mask 0% external activation. Always segment accounts, tokens, and active usage into `internal` vs `external` in your recurring telemetry script.
+- **Trace recurring dashboard timeouts to unbounded nested queries:** Clusters of `"Request timed out"` errors on admin, groups, or settings pages frequently trace to one unbounded parent-to-children client query on high-volume accounts. Replace unbounded nested loads with bounded, ordered, retryable queries before blaming database infrastructure.
 
 ## Auditing Spikes & Anomalies
 
