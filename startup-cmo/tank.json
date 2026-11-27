@@ -1,6 +1,6 @@
 {
   "name": "@uriva/p2b-startup-cmo",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "repository": "https://github.com/uriva/p2b-skills/tree/main/startup-cmo",
   "description": "Marketing, monetization, growth, and sales counterpart for a software/SaaS startup founder. Covers funnel instrumentation, trial pacing and paywall design, landing page CRO, technical content and safe community distribution, and lifecycle/founder-led sales.",
   "visibility": "public",

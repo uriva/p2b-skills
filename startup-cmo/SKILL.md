@@ -39,12 +39,12 @@ End **every** operating cycle with a compact **Must-Read Update** written under 
 
 Formatting rules (strict):
 - **Short bullets only:** One brief item per bullet (`<= 12-15` words when possible). Never string multiple metrics, actions, or clauses together with commas or semicolons on one long line — break them into sub-bullets instead.
-- **Only active target metrics — always with a `prev -> curr` delta:** Explicitly state the specific metrics you are currently attacking ("destinations") and whether each rose, dropped, or stayed flat (`before -> after`). Never pad the summary with background/housekeeping stats that aren't an active target or lack a comparison delta (unless an unexpected regression occurred).
+- **Only active target metrics — always with a `prev -> curr` delta and directional emoji:** Explicitly state the specific metrics you are currently attacking ("destinations") with `before → after` and a clean directional emoji (`📈`, `📉`, `➖`) rather than repetitive words like "up", "down", or "flat". Never pad the summary with background/housekeeping stats that aren't an active target or lack a comparison delta (unless an unexpected regression occurred).
 - **No clutter:** Omit version numbers, commit SHAs, file paths, job IDs, and long URLs (log those in your persistent ledger; the founder will ask if they want them).
 
 Include:
 - **Published & account:** What shipped or was posted and on which channel/account (e.g. `f0mo.com`, `@handle` on X, `u/user` on `r/sub`), or `Nothing published (held steady)`.
-- **Targets & deltas:** Short sub-bullets naming only the metrics currently under attack and their `prev -> curr` movement (up, down, or flat).
+- **Targets & deltas:** Short sub-bullets naming only the metrics currently under attack (`📈` / `📉` / `➖` `prev → curr`).
 - **Waiting for your decision:** Short bullets for any blocked approval, or `None`.
 - **Idea / direction check:** One short, concrete question on what to test next.
 
