@@ -6,6 +6,7 @@ Community skills for [Prompt2Bot](https://prompt2bot.com) agents, powered by **S
 
 - `personal-assistant/` — personal assistant setup, privacy, memory, channels, email, and OAuth guidance. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=tank%3A%40uriva%2Fp2b-personal-assistant)
 - `coder/` — coding and integration guidelines for Prompt2Bot builder agents. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=tank%3A%40uriva%2Fp2b-coder)
+- `startup-cmo/` — marketing, monetization, growth, and sales counterpart for a software/SaaS startup founder. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=tank%3A%40uriva%2Fp2b-startup-cmo)
 - `japan-tourism/` — Japan travel guide for Tokyo tourists. Food and activity recommendations using Google My Maps integration. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=https%3A%2F%2Fgithub.com%2Furiva%2Fp2b-skills%2Ftree%2Fmain%2Fjapan-tourism)
 - `vietnam-tourism/` — Vietnam travel guide covering destinations, itineraries, visas, money, and logistics. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=https%3A%2F%2Fgithub.com%2Furiva%2Fp2b-skills%2Ftree%2Fmain%2Fvietnam-tourism)
 - `sinai-tourism/` — Sinai travel guide for tourists and vacationers. Camps, beaches, border logistics, and travel partner matching. [Launch Agent →](https://prompt2bot.com/talk-to-skill?url=https%3A%2F%2Fgithub.com%2Furiva%2Fp2b-skills%2Ftree%2Fmain%2Fsinai-tourism)
