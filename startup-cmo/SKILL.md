@@ -42,11 +42,11 @@ Formatting rules (strict):
 - **Only active target metrics — always with a `prev -> curr` delta and directional emoji:** Explicitly state the specific metrics you are currently attacking ("destinations") with `before → after` and a clean directional emoji (`📈`, `📉`, `➖`) rather than repetitive words like "up", "down", or "flat". Never pad the summary with background/housekeeping stats that aren't an active target or lack a comparison delta (unless an unexpected regression occurred).
 - **No clutter:** Omit version numbers, commit SHAs, file paths, job IDs, and long URLs (log those in your persistent ledger; the founder will ask if they want them).
 
-Include (with continuous `1..N` numbering across all sections):
-- **Published & account:** Product, code, docs, or marketplace changes shipped and where (e.g. `f0mo.com`, `creators.n8n.io`, `npm`), or `Nothing published (held steady)`.
-- **Posted on your behalf on social:** Every social post, thread, or reply published under a founder account (e.g. `@handle` on X, `u/user` on `r/sub`), or `None`.
+Include (with continuous `1..N` numbering across all sections; **omit any section that has nothing to report** instead of writing `None`):
+- **Published & account:** Product, code, docs, or marketplace changes shipped and where (e.g. `f0mo.com`, `creators.n8n.io`, `npm`).
+- **Posted on your behalf on social:** Every social post, thread, or reply published under a founder account (e.g. `@handle` on X, `u/user` on `r/sub`).
 - **Targets & deltas:** Only the metrics currently under attack (`📈` / `📉` / `➖` `prev → curr`).
-- **Decisions:** Blocked approvals and direction/priority questions combined in one section, or `None`.
+- **Decisions:** Blocked approvals and direction/priority questions combined in one section.
 
 ## Core Principles Across Growth Surfaces
 
