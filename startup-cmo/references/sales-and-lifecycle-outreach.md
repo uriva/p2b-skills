@@ -7,6 +7,7 @@ Dashboards show *where* users drop; transcripts show *why*. Whenever a stage und
 - Pull the last 5-15 real conversations, support tickets, or onboarding sessions from users who stalled or hit the paywall.
 - Look for exact friction moments:
   - Confusion on Turn 1 ("what can you actually do?") or bare/vague inputs where the bot replies with an open-ended text question instead of **3 clickable 1-tap `<button>` starter options** — open-ended clarification walls cause immediate drop-offs.
+  - Overloaded Turn-1 questionnaires (stacking attribution, profile setup, and alert opt-ins in one reply) that suppress retention opt-ins. Deliver core value first on Turn 1 and ask **at most one** high-leverage retention question (such as a 1-tap weekly digest opt-in), deferring secondary questions to later turns.
   - False-positive safety or "therapist mode" refusals on benign domain inputs (e.g., dramatic movie quotes, creative writing prompts, or domain jargon) that silently kill activation with zero tool calls.
   - Unexpected errors, auth detours, or broken mobile buttons.
   - Sticker shock, premature cap hits ("It ran out already?!"), or walls of text burying a checkout link when users explicitly ask to upgrade.
@@ -19,10 +20,10 @@ Lifecycle messages should feel like a helpful note from a thoughtful founder, ne
 
 - **Signed up, never activated:** One short message 24h later with 2 concrete things they can try in 10 seconds (direct link back into the product).
 - **Activated, hit paywall, didn't upgrade:** Ensure they received a clear, localized message with both the 1-tap authenticated upgrade link and the free-unlock referral option — never double-ping.
-- **Checkout abandoned:** If a user reached Stripe Checkout and cancelled, note the friction (price, missing payment method, or still evaluating). Many buyers convert hours later once they hit the need again — avoid aggressive countdown pressure.
+- **Checkout abandoned:** If a user reached Stripe Checkout and cancelled (`?checkout=cancelled`), note the friction (price, missing payment method, or comparing options like a referral link). Users who already built a real multi-day habit frequently return hours later and upgrade on their own once they hit the workflow need again — avoid aggressive countdown pressure.
 - **Happy power user / high NPS:** Great moment to invite a quick reply ("what's the one thing you'd miss most if this disappeared?") or share their personal referral link.
 - **Strict hygiene:** Always deduplicate outreach per user and event, honor opt-outs immediately, and keep every message concise and human.
-- **Verify retention crons actually deliver in production:** Never trust a scheduled digest cron just because the code exists — compare real `Email Sent` analytics against eligible database records. Watch for inverted relation filters (returning 0 rows), per-user N+1 queries blowing serverless subrequest limits, missing `lastNotified` updates, already-acted-upon items, and links pointing to the homepage instead of deep-linking straight to the action screen.
+- **Verify retention crons actually deliver — and don't silently prune passive readers:** Never trust a scheduled digest cron just because the code exists — compare real delivery analytics against eligible database records. Watch for inverted relation filters (returning 0 rows), per-user N+1 queries blowing serverless subrequest limits, missing `lastNotified` updates, already-acted-upon items, links pointing to the homepage instead of deep-linking straight to the action screen, and inactivity cutoffs that ignore outbound link clicks (`lastLinkClickAt`) or unjustly expire low-frequency keyword/entity trackers.
 - **Send a transactional "Launch Kit" email on first creation:** When an organizer/creator spins up a new topic, event, or workspace, send one crisp transactional email (honoring opt-outs) with their invite link, printable QR/venue links, and 3 quick tips to get their first 20 members — paired with an in-app post-create launch checklist.
 
 ## Closing the Loop on Every Paid Conversion
