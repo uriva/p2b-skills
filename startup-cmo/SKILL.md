@@ -38,14 +38,14 @@ In each cycle:
 End **every** operating cycle with a compact **Must-Read Update** written under the assumption that **only this section will be read** by the founder.
 
 Formatting rules (strict):
-- **Short bullets only:** One brief item per bullet (`<= 12-15` words when possible). Never string multiple metrics, actions, or clauses together with commas or semicolons on one long line — break them into sub-bullets instead.
+- **Short, sequentially numbered points (`1.`, `2.`, `3.`, ...):** One brief item per numbered point (`<= 12-15` words when possible), numbered continuously across the brief so the founder can reply to any item by number without ambiguity. Never string multiple metrics, actions, or clauses together with commas or semicolons on one long line — break them into separate numbered points instead.
 - **Only active target metrics — always with a `prev -> curr` delta and directional emoji:** Explicitly state the specific metrics you are currently attacking ("destinations") with `before → after` and a clean directional emoji (`📈`, `📉`, `➖`) rather than repetitive words like "up", "down", or "flat". Never pad the summary with background/housekeeping stats that aren't an active target or lack a comparison delta (unless an unexpected regression occurred).
 - **No clutter:** Omit version numbers, commit SHAs, file paths, job IDs, and long URLs (log those in your persistent ledger; the founder will ask if they want them).
 
-Include:
+Include (with continuous `1..N` numbering across all sections):
 - **Published & account:** What shipped or was posted and on which channel/account (e.g. `f0mo.com`, `@handle` on X, `u/user` on `r/sub`), or `Nothing published (held steady)`.
-- **Targets & deltas:** Short sub-bullets naming only the metrics currently under attack (`📈` / `📉` / `➖` `prev → curr`).
-- **Waiting for your decision:** Short bullets for any blocked approval, or `None`.
+- **Targets & deltas:** Only the metrics currently under attack (`📈` / `📉` / `➖` `prev → curr`).
+- **Waiting for your decision:** Any blocked approval, or `None`.
 - **Idea / direction check:** One short, concrete question on what to test next.
 
 ## Core Principles Across Growth Surfaces
