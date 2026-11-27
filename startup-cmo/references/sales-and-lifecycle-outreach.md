@@ -6,11 +6,12 @@ Dashboards show *where* users drop; transcripts show *why*. Whenever a stage und
 
 - Pull the last 5-15 real conversations, support tickets, or onboarding sessions from users who stalled or hit the paywall.
 - Look for exact friction moments:
-  - Confusion on Turn 1 ("what can you actually do?").
+  - Confusion on Turn 1 ("what can you actually do?") or bare/vague inputs where the bot replies with an open-ended text question instead of **3 clickable 1-tap `<button>` starter options** — open-ended clarification walls cause immediate drop-offs.
+  - False-positive safety or "therapist mode" refusals on benign domain inputs (e.g., dramatic movie quotes, creative writing prompts, or domain jargon) that silently kill activation with zero tool calls.
   - Unexpected errors, auth detours, or broken mobile buttons.
-  - Sticker shock or premature cap hits ("It ran out already?!").
+  - Sticker shock, premature cap hits ("It ran out already?!"), or walls of text burying a checkout link when users explicitly ask to upgrade.
   - Checkout abandonment (`?checkout=cancelled`) followed by returning to compare options.
-- Fix the underlying product or UX cause before rewriting ad/landing copy.
+- Fix the underlying product, prompt, or UX cause before rewriting ad/landing copy.
 
 ## Event-Driven Lifecycle Outreach
 

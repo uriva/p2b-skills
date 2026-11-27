@@ -17,11 +17,21 @@ One of the highest-impact SaaS conversion killers is advertising a multi-day fre
 - **Gate generous free tiers on a real friction-appropriate identity signal:** Keep unverified/anonymous usage tight (enough to feel the product, too small for abuse farms) and unlock the full trial upon verified phone or equivalent strong identity — while pooling unverified usage across shared IP / canonical email aliases to stop disposable-account rotation.
 - **Never give away the full quota for weak signals:** Do not expand free caps for trivial email-only signups if disposable emails are being farmed.
 
+## Match Pricing Model to Actual Usage Cadence
+
+- **Check multi-month retention before betting everything on subscriptions:** Query 90-day active usage by distinct active months. When 80%-95%+ of users are episodic (e.g., 1-month searchers/creators), a subscription-only paywall turns away willing buyers.
+- **Hybrid Pay-As-You-Go Credit Packs + Monthly Pro:** Offer non-expiring one-time Credit Packs right above Monthly Pro tiers. Packs capture episodic buyers with zero recurring-billing fear while anchoring the per-unit discount of Monthly Pro for power users.
+- **Recover involuntary churn (`payment_failed`) immediately:** Audit Stripe cancellations by reason (`payment_failed` vs `cancellation_requested`) and `past_due` counts — involuntary churn routinely drives 50%-70%+ of early-stage MRR loss. Wire a deduplicated `invoice.payment_failed` webhook handler (scoped strictly to the product's price IDs) that emails a 1-click Billing Portal recovery link, and verify the event is actually enabled on the live Stripe webhook endpoint.
+
 ## Zero-Friction Paywall & Checkout UX
 
-- **Authenticated 1-tap upgrade links:** Every paywall message delivered in chat, email, or in-app should link directly to `/pricing?token=<one-time-auth-token>` so the user lands already signed in and can reach Stripe/billing checkout in one click.
+- **Use signed, non-expiring on-demand upgrade redirects:** Instead of eagerly generating 24h-expiring Stripe Checkout sessions on result delivery, embed HMAC-signed `/api/upgrade?...` links that track clicks and create a fresh Checkout session only on click.
+- **Authenticated 1-tap upgrade links:** Every paywall message delivered in chat, email, or in-app should preserve auth or user email so the user lands ready to pay in one click.
+- **Add trust reassurance directly on Stripe Checkout:** Set `custom_text.submit.message` right above the Stripe Pay button matching the exact product (`"One-time payment, no subscription. Credits never expire and activate instantly."` vs `"Cancel anytime in 1 click."`).
+- **Match sign-in, cancelled-checkout, and success copy to the chosen plan:** Never show `"Sign in to complete subscription"` or `"Subscription confirmed!"` to a buyer who selected a one-time Credit Pack.
+- **Keep in-chat upgrade replies punchy (2-3 lines):** When a user triggers a paywall or clicks a watermark-removal button, never dump a 6-bullet wall of text that buries the checkout link. Lead with the 1-click checkout link for the lowest-friction option, mention alternatives in 1 brief line, and give an explicit post-checkout next step (e.g. a clickable `"Re-download without watermark"` button).
 - **Guard auth-in-flight states:** On `/pricing?token=...`, never let an unauthenticated render flash a "Sign in to upgrade" wall or redirect to `/login` before the token exchange finishes.
-- **Support channel-native checkout:** If a user signed up via WhatsApp/Telegram/phone without linking an email address, allow Stripe Checkout without requiring a pre-linked email (Stripe collects email during checkout). Never block a ready buyer with an unnecessary "please add an email in settings first" detour.
+- **Support channel-native checkout:** If a user signed up via WhatsApp/Telegram/phone without linking an email address, allow Stripe Checkout without requiring a pre-linked email (Stripe collects email during checkout) or complete inline verification cleanly without dead-end website detours.
 - **Harden in-app WebViews:** Users clicking paywall links from WhatsApp, Telegram, or social apps land inside restricted mobile WebViews where APIs like `navigator.clipboard.writeText` throw `NotAllowedError`. Always provide a fallback (e.g. `document.execCommand("copy")` + graceful toast) on copy buttons for referral links and setup codes.
 
 ## Paywall Hygiene

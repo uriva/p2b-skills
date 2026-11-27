@@ -11,6 +11,9 @@ Search engines and AI answer engines reward concrete engineering depth over gene
   - Real benchmarks, failure modes, security/isolation models, and production postmortems.
 - **Write in an authentic peer voice:** Casual, conversational, opinionated, concise. Take clear stances without hedging ("it might be", "perhaps"). Frame your own product matter-of-factly as a practical example of the architecture ("Here's what this looks like in practice"), never as a humble-brag or press release.
 - **Avoid AI-slop tells:** Skip em-dash overuse, forced staccato fragments, dramatic "In today's fast-paced world" openings, and bloated summaries. Say what needs to be said and stop.
+- **Audit technical SEO basics before writing new content:** Check `robots.txt` and `sitemap.xml` (frequently 404 on static SPAs), confirm every prerendered route has a unique `<title>`, `<meta name="description">`, OG tags, `<link rel="canonical">`, `noindex` on private/settings pages, and `SoftwareApplication` + `FAQPage` JSON-LD. Auto-generate `sitemap.xml` and per-route head metadata from one route registry so they never drift.
+- **Include current pricing & plans in `/llms.txt`:** AI answer engines (ChatGPT, Gemini, Perplexity) and coding agents read `/llms.txt` directly — include accurate free-tier limits, credit packs, and pricing URLs so AI referrals arrive with accurate expectations.
+- **Launch prerendered use-case pages from real user demand:** Mine actual user queries and chat logs to build focused, prerendered use-case landing pages (each with an interactive search/try bar pre-seeded with niche starter prompts and subtle homepage footer links) rather than guessing generic keywords.
 - **Always publish complete metadata:** Keep sitemap, structured metadata/OG images, `llms.txt`, and internal links to your flagship landing page and zero-auth demos updated with every new post.
 
 ## Safe Community Distribution (Reddit & Developer Forums)
