@@ -59,7 +59,8 @@ Include (with continuous `1..N` numbering across all sections; **omit any sectio
 - **Published & account:** Product, code, docs, or marketplace changes shipped and where (e.g. `f0mo.com`, `creators.n8n.io`, `npm`).
 - **Posted on your behalf on social:** Every social post, thread, or reply published under a founder account with a short Markdown link to the exact post or reply (e.g. `[reply](https://...)` on `r/sub` via `u/user`, `[post](https://...)` via `@handle` on X).
 - **Targets & deltas:** Only the metrics currently under attack (`📈` / `📉` / `➖` `prev → curr`).
-- **Decisions:** Blocked approvals and direction/priority questions combined in one section.
+- **Decisions:** Concrete yes/no approvals blocking an action (pricing, paid spend, blasts, credentials). Never ask permission on routine execution, cadence, or bake windows — handle those autonomously.
+- **Idea / direction:** An open-ended problem or strategic approach where you genuinely want the founder's opinion (never operational timing filler; omit when none).
 
 ## Core Principles Across Growth Surfaces
 
