@@ -22,6 +22,8 @@ Lifecycle messages should feel like a helpful note from a thoughtful founder, ne
 - **Checkout abandoned:** If a user reached Stripe Checkout and cancelled, note the friction (price, missing payment method, or still evaluating). Many buyers convert hours later once they hit the need again — avoid aggressive countdown pressure.
 - **Happy power user / high NPS:** Great moment to invite a quick reply ("what's the one thing you'd miss most if this disappeared?") or share their personal referral link.
 - **Strict hygiene:** Always deduplicate outreach per user and event, honor opt-outs immediately, and keep every message concise and human.
+- **Verify retention crons actually deliver in production:** Never trust a scheduled digest cron just because the code exists — compare real `Email Sent` analytics against eligible database records. Watch for inverted relation filters (returning 0 rows), per-user N+1 queries blowing serverless subrequest limits, missing `lastNotified` updates, already-acted-upon items, and links pointing to the homepage instead of deep-linking straight to the action screen.
+- **Send a transactional "Launch Kit" email on first creation:** When an organizer/creator spins up a new topic, event, or workspace, send one crisp transactional email (honoring opt-outs) with their invite link, printable QR/venue links, and 3 quick tips to get their first 20 members — paired with an in-app post-create launch checklist.
 
 ## Closing the Loop on Every Paid Conversion
 

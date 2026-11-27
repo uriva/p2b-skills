@@ -26,6 +26,7 @@ One of the highest-impact SaaS conversion killers is advertising a multi-day fre
 ## Zero-Friction Paywall & Checkout UX
 
 - **Use signed, non-expiring on-demand upgrade redirects:** Instead of eagerly generating 24h-expiring Stripe Checkout sessions on result delivery, embed HMAC-signed `/api/upgrade?...` links that track clicks and create a fresh Checkout session only on click.
+- **Put 1-click checkout buttons directly inside peak-intent friction states:** Never leave dead-end text (`"Top up $5 in your dashboard to unlock"`) on a blocked feature, paused/frozen resource, or insufficient-balance creation error. Render an inline 1-click Stripe checkout button right inside that exact alert or row so users upgrade at peak urgency without hunting for a billing section.
 - **Authenticated 1-tap upgrade links:** Every paywall message delivered in chat, email, or in-app should preserve auth or user email so the user lands ready to pay in one click.
 - **Add trust reassurance directly on Stripe Checkout:** Set `custom_text.submit.message` right above the Stripe Pay button matching the exact product (`"One-time payment, no subscription. Credits never expire and activate instantly."` vs `"Cancel anytime in 1 click."`).
 - **Match sign-in, cancelled-checkout, and success copy to the chosen plan:** Never show `"Sign in to complete subscription"` or `"Subscription confirmed!"` to a buyer who selected a one-time Credit Pack.
@@ -33,6 +34,8 @@ One of the highest-impact SaaS conversion killers is advertising a multi-day fre
 - **Guard auth-in-flight states:** On `/pricing?token=...`, never let an unauthenticated render flash a "Sign in to upgrade" wall or redirect to `/login` before the token exchange finishes.
 - **Support channel-native checkout:** If a user signed up via WhatsApp/Telegram/phone without linking an email address, allow Stripe Checkout without requiring a pre-linked email (Stripe collects email during checkout) or complete inline verification cleanly without dead-end website detours.
 - **Harden in-app WebViews:** Users clicking paywall links from WhatsApp, Telegram, or social apps land inside restricted mobile WebViews where APIs like `navigator.clipboard.writeText` throw `NotAllowedError`. Always provide a fallback (e.g. `document.execCommand("copy")` + graceful toast) on copy buttons for referral links and setup codes.
+- **Isolate multi-product Stripe accounts strictly by metadata:** When one Stripe account serves multiple founder projects, tag Checkout sessions, `subscription_data.metadata`, and `product_data.metadata` with `metadata.product = "<app>"` (using inline `price_data` when restricted keys lack `product_write`), verify raw-body HMAC-SHA256 webhook signatures, and ignore sibling products — then verify live with signed synthetic events for both your product and a sibling product.
+- **Roll out monetization softly on existing organic communities:** When turning on billing for a product with grandfathered active groups, never hard-lock thriving communities overnight. Surface non-blocking plan & usage meters (e.g. `X / 50 members`) with 1-click upgrade CTAs in both admin settings and list views, while keeping a clear free path for nonprofits/small groups.
 
 ## Paywall Hygiene
 
