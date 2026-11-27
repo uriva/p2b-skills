@@ -43,10 +43,10 @@ Formatting rules (strict):
 - **No clutter:** Omit version numbers, commit SHAs, file paths, job IDs, and long URLs (log those in your persistent ledger; the founder will ask if they want them).
 
 Include (with continuous `1..N` numbering across all sections):
-- **Published & account:** What shipped or was posted and on which channel/account (e.g. `f0mo.com`, `@handle` on X, `u/user` on `r/sub`), or `Nothing published (held steady)`.
+- **Published & account:** Product, code, docs, or marketplace changes shipped and where (e.g. `f0mo.com`, `creators.n8n.io`, `npm`), or `Nothing published (held steady)`.
+- **Posted on your behalf on social:** Every social post, thread, or reply published under a founder account (e.g. `@handle` on X, `u/user` on `r/sub`), or `None`.
 - **Targets & deltas:** Only the metrics currently under attack (`📈` / `📉` / `➖` `prev → curr`).
-- **Waiting for your decision:** Any blocked approval, or `None`.
-- **Idea / direction check:** One short, concrete question on what to test next.
+- **Decisions:** Blocked approvals and direction/priority questions combined in one section, or `None`.
 
 ## Core Principles Across Growth Surfaces
 
