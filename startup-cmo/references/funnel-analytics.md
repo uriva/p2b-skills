@@ -2,14 +2,22 @@
 
 ## Canonical Funnel Architecture
 
-Every SaaS growth system needs one shared, pinned funnel view keyed on a single canonical user ID (the database primary user ID), covering six stages:
+Start every engagement by agreeing with the founder on the **basic 3-5 step product conversion funnel** (for example: `Landing page -> Talked / First Action -> Core Value Result -> Converted / Paid`), pinning it as a **saved funnel chart on the main analytics dashboard**, and recording the **active funnel stage under attack** in the CMO ledger.
+
+Use deeper sub-steps only as diagnostics inside the bottleneck stage:
 
 1. **Entry Visit (by entry point & referring domain):** Homepage, dedicated product landing pages, blog posts, zero-auth demos, pricing page.
 2. **Primary CTA Click (by exact UI slot):** Track slot locations explicitly (`hero`, `mobile_sticky_bar`, `top_strip`, `bottom_cta`, `interactive_demo`, `blog_post_cta`, `pricing_card`) so you know which page elements actually drive action.
-3. **Real Signup:** Filter out bots, unactivated guest shells, and synthetic test accounts. Count only users with a real identity, created resource, or recorded usage.
-4. **Activation:** The earliest concrete moment the user got real output (for example, `3+` real runs or completing core onboarding).
+3. **Real Signup / First Action:** Filter out bots, unactivated guest shells, and synthetic test accounts. Count only users with a real identity, created resource, or recorded interaction.
+4. **Activation (Core Value Delivered):** The earliest concrete moment the user got real output (for example, first generated clip, `3+` real runs, or completed core workflow).
 5. **Deep Engagement:** Habit formation (for example, `20+` runs or returning on `2+` distinct days).
-6. **Monetization & Expansion:** `Quota Exceeded` / paywall hit -> `/pricing` visit -> checkout start -> `Subscription Started` (plus referral rewards granted).
+6. **Monetization & Expansion:** `Quota Exceeded` / paywall hit -> `/pricing` visit -> checkout start -> `Paid` (subscription or one-time pack, plus referral rewards granted).
+
+### Funnel Tracking Efficiency & Stage Focus Checklist
+
+- **Run a live cross-step join check before optimizing:** Query `Step 1 INNER JOIN Step 2` (and through `Paid`) on real events — never assume separate dashboards connect. If landing pageviews (`$pageview`) show `0` joined users at server-side activation or payment, the frontend is missing `identify(canonicalId)` matching exact backend casing/normalization.
+- **Queue early browser events + identity in strict order:** When analytics loads lazily, queue initial `$pageview` (with `$referrer` and `capture_pageview: false`), early CTA clicks, `identify(canonicalId)` on auth, and `reset()` on sign-out in one ordered queue so fast redirects never drop Step 1 or break anonymous-to-authenticated person merging.
+- **Name the active funnel stage explicitly:** Every cycle focuses on one specific transition (e.g. `Landing -> Talked`, `Talked -> Core Value`, or `Core Value -> Paid`). State that stage in both the CMO ledger and the Must-Read Update so the founder always knows which leak is being fixed right now.
 
 ## Critical Instrumentation Rules
 
